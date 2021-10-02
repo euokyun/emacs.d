@@ -1,0 +1,8 @@
+# -*- mode: snippet -*-
+# name: sicp
+# key: sicp
+# --
+#lang sicp
+(#%provide (all-defined))
+
+$1
