@@ -2,6 +2,7 @@
 /straight/
 /recentf
 /eln-cache/
-/var/company/
-/var/emojify/
+/var/
 /elpa/
+/.emacs.desktop
+/.last-package-update-day
