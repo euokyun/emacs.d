@@ -17,11 +17,6 @@
 ;; package initialization occurs before `user-init-file' is loaded, but after the `early-init-file'.
 (setq package-enable-at-startup nil)
 
-;; (member "D2Coding" (font-family-list))
-;; (member "JetBrains Mono" (font-family-list))
-;; (member "Iosevka SS08" (font-family-list))
-
-
 (set-face-attribute 'default nil :family "JetBrains Mono")
 (set-fontset-font t 'hangul "D2Coding")
 
@@ -34,16 +29,22 @@
 (set-fontset-font t 'unicode (font-spec :family "Weather Icons") nil 'append)
 
 
-(scroll-bar-mode 0)
-(tool-bar-mode 0)
 
+;; Disable most GUI widgets early on
 (setq default-frame-alist
-      '(
-        ;; (scroll-bar-mode . 0)
-        ;; (tool-bar-mode . 0)
-        (font . "JetBrains Mono")))
-
-
+      '((font . "JetBrains Mono")
+        (horizontal-scroll-bars . nil)
+        (vertical-scroll-bars . nil)
+        (ns-appearance . dark)          ; hide titlebar
+        (ns-transparent-titlebar . t)   ; hide titlebar
+        (scroll-bar-mode 0)
+        (tool-bar-mode 0)
+        (menu-bar-lines . 0)
+        (tool-bar-lines . 0)
+        (internal-border-width . 0)
+        ;; (height . 50)
+        ;; (width . 95)
+        (ns-use-proxy-icon nil)))
 
 
 (setq default-file-name-handler-alist file-name-handler-alist
