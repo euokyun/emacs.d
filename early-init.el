@@ -1,4 +1,5 @@
-;;; -*- lexical-binding: t -*-
+;;; early-init.el -*- lexical-binding: t; -*-
+
 
 ;; from https://github.com/hlissner/doom-emacs/blob/develop/early-init.el
 ;; temporary prevent gc running and reset it later by `gcmh-mode'.
@@ -9,6 +10,7 @@
 ;; (setq comp-deferred-compilation nil
 ;;       native-comp-deferred-compilation nil)
 
+(setq native-comp-compiler-options '("-O2" "-march=skylake" "-mtune=native")) ; for gccemacs compile options
 
 ;; prevent use stale byte-code.
 ;; Otherwise skip mtime check on every *.elc file.
@@ -37,11 +39,12 @@
         (vertical-scroll-bars . nil)
         (ns-appearance . dark)          ; hide titlebar
         (ns-transparent-titlebar . t)   ; hide titlebar
-        (scroll-bar-mode 0)
-        (tool-bar-mode 0)
+        (scroll-bar-mode -1)
+        (tool-bar-mode -1)
         (menu-bar-lines . 0)
         (tool-bar-lines . 0)
         (internal-border-width . 0)
+        (frame-title-format "\n")
         ;; (height . 50)
         ;; (width . 95)
         (ns-use-proxy-icon nil)))
@@ -50,6 +53,8 @@
 (setq default-file-name-handler-alist file-name-handler-alist
       file-name-handler-alist nil)
 
+(set-default-coding-systems 'utf-8)
+(set-language-environment "UTF-8")
 (add-hook 'emacs-startup-hook
           (lambda (&rest _)
             (setq file-name-handler-alist default-file-name-handler-alist)
