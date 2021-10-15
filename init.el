@@ -3,6 +3,13 @@
 ;;; Code:
 
 ;; (setq debug-on-error t)               ; if you need to debug your init.el
+
+;; for find error
+;; (defface t '((t (:background "orange"))) "Test.")
+
+
+
+
 ;; (add-hook 'emacs-startup-hook
 ;;           (lambda ()
 ;;             (message "*** Emacs loaded in %s with %d garbage collections."
@@ -42,13 +49,14 @@
  show-help-function nil                 ; t
  straight-use-package-by-default t      ; use use-package
  straight-check-for-modifications '(check-on-save find-when-checking) ; don't catch modification unless `save buffer' command.
- use-package-always-ensure t     ; if package is not installed, then install it.
- tramp-default-method "ssh"      ; remote connection default.
- use-dialog-box nil              ;
- vc-follow-symlinks t            ; silent warning for symlink.
- warning-minimum-level :error    ;
+ use-package-always-ensure t     		; if package is not installed, then install it.
+ tramp-default-method "ssh"      		; remote connection default.
+ use-dialog-box nil              		;
+ vc-follow-symlinks t            		; silent warning for symlink.
+ warning-minimum-level :error    		;
  warning-suppress-log-types '((comp))   ; silent warning for native-comp.
- warning-suppress-types '((use-package) (use-package))
+ warning-suppress-types '((use-package)
+                          (use-package))
  fill-column 80                         ; default is `70'. force line breaker.
  comment-column 60                      ; set comment column to 60
  window-combination-resize t            ;
@@ -67,11 +75,16 @@
  ns-use-proxy-icon nil           ; do not use icon in titlebar
  x-underline-at-descent-line t   ; Underline looks a bit better when drawn lower
  inhibit-compacting-font-caches t       ; for fix all-the-icons slow rendering
- display-buffer-base-action '((display-buffer-reuse-window display-buffer-same-window) (reusable-frames . t)) ; perspective - fix window layout.
  even-window-sizes nil                  ; perspective - fix window layout.
+ display-buffer-base-action '((display-buffer-reuse-window display-buffer-same-window)
+                              (reusable-frames . t)) ; perspective - fix window layout.
  face-font-rescale-alist '((".*JetBrains Mono.*" . 1.0)
                            (".*D2Coding.*" . 1.1092896174863387)
-                           (".*Iosevka SS08 .*" . 1.2917385677308024)))
+                           (".*Iosevka SS08 .*" . 1.2917385677308024))
+ tab-bar-format '(tab-bar-format-global) ; global modeline using emacs28 tab-bar
+ tab-bar-mode t                     ; http://ruzkuku.com/texts/emacs-global.html
+ )
+
 
 (put 'narrow-to-region 'disabled nil)
 
@@ -198,6 +211,8 @@
  ;; display-time-format "%l:%M %p %b %y"
  display-time-format "%H:%M"
  display-time-default-load-average nil)
+
+
 
 
 
@@ -444,9 +459,9 @@
 ;; https://github.com/abo-abo/avy
 (use-package avy
   :custom
-  ;; (avy-background t)
+  (avy-background t)
   (avy-style 'at-full)
-  (avy-timeout-seconds .3)
+  (avy-timeout-seconds .5)
   ;; :config
   ;; (set-face-italic 'avy-goto-char-timer-face nil)
   ;; (set-face-italic 'avy-lead-face nil)
@@ -504,10 +519,10 @@
   ;; (resize-mini-frames t)
   ;; (resize-mini-frames 'grow-only)
   (mini-frame-ignore-commands
-   '(eval-expression "edebug-eval-expression" debugger-eval-expression completion-at-point ediff-quit))
+   '(eval-expression "edebug-eval-expression" debugger-eval-expression completion-at-point ediff-quit evil-ex))
   (mini-frame-color-shift-step 15)
   :hook (after-init . mini-frame-mode))
-
+;; TODO: 위치 조절 기능
 ;; M-x는 안 되는데 swiper search같은건 setq 할당으로도 금방 바뀐다.
 ;; 명령어 구분을 통해서 화면의 어느 위치에 미니프레임을 띄울지 판단하는 방식으로 만들어야 함
 
@@ -730,14 +745,14 @@
   ;;   "test function."
   ;;   (interactive)
   ;;   (message "%s" "is?"))
-  (defun my/aw-winner-undo ()
-    "undo window change."
-    (interactive)
-    (winner-undo))
-  (defun my/aw-winner-redo ()
-    "redo window change."
-    (interactive)
-    (winner-redo))
+  ;; (defun my/aw-winner-undo ()
+  ;;   "undo window change."
+  ;;   (interactive)
+  ;;   (winner-undo))
+  ;; (defun my/aw-winner-redo ()
+  ;;   "redo window change."
+  ;;   (interactive)
+  ;;   (winner-redo))
   (defun my/aw-vterm ()
     "open terminal here"
     (interactive)
@@ -757,8 +772,8 @@
       ((el-patch-swap ?b ?l) aw-split-window-horz "Split Horz Window")
       ((el-patch-swap ?o ?K) delete-other-windows "Delete Other Windows")
       ((el-patch-swap ?T ?t) aw-transpose-frame "Transpose Frame")
-      (el-patch-add (?r my/aw-winner-redo))
-      (el-patch-add (?u my/aw-winner-undo))
+      ;; (el-patch-add (?r my/aw-winner-redo))
+      ;; (el-patch-add (?u my/aw-winner-undo))
       (el-patch-add (?! my/aw-vterm))
       ;; ?i ?r ?t are used by hyperbole.el
       (?? aw-show-dispatch-help))
@@ -833,9 +848,11 @@ or
 
 
 ;; https://gitlab.com/ideasman42/emacs-hl-block-mode
+;; this may cause "face t" problem. when color-tint.
 (use-package hl-block-mode
   :custom
   (hl-block-style 'bracket)             ; color tint mode disables rainbow mode.
+ ;; (hl-block-style 'color-tint)
   ;; (hl-block-bracket "{")
   :commands (hl-block-mode)
   :hook ((prog-mode . hl-block-mode)))
@@ -865,7 +882,7 @@ or
   (highlight-indent-guides-delay 0))
 
 ;; https://github.com/malabarba/aggressive-indent-mode
-;; automatically reindent code
+;; automatically indent code
 (use-package aggressive-indent
   :disabled
   :hook
@@ -887,6 +904,7 @@ or
                   evil-redo)
                 aggressive-indent-protected-commands)))
 
+;; fold/unfold
 (use-package origami
   ;; :disabled
   :straight (origami
@@ -894,10 +912,16 @@ or
              :host github
              :repo "gregsexton/origami.el"
              :fork (:host github
-                          :repo skrytebane/origami.el))
+                    :repo skrytebane/origami.el)) ; fix deprecated cl package.
   ;; :hook (yaml-mode . origami-mode)
   :config
   (global-origami-mode))
+
+;; https://github.com/emacs-lsp/lsp-origami
+(use-package lsp-origami
+  :after (lsp-mode origami)
+  :config
+  (add-hook 'lsp-after-open-hook #'lsp-origami-try-enable))
 
 ;; https://github.com/lewang/ws-butler
 (use-package ws-butler
@@ -979,6 +1003,7 @@ or
 (use-package persp-mode
   :custom
   (persp-autokill-buffer-on-remove 'kill-weak)
+  (persp-hook-up-emacs-buffer-completion t) ; try to restrict buffer list.
   :config
   (persp-mode)
    (add-to-list 'window-persistent-parameters '(winner-ring . t))
@@ -1217,20 +1242,18 @@ or
   :hook ((prog-mode org-mode) . yas-minor-mode)
   :config
   (setq yas-fallback-behavior '(apply tab-jump-out 1))
-  (yas-reload-all))
-
-;; Add yasnippet support for all company backends
-;; https://github.com/syl20bnr/spacemacs/pull/179
-;; (defvar company-mode/enable-yas t
-;;   "Enable yasnippet for all backends.")
-
-;; (defun company-mode/backend-with-yas (backend)
-;;   (if (or (not company-mode/enable-yas) (and (listp backend) (member 'company-yasnippet backend)))
-;;       backend
-;;     (append (if (consp backend) backend (list backend))
-;;             '(:with company-yasnippet))))
-
-;; (setq company-backends (mapcar #'company-mode/backend-with-yas company-backends))
+  (yas-reload-all)
+  ;; Add yasnippet support for all company backends
+  ;; https://github.com/syl20bnr/spacemacs/pull/179
+  (defvar company-mode/enable-yas t
+    "Enable yasnippet for all backends.")
+  (defun company-mode/backend-with-yas (backend)
+    (if (or (not company-mode/enable-yas) (and (listp backend) (member 'company-yasnippet backend)))
+        backend
+      (append (if (consp backend) backend (list backend))
+              '(:with company-yasnippet))))
+  ;; (setq company-backends (mapcar #'company-mode/backend-with-yas company-backends))
+  )
 
 
 ;; ---------------------------
@@ -1264,15 +1287,15 @@ or
               ;; ("TAB" . completion-at-point)
               ("C-c C-f" . lsp-format-buffer))
   :custom
-  ;; (lsp-keymap-prefix "C-x l")
+  (lsp-keymap-prefix "C-x l")
   (lsp-auto-guess-root nil)
   (lsp-prefer-flymake nil)           ; Use flycheck instead of flymake
   (lsp-enable-file-watchers nil)
   (lsp-enable-folding nil)
   (read-process-output-max (* 1024 1024))
   (lsp-keep-workspace-alive nil)
-  (lsp-eldoc-hook nil)
-  (lsp-headerline-breadcrumb-enable nil)
+  ;; (lsp-eldoc-hook nil)
+  ;; (lsp-headerline-breadcrumb-enable nil)
   (lsp-treemacs-sync-mode 1)            ; https://github.com/emacs-lsp/lsp-treemacs
   :config
   (defun lsp-update-server ()
@@ -1287,10 +1310,32 @@ or
   :hook (lsp-mode . lsp-ui-mode)
   :custom
   (lsp-ui-sideline-enable t)
-  (lsp-ui-sideline-show-hover nil)
+  ;; (lsp-ui-sideline-show-hover nil)
+  (lsp-ui-sideline-show-hover t)
   (lsp-ui-doc-position 'bottom)
   :config
   (lsp-ui-doc-show))
+
+
+
+;; https://github.com/emacs-lsp/lsp-java
+(use-package lsp-java
+  :after lsp-mode
+  :if (executable-find "mvn")
+  :init
+  (use-package request :defer t)
+  :custom
+  (lsp-java-server-install-dir (expand-file-name "eclipse.jdt.ls/server/" user-emacs-directory))
+  (lsp-java-workspace-dir (expand-file-name "eclipse.jdt.ls/workspace/" user-emacs-directory))
+  (lsp-java-format-settings-url "https://raw.githubusercontent.com/google/styleguide/gh-pages/eclipse-java-google-style.xml")
+  (lsp-java-format-settings-profile "GoogleStyle")
+  :config
+  (require 'lsp-java-boot)
+  ;; to enable the lenses
+  (add-hook 'lsp-mode-hook #'lsp-lens-mode)
+  (add-hook 'java-mode-hook #'lsp-java-boot-lens-mode))
+
+
 
 ;; https://github.com/emacs-lsp/dap-mode
 (use-package dap-mode
@@ -1303,6 +1348,10 @@ or
   (require 'dap-node)
   (dap-node-setup))
 
+(use-package dap-java
+  :ensure nil
+  :straight nil)
+
 ;; https://github.com/abo-abo/lispy
 ;; (use-package lispy
 ;;   :hook ((emacs-lisp-mode . lispy-mode)
@@ -1311,7 +1360,7 @@ or
 ;; https://github.com/noctuid/lispyville
 (use-package lispyville
   :hook ((emacs-lisp-mode . lispyville-mode)
-         (scheme-mode . lispyville-mode)
+         ;; (scheme-mode . lispyville-mode)
          (racket-mode . lispyville-mode))
   ;; :hook ((lispy-mode . lispyville-mode))
   :config
@@ -1375,13 +1424,31 @@ or
 
 
 ;; racket
-(use-package racket-mode
-  :config (require 'lsp-racket)
-  :mode "\\.scm\\'")
+(use-package racket-mode)
+
+;; https://mullikine.github.io/posts/setting-up-lsp-with-emacs-attempt-2/
+(use-package lsp-racket
+  :after (lsp-mode racket-mode)
+  :straight (lsp-racket
+             :type git
+             :host github
+              :repo "mullikine/lsp-racket-el"))
+
+
+;; (use-package lsp-racket
+;;   :straight (lsp-racket
+;;              :type git
+;;              :host github
+;;              :repo "vishesh/lsp-racket.el")
+;;   :config
+;;   (add-hook 'racket-mode-hook #'lsp-racket-enable))
+
 
 (use-package geiser
   :commands (geiser run-geiser geiser-repl)
   :defer t)
+
+;; (use-package geiser-mit)
 
 ;; https://gitlab.com/jaor/geiser/-/issues/224
 ;; (require 'geiser)
@@ -1524,9 +1591,9 @@ or
   :config
   ;; (unless clangd-p (delete 'company-clang company-backends))
   (global-company-mode 1)
+
   (defun smarter-tab-to-complete ()
     "Try to `org-cycle', `yas-expand', and `yas-next-field' at current cursor position.
-
 If all failed, try to complete the common part with `company-complete-common'"
     (interactive)
     (when yas-minor-mode
@@ -1542,6 +1609,17 @@ If all failed, try to complete the common part with `company-complete-common'"
                          (eq old-tick (buffer-chars-modified-tick)))
               (throw 'func-suceed t)))
           (company-complete-common))))))
+
+;; ;; https://github.com/tigersoldier/company-lsp
+;; deprecated
+;; (use-package company-lsp
+;; :disabled
+;;   :custom
+;;   (company-lsp-async t)
+;;   (company-lsp-enable-snippet t)
+;;   ;; (company-lsp-enable-recompletion nil)
+;;   :config
+;;   (push 'company-lsp company-backends))
 
 ;; https://github.com/TommyX12/company-tabnine
 ;; this requires run `M-x company-tabnine-install-binary' to install the TabNine binary for your system.
@@ -1596,7 +1674,6 @@ If all failed, try to complete the common part with `company-complete-common'"
   :config
   (add-to-list 'lsp-client-packages 'lsp-racket)
   (company-tabnine-toggle t))
-
 
 ;; https://github.com/sebastiencs/company-box
 (use-package company-box
@@ -1876,22 +1953,13 @@ If all failed, try to complete the common part with `company-complete-common'"
   ;;         company-box-icons-alist 'company-box-icons-all-the-icons))
   )
 
-;; https://github.com/emacs-lsp/lsp-java
-(use-package lsp-java
-  :after lsp-mode
-  :if (executable-find "mvn")
-  :init
-  (use-package request :defer t)
-  :custom
-  (lsp-java-server-install-dir (expand-file-name "eclipse.jdt.ls/server/" user-emacs-directory))
-  (lsp-java-workspace-dir (expand-file-name "eclipse.jdt.ls/workspace/" user-emacs-directory)))
-
 
 
 
 ;; https://github.com/raxod502/apheleia
 ;; auto code formatter
 (use-package apheleia
+  :disabled
   :straight (apheleia
              :host github
              :repo "raxod502/apheleia")
@@ -2024,19 +2092,19 @@ If all failed, try to complete the common part with `company-complete-common'"
   (org-log-into-drawer t)         ; Log stuff into the LOGBOOK drawer by default
   (org-hide-emphasis-markers t)   ; hide markup indicator
   (prettify-symbols-unprettify-at-point 'right-edge)
-  (org-fontify-done-headline t)         ; apply special face to DONE
-  (org-hide-leading-stars t)            ; hide the stars
-  (org-pretty-entities t)               ; show entities as UTF-8 char.
-  (org-odd-levels-only)                 ; odd levels only
-  (org-indent-indentation-per-level 2)  ;
+  (org-fontify-done-headline t)       ; apply special face to DONE
+  (org-hide-leading-stars t)          ; hide the stars
+  (org-pretty-entities t)             ; show entities as UTF-8 char.
+  (org-odd-levels-only)               ; odd levels only
+  ;; (org-indent-indentation-per-level 2)  ;
   (org-hide-leading-stars t)            ; hide the stars.
   (org-ellipsis "⋱")                    ; change ellipsis shape.
   (org-src-fontify-natively t)
   (org-fontify-quote-and-verse-blocks t)
   (org-src-tab-acts-natively t)
   ;; (org-edit-src-content-indentation 4)   ; indentation for contents of code block.
-  (org-edit-src-content-indentation nil) ; indentation for contents of code block. if `org-src-preserve-indentation' is `non-nil' this will be ignored.
-  (org-src-preserve-indentation nil)     ;
+  (org-edit-src-content-indentation 0) ; indentation for contents of code block. if `org-src-preserve-indentation' is `non-nil' this will be ignored.
+  ;; (org-src-preserve-indentation nil)     ;
   (org-hide-block-startup nil)
   ;; (org-cycle-separator-lines 2)          ; blank line when collapsed. default is `2'
   ;; (org-blank-before-new-entry '((heading . auto) (plain-list-item . auto))) ; default value.
@@ -2060,8 +2128,8 @@ If all failed, try to complete the common part with `company-complete-common'"
   (org-outline-path-complete-in-steps nil)
   ;; emphasis using zero with space
   (org-emphasis-regexp-components '("   ('\"{\x200B" "-     .,:!?;'\")}\\[\x200B" " ,\"'" "." 1))
-  (org-startup-with-inline-images t)    ; start with inline images
-  ;; (org-startup-with-latex-preview t)                ; start with latex preview
+  (org-startup-with-inline-images t)                ; start with inline images
+  (org-startup-with-latex-preview t)                ; start with latex preview
   (org-latex-create-formula-image-program 'dvisvgm) ; latex to svg
 
 
@@ -2087,7 +2155,7 @@ If all failed, try to complete the common part with `company-complete-common'"
   ;;  ((t (:foreground ""))))
   (org-document-title
    ((t (:height 1.1
-                :weight bold))))
+        :weight bold))))
   ;; (org-done
   ;;  ((t (
   ;;       :foreground "PaleGreen"
@@ -2145,6 +2213,20 @@ If all failed, try to complete the common part with `company-complete-common'"
 
 
   :config
+
+  ;; https://seorenn.tistory.com/65
+  ;; add external image link support.
+  (defun org-custom-link-img-follow (path)
+    (org-link-open-from-string path))
+  (defun org-custom-link-img-export (path desc format)
+    (cond ((eq format 'html)
+           (format "<img src=\"%s\" alt=\"%s\"/>" path desc))))
+  (org-add-link-type "img" 'org-custom-link-img-follow 'org-custom-link-img-export)
+
+
+  (add-to-list 'org-emphasis-alist '("$" latex))
+
+
   (defface org-checkbox-done-text
     '((t (:inherit (shadow))))
     "Face for checked checkbox text")
@@ -2176,6 +2258,16 @@ If all failed, try to complete the common part with `company-complete-common'"
       (add-to-list 'org-export-filter-plain-text-functions
                    'my-filter-remove-u200b))
 
+  (use-package org-transclusion
+    :straight (org-transclusion
+               :type git
+               :host github
+               :repo "nobiot/org-transclusion"))
+
+
+
+
+
 
   (font-lock-add-keywords
    'org-mode
@@ -2192,9 +2284,18 @@ If all failed, try to complete the common part with `company-complete-common'"
           ;; org-irc
           ))
 
+;; https://github.com/hasu/emacs-ob-racket
+  (use-package ob-racket
+    :straight (ob-racket
+               :type git
+               :host github
+                :repo "hasu/emacs-ob-racket"))
+
   (org-babel-do-load-languages
    'org-babel-load-languages
    '((emacs-lisp . t)
+     ;; (scheme . t)
+     (racket . t)
      (latex . t)
      ;; (ledger . t)
      ))
@@ -2286,6 +2387,8 @@ If all failed, try to complete the common part with `company-complete-common'"
   (use-package org-make-toc
     :hook (org-mode . org-make-toc-mode))
 
+  ;; https://github.com/awth13/org-appear
+  ;; toggle visibility of emphasis.
   (use-package org-appear
     :hook (org-mode . org-appear-mode))
 
@@ -2353,18 +2456,18 @@ If all failed, try to complete the common part with `company-complete-common'"
         :olp ("Log")
         :head "#+title: %<%Y-%m-%d %a>\n\n[[roam:%<%Y-%B>]]\n\n")))
     :bind (:map org-roam-mode-map
-                (("C-c n l" . org-roam)
-                 ("C-c n f" . org-roam-find-file)
-                 ("C-c n d" . org-roam-dailies-find-date)
-                 ("C-c n c" . org-roam-dailies-capture-today)
-                 ("C-c n C r" . org-roam-dailies-capture-tomorrow)
-                 ("C-c n t" . org-roam-dailies-find-today)
-                 ("C-c n y" . org-roam-dailies-find-yesterday)
-                 ("C-c n r" . org-roam-dailies-find-tomorrow)
-                 ("C-c n g" . org-roam-graph))
-                :map org-mode-map
-                (("C-c n i" . org-roam-insert))
-                (("C-c n I" . org-roam-insert-immediate))))
+           (("C-c n l" . org-roam)
+            ("C-c n f" . org-roam-find-file)
+            ("C-c n d" . org-roam-dailies-find-date)
+            ("C-c n c" . org-roam-dailies-capture-today)
+            ("C-c n C r" . org-roam-dailies-capture-tomorrow)
+            ("C-c n t" . org-roam-dailies-find-today)
+            ("C-c n y" . org-roam-dailies-find-yesterday)
+            ("C-c n r" . org-roam-dailies-find-tomorrow)
+            ("C-c n g" . org-roam-graph))
+           :map org-mode-map
+           (("C-c n i" . org-roam-insert))
+           (("C-c n I" . org-roam-insert-immediate))))
 
   ;; https://github.com/jrblevin/deft
   (use-package deft
@@ -2414,7 +2517,7 @@ If all failed, try to complete the common part with `company-complete-common'"
 replace the line with output. With a prefix argument, append the
 output instead."
     (interactive "P")
-    (let ( (command (thing-at-point 'line)) )
+    (let ((command (thing-at-point 'line)))
       (cond ((null prefix)
              (kill-whole-line)
              (indent-according-to-mode))
@@ -2518,15 +2621,16 @@ Lisp function does not specify a special indentation."
 
 
 (el-patch-feature ace-window)
-;; (with-eval-after-load 'ace-window
-;;   (el-patch-defun aw--switch-buffer () ;; add persp-mode setting.
-;;     (cond (el-patch-add ((bound-and-true-p ivy-mode)
-;;                          (ivy-switch-buffer)))
-;;           ((bound-and-true-p ido-mode)
-;;            (ido-switch-buffer))
-;;           (t
-;;            (call-interactively 'switch-to-buffer)))))
-
+(with-eval-after-load 'ace-window
+  (el-patch-defun aw--switch-buffer () ;; add persp-mode setting.
+    (cond (el-patch-add ((bound-and-true-p persp-mode)
+                         (call-interactively 'persp-switch-to-buffer)))
+          ((bound-and-true-p ivy-mode)
+           (ivy-switch-buffer))
+          ((bound-and-true-p ido-mode)
+           (ido-switch-buffer))
+          (t
+           (call-interactively 'switch-to-buffer)))))
 
 
 (el-patch-feature org)
@@ -2548,7 +2652,6 @@ prompted for."
                 end (region-end)
                 string (buffer-substring beg end))
         (setq move t))
-
       (unless char
         (message "Emphasis marker or tag: [%s]"
                  (mapconcat #'car org-emphasis-alist ""))
@@ -2568,13 +2671,11 @@ prompted for."
       (unless (or (bolp)
                   (string-match (concat "[" (nth 0 erc) "\n]")
                                 (char-to-string (char-before (point)))))
-        (insert ""))
+        (insert (el-patch-swap " " "")) (el-patch-add (forward-char 1)))
       (unless (or (eobp)
                   (string-match (concat "[" (nth 1 erc) "\n]")
                                 (char-to-string (char-after (point)))))
-        ;; (insert "") (backward-char (el-patch-swap 1 2)))
-        (insert "") ;; (backward-char 1)
-        )
+        (insert (el-patch-swap " " " ")) (el-patch-remove (backward-char 1)))
       (insert string)
       (and move (backward-char (el-patch-swap 1 2))))))
 
@@ -2698,28 +2799,33 @@ or go back to just one window (by deleting all but the selected window)."
   "s-p"
   "s-h"
   "s-t"
+
   )
 
 
 
 (general-define-key
- "C-s" 'counsel-grep-or-swiper
- ;; "s-f" 'counsel-grep-or-swiper
+ ;; "C-s" 'counsel-grep-or-swiper
+ "s-f" 'counsel-grep-or-swiper
  ;; "s-w" 'delete-window
  ;; "s-W" 'delete-other-window
  ;; undo, redo
  ;; "s-z" 'undo-tree-undo
  ;; "s-Z" 'undo-tree-redo
  "C-M-u" 'universal-argument            ; C-u is now evil-scroll-up
- "s-?" 'evilnc-copy-and-comment-lines
- "s-/" 'evilnc-comment-or-uncomment-lines
+ ;; "s-?" 'evilnc-copy-and-comment-lines
+ ;; "s-/" 'evilnc-comment-or-uncomment-lines
  "<f17>" 'toggle-input-method
  "M-y" 'insert-last-message
  "s-b" 'treemacs
  "C-SPC" 'completion-at-point
  "s-o" 'find-file
  ;; "s-f" 'evil-avy-goto-char-timer
-
+ "s-n" '(nil :which-key "new buffer & frame")
+ "s-n f" 'make-frame
+ "s-n b" '(clone-indirect-buffer-other-window :which-key "clone indirect buffer - other window")
+ "s-n B" '(make-indirect-buffer :which-key "make indirect buffer")
+ "s-," help-map                         ; change c-h map.
  )
 
 (general-define-key
@@ -2741,6 +2847,7 @@ or go back to just one window (by deleting all but the selected window)."
 
 (general-define-key
  :states 'visual
+ "s-n" 'edit-indirect-region
  "R" 'evil-multiedit-match-all
  "C-M-d" 'evil-multiedit-restore)
 
@@ -2751,6 +2858,7 @@ or go back to just one window (by deleting all but the selected window)."
 
 (push '((multiedit-insert . evil-multiedit-insert-state-map)
         (multiedit . evil-multiedit-state-map)) general-keymap-aliases)
+
 (general-define-key
  :states '(multiedit motion)
  "RET" 'evil-multiedit-toggle-or-restrict-region)
@@ -2873,7 +2981,8 @@ or go back to just one window (by deleting all but the selected window)."
 
 
   ;; expand region
-  "v" 'er/expand-region)
+  "v" 'er/expand-region
+  )
 
 
 
@@ -2882,8 +2991,10 @@ or go back to just one window (by deleting all but the selected window)."
   :states '(normal insert visual emacs motion)
   :keymaps 'lsp-mode-map
   "l" '(:ignore t :which-key "lsp")
-  "ld" 'xref-find-definitions
-  "lr" 'xref-find-references
+  ;; "ld" 'xref-find-definitions
+  ;; "lr" 'xref-find-references
+  "ld" 'lsp-ui-peek-find-definitions
+  "lr" 'lsp-ui-peek-find-references
   "ln" 'lsp-ui-find-next-reference
   "lp" 'lsp-ui-find-prev-reference
   "ls" 'counsel-imenu
@@ -2910,10 +3021,11 @@ or go back to just one window (by deleting all but the selected window)."
   "oil" '(org-insert-link :which-key "insert link")
   "oi," '(org-insert-structure-template :which-key "insert structure")
   "oii" '(org-emphasize :which-key "emphasize")
-  "o SPC" '(insert-zero-width-space :which-key "zero width space")
+  ;; transclusion
+  "oit" '(org-transclusion-add)
+  "o SPC" '(insert-zero-width-space :which-key "zero width space"))
 
 
-  )
 
 ;; ;; org-mode
 (general-define-key
@@ -2922,11 +3034,17 @@ or go back to just one window (by deleting all but the selected window)."
  "C-j" 'org-next-visible-heading
  "C-k" 'org-previous-visible-heading)
 
+;; override org-mode's `$' keybind.
+;; press once will go visual end of line
+;; and press twice will end of line.
 
-
-
-
-
+(general-define-key
+ :states '(normal motion visual)
+ :keymaps 'org-mode-map
+ "$" (general-key-dispatch '(lambda () (interactive) (evil-org-end-of-line))
+       :timeout 0.25
+       ;; "$" '(lambda () (interactive) (evil-end-of-line))
+       "$" 'evil-end-of-line))
 
 
 
@@ -2942,7 +3060,7 @@ or go back to just one window (by deleting all but the selected window)."
   :states 'normal
   ;; :which-key "eval"
   ;; :keymaps
-  ;; "" '(:ignore t :which-key "eval")
+  "" '(nil :which-key "eval")
   "b" '(eval-buffer :which-key "eval buffer")
   "/" '(lispy-eval-and-comment :which-key "eval and comment")
   "x" '(eval-last-sexp :which-key "eval sexp"))
@@ -2974,6 +3092,7 @@ or go back to just one window (by deleting all but the selected window)."
 (general-define-key
  :states 'normal
  :keymaps 'dired-mode-map
+ "SPC" nil
  "h" 'dired-single-up-directory
  "H" 'dired-omit-mode
  "l" 'dired-single-buffer
@@ -3026,6 +3145,10 @@ or go back to just one window (by deleting all but the selected window)."
 ;;       (pcase appearance
 ;;         ('light (face-remap-add-relative 'git-gutter:added nil '(:foreground "DarkGreen")))
 ;;         ('dark (face-remap-add-relative 'git-gutter:added nil '(:foreground "LightGreen")))))))
+
+
+;; don't know why this not work at once.
+(setq frame-title-format "\n") ; hide frame size info that will be second line and not visible.
 
 
 (use-package gcmh
