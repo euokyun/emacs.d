@@ -1,22 +1,33 @@
-;;; init.el --- init.el  -*- lexical-binding: t; -*-
+;;; init.el -*- lexical-binding: t; -*-
 ;;; Commentary: euokyun's emacs init file.
 ;;; Code:
 
 ;; (setq debug-on-error t)               ; if you need to debug your init.el
 
-;; for find error
-;; (defface t '((t (:background "orange"))) "Test.")
+(setq custom-file (expand-file-name "custom.el" user-emacs-directory))
+(load custom-file 'noerror)
+
+
+;; (featurep 'no-littering)
+;; (featurep 'recentf)
 
 
 
+;; font settings.
+(set-face-attribute 'default nil :family "JetBrains Mono")
+(set-fontset-font t 'hangul "D2Coding")
 
-;; (add-hook 'emacs-startup-hook
-;;           (lambda ()
-;;             (message "*** Emacs loaded in %s with %d garbage collections."
-;;                      (format "%.2f seconds"
-;;                              (float-time
-;;                               (time-subtract after-init-time before-init-time)))
-;;                      gcs-done)))
+;; ;; Use 'prepend for the NS and Mac ports or Emacs will crash.
+(set-fontset-font t 'unicode (font-spec :family "all-the-icons") nil 'append)
+(set-fontset-font t 'unicode (font-spec :family "file-icons") nil 'append)
+(set-fontset-font t 'unicode (font-spec :family "Material Icons") nil 'append)
+(set-fontset-font t 'unicode (font-spec :family "github-octicons") nil 'append)
+(set-fontset-font t 'unicode (font-spec :family "FontAwesome") nil 'append)
+(set-fontset-font t 'unicode (font-spec :family "Weather Icons") nil 'append)
+;; adjust font scale
+(setq-default face-font-rescale-alist '((".*JetBrains Mono.*" . 1.0)
+                                        ;; (".*Iosevka SS08 .*" . 1.2917385677308024)
+                                        (".*D2Coding.*" . 1.1973684210526316)))
 
 
 (setq-default
@@ -38,6 +49,7 @@
  indent-tabs-mode nil                   ; tab=space!
  tab-width 4                            ; space=4!
  inhibit-startup-screen t               ;
+ inhibit-startup-screen nil               ;
  initial-scratch-message nil            ; empty *scratch* buffer.
  keyboard-coding-system 'utf-8-unix     ; utf-8
  large-file-warning-threshold nil       ; do not warn file size.
@@ -55,8 +67,7 @@
  vc-follow-symlinks t            		; silent warning for symlink.
  warning-minimum-level :error    		;
  warning-suppress-log-types '((comp))   ; silent warning for native-comp.
- warning-suppress-types '((use-package)
-                          (use-package))
+ warning-suppress-types '((use-package) (use-package))
  fill-column 80                         ; default is `70'. force line breaker.
  comment-column 60                      ; set comment column to 60
  window-combination-resize t            ;
@@ -78,15 +89,18 @@
  even-window-sizes nil                  ; perspective - fix window layout.
  display-buffer-base-action '((display-buffer-reuse-window display-buffer-same-window)
                               (reusable-frames . t)) ; perspective - fix window layout.
- face-font-rescale-alist '((".*JetBrains Mono.*" . 1.0)
-                           (".*D2Coding.*" . 1.1092896174863387)
-                           (".*Iosevka SS08 .*" . 1.2917385677308024))
  tab-bar-format '(tab-bar-format-global) ; global modeline using emacs28 tab-bar
  tab-bar-mode t                     ; http://ruzkuku.com/texts/emacs-global.html
  )
 
+;; after + 12
+;; 가나다라마  1520
+;; abcdefghij  1820
 
-(put 'narrow-to-region 'disabled nil)
+
+
+;; mute warning.
+(put 'narrow-to-region 'disabled nil) 
 
 (when (eq system-type 'darwin)          ; MacOS specific config
   (setq-default
@@ -95,34 +109,8 @@
 
 (set-face-attribute 'default nil :height 170) ; initial font size
 
-;; Bootstrap straight.el
-(defvar bootstrap-version)
-(let ((bootstrap-file
-       (expand-file-name "straight/repos/straight.el/bootstrap.el" user-emacs-directory))
-      (bootstrap-version 5))
-  (unless (file-exists-p bootstrap-file)
-    (with-current-buffer
-        (url-retrieve-synchronously
-         "https://raw.githubusercontent.com/raxod502/straight.el/develop/install.el"
-         'silent 'inhibit-cookies)
-      (goto-char (point-max))
-      (eval-print-last-sexp)))
-  (load bootstrap-file nil 'nomessage))
-
-;; use straight.el for use-package expressions
-(straight-use-package 'use-package)
-;; Load the helper package for commands like `straight-x-clean-unused-repos'
-;; (require 'straight-x)
-(require 'use-package-ensure)
-;; (setq use-package-always-ensure t) ; global ensure
 
 
-
-;; https://github.com/purcell/exec-path-from-shell
-(use-package exec-path-from-shell
-  :if (memq window-system '(mac ns))
-  :config
-  (exec-path-from-shell-initialize))
 
 (use-package auto-package-update
   :config
@@ -130,17 +118,6 @@
   (setq auto-package-update-hide-results t)
   (auto-package-update-maybe))
 
-;; https://github.com/emacscollective/no-littering
-;; - var : persistent data
-;; - etc : configuration files.
-(use-package no-littering
-  :init
-  (setq auto-save-file-name-transforms
-        `((".*" ,(no-littering-expand-var-file-name "auto-save/") t)))
-  :config
-  (require 'recentf) ;; recent files에 var, etc 제외
-  (add-to-list 'recentf-exclude no-littering-var-directory)
-  (add-to-list 'recentf-exclude no-littering-etc-directory))
 
 
 
@@ -170,12 +147,8 @@
   (setq use-dialog-box nil)                ; Disable dialog boxes since they weren't working in Mac OSX
   )
 
-;; fix weird bug with frame size
-;; https://stackoverflow.com/questions/27758800/why-does-emacs-leave-a-gap-when-trying-to-maximize-the-frame
-;; (setq frame-resize-pixelwise t)
-
-;; 라인 넘버
-(column-number-mode)
+;; 라인&컬럼 넘버
+;; (column-number-mode)
 ;; (global-display-line-numbers-mode)
 
 ;; 커서 라인 강조
@@ -253,7 +226,7 @@
   (ligature-set-ligatures 'eww-mode '("ff" "fi" "ffi"))
   ;; Enable all Cascadia Code ligatures in programming modes
   (ligature-set-ligatures
-   '(prog-mode racket-repl-mode)
+   '(prog-mode racket-repl-mode org-mode)
    '("|||>" "<|||" "<==>" "<!--" "####" "~~>" "***" "||=" "||>"
      ":::" "::=" "=:=" "===" "==>" "=!=" "=>>" "=<<" "=/=" "!=="
      "!!." ">=>" ">>=" ">>>" ">>-" ">->" "->>" "-->" "---" "-<<"
@@ -391,6 +364,7 @@
     (setq ad-return-value (concat ad-return-value ".gz"))))
 
 (use-package paren
+  :disabled
   :config
   (set-face-attribute 'show-paren-match-expression nil :background "#363e4a")
   (show-paren-mode 1))
@@ -559,9 +533,10 @@
 
 ;; https://github.com/emacs-dashboard/emacs-dashboard
 (use-package dashboard
+  ;; :disabled
   :config
   (setq dashboard-projects-switch-function 'counsel-projectile-switch-project-by-name)
-(setq dashboard-set-init-info t)
+  (setq dashboard-set-init-info t)
   (dashboard-setup-startup-hook))
 
 ;; https://gitlab.com/jabranham/mixed-pitch
@@ -853,7 +828,7 @@ or
   :custom
   (hl-block-style 'bracket)             ; color tint mode disables rainbow mode.
  ;; (hl-block-style 'color-tint)
-  ;; (hl-block-bracket "{")
+  (hl-block-bracket "{")
   :commands (hl-block-mode)
   :hook ((prog-mode . hl-block-mode)))
 
@@ -1143,7 +1118,7 @@ or
 
 ;; https://github.com/bbatsov/super-save
 (use-package super-save
-  ;; :disabled
+  :disabled
   :defer 1
   :diminish super-save-mode
   :custom
@@ -1220,7 +1195,7 @@ or
   (git-gutter:modified ((t (:background nil))))
   (git-gutter:deleted ((t (:foreground "LightCoral" :background nil))))
   :custom
-  (git-gutter:hide-gutter t)
+  ;; (git-gutter:hide-gutter t)
   (git-gutter:modified-sign "≡")
   (git-gutter:added-sign "+")
   (git-gutter:deleted-sign "-"))
@@ -2062,7 +2037,7 @@ If all failed, try to complete the common part with `company-complete-common'"
 
 ;; https://config.daviwil.com/emacs#org-mode
 (defun org-mode-setup ()
-  (variable-pitch-mode nil)
+  ;; (variable-pitch-mode nil)
   (visual-line-mode 1)
   (display-line-numbers-mode nil)
   (setq evil-auto-indent nil))
@@ -2083,6 +2058,11 @@ If all failed, try to complete the common part with `company-complete-common'"
          ;; https://emacs.stackexchange.com/questions/16845/expand-org-mode-subtree-with-point-after-ellipsis/44568
          (org-tab-first-hook . org-end-of-line) ; expand when press TAB after ellipsis.
          )
+
+
+
+
+
 
   :custom
   (org-id-link-to-org-use-id t)   ; create ID if need to make link.
@@ -2213,6 +2193,20 @@ If all failed, try to complete the common part with `company-complete-common'"
 
 
   :config
+
+
+  (use-package org-src
+    :ensure nil
+    :straight nil
+    :custom
+    (org-src-window-setup 'split-window-below) ; show edit buffer below current buffer
+    :init/el-patch
+    (defvar org-src-mode-map
+      (let ((map (make-sparse-keymap)))
+        (define-key map (el-patch-swap "\C-c'"		[?\s-s]) 'org-edit-src-exit)
+        (define-key map (el-patch-swap "\C-c\C-k"	[?\s-k]) 'org-edit-src-abort)
+        (define-key map (el-patch-swap "\C-x\C-s"	"\C-x\C-s") 'org-edit-src-save)
+        map)))
 
   ;; https://seorenn.tistory.com/65
   ;; add external image link support.
@@ -2384,18 +2378,20 @@ If all failed, try to complete the common part with `company-complete-common'"
 
 
   ;; https://github.com/alphapapa/org-make-toc
-  (use-package org-make-toc
-    :hook (org-mode . org-make-toc-mode))
+  ;; (use-package org-make-toc
+  ;;   :hook (org-mode . org-make-toc-mode))
 
   ;; https://github.com/awth13/org-appear
   ;; toggle visibility of emphasis.
   (use-package org-appear
-    :hook (org-mode . org-appear-mode))
+    :hook (org-mode . org-appear-mode)
+    :custom
+    (org-appear-autolinks t))
 
   (use-package org-roam
     :straight t
-    :hook
-    (after-init . org-roam-mode)
+    ;; :hook
+    ;; (after-init . org-roam-mode)
     :config
     (org-roam-db-autosync-mode)
     :custom
@@ -2479,6 +2475,50 @@ If all failed, try to complete the common part with `company-complete-common'"
   ;; (defun org-at-src-block-p ()
   ;;   (eq (nth 0 (org-element-at-point)) 'src-block))
 
+  :config/el-patch
+  (defun org-emphasize (&optional char)
+    "Insert or change an emphasis, i.e. a font like bold or italic.
+If there is an active region, change that region to a new emphasis.
+If there is no region, just insert the marker characters and position
+the cursor between them.
+CHAR should be the marker character.  If it is a space, it means to
+remove the emphasis of the selected region.
+If CHAR is not given (for example in an interactive call) it will be
+prompted for."
+    (interactive)
+    (let ((erc org-emphasis-regexp-components)
+          (string "") beg end move s)
+      (if (org-region-active-p)
+          (setq beg (region-beginning)
+                end (region-end)
+                string (buffer-substring beg end))
+        (setq move t))
+      (unless char
+        (message "Emphasis marker or tag: [%s]"
+                 (mapconcat #'car org-emphasis-alist ""))
+        (setq char (read-char-exclusive)))
+      (if (equal char ?\s)
+          (setq s ""
+                move nil)
+        (unless (assoc (char-to-string char) org-emphasis-alist)
+          (user-error "No such emphasis marker: \"%c\"" char))
+        (setq s (char-to-string char)))
+      (while (and (> (length string) 1)
+                  (equal (substring string 0 1) (substring string -1))
+                  (assoc (substring string 0 1) org-emphasis-alist))
+        (setq string (substring string 1 -1)))
+      (setq string (concat (el-patch-add "​") s string s (el-patch-add "​")))
+      (when beg (delete-region beg end))
+      (unless (or (bolp)
+                  (string-match (concat "[" (nth 0 erc) "\n]")
+                                (char-to-string (char-before (point)))))
+        (insert (el-patch-swap " " "")) (el-patch-add (forward-char 1)))
+      (unless (or (eobp)
+                  (string-match (concat "[" (nth 1 erc) "\n]")
+                                (char-to-string (char-after (point)))))
+        (insert (el-patch-swap " " " ")) (el-patch-remove (backward-char 1)))
+      (insert string)
+      (and move (backward-char (el-patch-swap 1 2)))))
   ;; end org-mode
   )
 
@@ -2543,6 +2583,57 @@ output instead."
 ;; ---------------------------
 ;; Custom functions
 ;; ---------------------------
+
+
+(defun my/org-edit-this ()
+  "Edit element under the cursor."
+  (interactive)
+  (let ((elem (if (org-appear--current-elem)
+                  (car (org-appear--current-elem))
+                (car (org-element-at-point)))))
+    (cond ((equal elem 'src-block) (org-edit-special))
+          ((equal elem 'link) (org-insert-link)))))
+
+
+
+;; https://emacs.stackexchange.com/questions/7482/restoring-windows-and-layout-after-an-ediff-session
+(defvar ediff-last-windows nil
+  "Last ediff window configuration.")
+(defun ediff-restore-windows ()
+  "Restore window configuration to `ediff-last-windows'."
+  (set-window-configuration ediff-last-windows)
+  (remove-hook 'ediff-after-quit-hook-internal
+               'ediff-restore-windows))
+(defadvice ediff-buffers (around ediff-restore-windows activate)
+  (setq ediff-last-windows (current-window-configuration))
+  (add-hook 'ediff-after-quit-hook-internal 'ediff-restore-windows)
+  ad-do-it)
+
+;; https://www.emacswiki.org/emacs/DuplicateLines
+;; remove duplicates
+(defun uniquify-region-lines (beg end)
+  "Remove duplicate adjacent lines in region."
+  (interactive "*r")
+  (save-excursion
+    (goto-char beg)
+    (while (re-search-forward "^\\(.*\n\\)\\1+" end t)
+      (replace-match "\\1"))))
+
+(defun paf/sort-and-uniquify-region ()
+  "Remove duplicates and sort lines in region."
+  (interactive)
+  (sort-lines nil (region-beginning) (region-end))
+  (uniquify-region-lines (region-beginning) (region-end)))
+
+
+;; https://github.com/pascalfleury/emacs-config
+(defun toggle-maximize-buffer () "Maximize buffer"
+       (interactive)
+       (if (= 1 (length (window-list)))
+           (jump-to-register '_)
+         (progn
+           (window-configuration-to-register '_)
+           (delete-other-windows))))
 
 ;; change emacs-lisp indentation
 ;; https://emacs.stackexchange.com/questions/10230/how-to-indent-keywords-aligned
@@ -2631,53 +2722,6 @@ Lisp function does not specify a special indentation."
            (ido-switch-buffer))
           (t
            (call-interactively 'switch-to-buffer)))))
-
-
-(el-patch-feature org)
-(with-eval-after-load 'org
-  (el-patch-defun org-emphasize (&optional char)
-    "Insert or change an emphasis, i.e. a font like bold or italic.
-If there is an active region, change that region to a new emphasis.
-If there is no region, just insert the marker characters and position
-the cursor between them.
-CHAR should be the marker character.  If it is a space, it means to
-remove the emphasis of the selected region.
-If CHAR is not given (for example in an interactive call) it will be
-prompted for."
-    (interactive)
-    (let ((erc org-emphasis-regexp-components)
-          (string "") beg end move s)
-      (if (org-region-active-p)
-          (setq beg (region-beginning)
-                end (region-end)
-                string (buffer-substring beg end))
-        (setq move t))
-      (unless char
-        (message "Emphasis marker or tag: [%s]"
-                 (mapconcat #'car org-emphasis-alist ""))
-        (setq char (read-char-exclusive)))
-      (if (equal char ?\s)
-          (setq s ""
-                move nil)
-        (unless (assoc (char-to-string char) org-emphasis-alist)
-          (user-error "No such emphasis marker: \"%c\"" char))
-        (setq s (char-to-string char)))
-      (while (and (> (length string) 1)
-                  (equal (substring string 0 1) (substring string -1))
-                  (assoc (substring string 0 1) org-emphasis-alist))
-        (setq string (substring string 1 -1)))
-      (setq string (concat (el-patch-add "​") s string s (el-patch-add "​")))
-      (when beg (delete-region beg end))
-      (unless (or (bolp)
-                  (string-match (concat "[" (nth 0 erc) "\n]")
-                                (char-to-string (char-before (point)))))
-        (insert (el-patch-swap " " "")) (el-patch-add (forward-char 1)))
-      (unless (or (eobp)
-                  (string-match (concat "[" (nth 1 erc) "\n]")
-                                (char-to-string (char-after (point)))))
-        (insert (el-patch-swap " " " ")) (el-patch-remove (backward-char 1)))
-      (insert string)
-      (and move (backward-char (el-patch-swap 1 2))))))
 
 
 
@@ -2819,7 +2863,9 @@ or go back to just one window (by deleting all but the selected window)."
  "M-y" 'insert-last-message
  "s-b" 'treemacs
  "C-SPC" 'completion-at-point
- "s-o" 'find-file
+ ;; "s-o" 'find-file
+ "s-o" 'counsel-switch-buffer
+ "s-O" 'find-file
  ;; "s-f" 'evil-avy-goto-char-timer
  "s-n" '(nil :which-key "new buffer & frame")
  "s-n f" 'make-frame
@@ -2853,8 +2899,9 @@ or go back to just one window (by deleting all but the selected window)."
 
 (general-define-key
  :states '(normal visual)
- "s-d" 'evil-multiedit-match-and-next
- "s-D" 'evil-multiedit-match-and-prev)
+  "gl" '(browse-url :which-key "browse-url")
+  "s-d" 'evil-multiedit-match-and-next
+  "s-D" 'evil-multiedit-match-and-prev)
 
 (push '((multiedit-insert . evil-multiedit-insert-state-map)
         (multiedit . evil-multiedit-state-map)) general-keymap-aliases)
@@ -3034,10 +3081,23 @@ or go back to just one window (by deleting all but the selected window)."
  "C-j" 'org-next-visible-heading
  "C-k" 'org-previous-visible-heading)
 
+;; org-mode src block keybinds.
+
+(defvar org-src-mode-map
+  (let ((map (make-sparse-keymap)))
+    (define-key map "\C-c'" 'org-edit-src-exit)
+    (define-key map "\C-c\C-k" 'org-edit-src-abort)
+    (define-key map "\C-x\C-s" 'org-edit-src-save)
+    map))
+(general-define-key
+ :keymaps '(org-src-mode-map)
+ "s-k" nil
+ "s-s" 'org-edit-src-save
+ "s-k" 'org-edit-src-exit)
+
 ;; override org-mode's `$' keybind.
 ;; press once will go visual end of line
 ;; and press twice will end of line.
-
 (general-define-key
  :states '(normal motion visual)
  :keymaps 'org-mode-map
@@ -3099,6 +3159,13 @@ or go back to just one window (by deleting all but the selected window)."
  "y" 'dired-ranger-copy
  "X" 'dired-ranger-move
  "p" 'dired-ranger-paste)
+
+
+(spc-e
+  :states '(normal insert visual emacs motion)
+  :keymaps 'org-mode-map
+  "e" '(my/org-edit-this :which-key "edit-this")
+  "x" '(org-babel-execute-src-block :which-key "execute this block"))
 
 ;; (general-define-key
 ;;  :keymap 'lispyville-mode-map

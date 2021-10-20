@@ -1,6 +1,5 @@
 ;;; early-init.el -*- lexical-binding: t; -*-
 
-
 ;; from https://github.com/hlissner/doom-emacs/blob/develop/early-init.el
 ;; temporary prevent gc running and reset it later by `gcmh-mode'.
 (setq gc-cons-threshold most-positive-fixnum
@@ -19,17 +18,55 @@
 ;; package initialization occurs before `user-init-file' is loaded, but after the `early-init-file'.
 (setq package-enable-at-startup nil)
 
-(set-face-attribute 'default nil :family "JetBrains Mono")
-(set-fontset-font t 'hangul "D2Coding")
 
-;; Use 'prepend for the NS and Mac ports or Emacs will crash.
-(set-fontset-font t 'unicode (font-spec :family "all-the-icons") nil 'append)
-(set-fontset-font t 'unicode (font-spec :family "file-icons") nil 'append)
-(set-fontset-font t 'unicode (font-spec :family "Material Icons") nil 'append)
-(set-fontset-font t 'unicode (font-spec :family "github-octicons") nil 'append)
-(set-fontset-font t 'unicode (font-spec :family "FontAwesome") nil 'append)
-(set-fontset-font t 'unicode (font-spec :family "Weather Icons") nil 'append)
+(setq default-file-name-handler-alist file-name-handler-alist
+      file-name-handler-alist nil)
 
+;; ----------------------------------------------------------------
+;; use straight.el as package manager.
+;; will cache autoloads for all package. I/O workload will be O(n) -> O(1).
+;; you may wish to call `straight-prune-build' occasionally, since otherwise this cache file may grow quite large over time.
+(setq straight-cache-autoloads t)
+
+;; Bootstrap straight.el
+(defvar bootstrap-version)
+(let ((bootstrap-file
+       (expand-file-name "straight/repos/straight.el/bootstrap.el" user-emacs-directory))
+      (bootstrap-version 5))
+  (unless (file-exists-p bootstrap-file)
+    (with-current-buffer
+        (url-retrieve-synchronously
+         "https://raw.githubusercontent.com/raxod502/straight.el/develop/install.el"
+         'silent 'inhibit-cookies)
+      (goto-char (point-max))
+      (eval-print-last-sexp)))
+  (load bootstrap-file nil 'nomessage))
+;; use straight.el for use-package expressions
+(straight-use-package 'use-package)
+(require 'use-package-ensure)
+(setq straight-use-package-by-default t)
+
+;; (setq use-package-enable-imenu-support t)
+
+;; https://github.com/purcell/exec-path-from-shell
+(use-package exec-path-from-shell
+  :if (memq window-system '(mac ns))
+  ;; :custom
+  ;; (exec-path-from-shell-arguments nil)
+  :config
+  (exec-path-from-shell-initialize))
+
+;; https://github.com/emacscollective/no-littering
+;; - var : persistent data
+;; - etc : configuration files.
+(use-package no-littering
+  :init
+  (setq auto-save-file-name-transforms
+        `((".*" ,(no-littering-expand-var-file-name "auto-save/") t)))
+  :config
+  (require 'recentf) ;; recent files에 var, etc 제외
+  (add-to-list 'recentf-exclude no-littering-var-directory)
+  (add-to-list 'recentf-exclude no-littering-etc-directory))
 
 
 ;; Disable most GUI widgets early on
@@ -50,8 +87,6 @@
         (ns-use-proxy-icon nil)))
 
 
-(setq default-file-name-handler-alist file-name-handler-alist
-      file-name-handler-alist nil)
 
 (set-default-coding-systems 'utf-8)
 (set-language-environment "UTF-8")
