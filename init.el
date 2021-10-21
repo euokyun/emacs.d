@@ -75,7 +75,6 @@
  truncate-lines t                       ; do not wrap code.
  backup-by-copying t                    ; make backup.
  ;; global-auto-revert-non-file-buffers t  ; revert dired and other buffers.
- global-auto-revert-mode t
  auto-revert-verbose nil         ; do not message this
  auto-revert-avoid-polling t     ; do not use pooling.
  delete-old-versions t           ; delete old versions.
@@ -89,8 +88,9 @@
  even-window-sizes nil                  ; perspective - fix window layout.
  display-buffer-base-action '((display-buffer-reuse-window display-buffer-same-window)
                               (reusable-frames . t)) ; perspective - fix window layout.
- tab-bar-format '(tab-bar-format-global) ; global modeline using emacs28 tab-bar
- tab-bar-mode t                     ; http://ruzkuku.com/texts/emacs-global.html
+ ;; tab-bar-format '(tab-bar-format-global) ; global modeline using emacs28 tab-bar
+ ;; tab-bar-mode t                     ; http://ruzkuku.com/texts/emacs-global.html
+ ;; tab-line-mode t
  )
 
 ;; after + 12
@@ -99,8 +99,11 @@
 
 
 
-;; mute warning.
-(put 'narrow-to-region 'disabled nil) 
+;; mute warning. about narrowing.
+(put 'narrow-to-region 'disabled nil)
+(put 'narrow-to-defun 'disabled nil)
+(put 'narrow-to-page 'disabled nil)
+
 
 (when (eq system-type 'darwin)          ; MacOS specific config
   (setq-default
@@ -108,7 +111,6 @@
    ns-pop-up-frames nil))
 
 (set-face-attribute 'default nil :height 170) ; initial font size
-
 
 
 
@@ -198,6 +200,12 @@
 ;; https://github.com/raxod502/el-patch
 ;; for override emacs functions
 (use-package el-patch
+  :config
+  (el-patch-deftype evil-define-command
+  :classify el-patch-classify-function
+  :locate el-patch-locate-function
+  :declare ((indent defun)
+            (doc-string 3)))
   :custom
   (el-patch-enable-use-package-integration t))
 
@@ -226,7 +234,7 @@
   (ligature-set-ligatures 'eww-mode '("ff" "fi" "ffi"))
   ;; Enable all Cascadia Code ligatures in programming modes
   (ligature-set-ligatures
-   '(prog-mode racket-repl-mode org-mode)
+   '(prog-mode racket-repl-mode)
    '("|||>" "<|||" "<==>" "<!--" "####" "~~>" "***" "||=" "||>"
      ":::" "::=" "=:=" "===" "==>" "=!=" "=>>" "=<<" "=/=" "!=="
      "!!." ">=>" ">>=" ">>>" ">>-" ">->" "->>" "-->" "---" "-<<"
@@ -372,10 +380,12 @@
 (use-package evil
   :init
   (setq evil-want-keybinding nil)
-  (setq evil-undo-system 'undo-tree)
-  (setq evil-want-C-u-scroll t)
   :custom
+  (evil-undo-system 'undo-tree)
+  (evil-respect-visual-line-mode t)
   (evil-shift-width tab-width)            ; tab option for evil
+  (evil-want-C-u-scroll t)         ; set `C-u' to scroll up. not for insert mode.
+  (evil-want-C-i-jump nil)         ; set `C-i' to insert `TAB' key.
   :config
   (evil-mode 1))
 
@@ -413,15 +423,95 @@
   (evil-embrace-enable-evil-surround-integration))
 
 ;; https://github.com/hlissner/evil-multiedit
+;; this is only solution--works with M-x, and other functions well.
+;; but this package doesn't have fake cursors.
 (use-package evil-multiedit)
 
-;; ;; https://github.com/gabesoft/evil-mc
-;; (use-package evil-mc)
+(use-package iedit)
 
-(use-package multiple-cursors
-  :custom
-  (mc/edit-lines-empty-lines 'ignore)
-  (mc/insert-numbers-default 1))
+(use-package evil-iedit-state
+  :after iedit)
+
+;; ;; https://github.com/gabesoft/evil-mc
+(use-package evil-mc
+  :config/el-patch
+  (evil-define-command evil-mc-make-cursor-here ()
+    "Create a cursor at point."
+    :repeat ignore
+    :evil-mc t
+    (evil-mc-run-cursors-before)
+    (el-patch-wrap 1 1
+      (if (equal evil-state 'visual) (evil-mc-make-cursor-at-pos (- (point) 1))
+        (evil-mc-make-cursor-at-pos (point)))))
+  :config
+
+  (defun evil-mc-toggle-cursor-here ()
+    "Toggle Fake Cursor."
+    (interactive)
+    (if (eq (point) (evil-mc-get-cursor-start (evil-mc-find-next-cursor)))
+        (evil-mc-undo-cursor-at-pos (point))
+      (evil-mc-make-cursor-here)))
+  (defun evil-mc-toggle-frozen ()
+    "Toggle fake cursor pause/resume."
+    (interactive)
+    (if evil-mc-frozen
+        (evil-mc-resume-cursors)
+      (evil-mc-pause-cursors)))
+  (defun evil--mc-make-cursor-at-col (_startcol endcol orig-line)
+    (move-to-column endcol)
+    (unless (= (line-number-at-pos) orig-line)
+      (evil-mc-make-cursor-here)))
+  ;; During visual selection point has +1 value
+  (defun my-evil-mc-make-vertical-cursors (beg end)
+    (interactive (list (region-beginning) (- (region-end) 1)))
+    (evil-exit-visual-state)
+    (evil-mc-pause-cursors)
+    ;; Because `evil-mc-resume-cursors` produces a cursor,
+    ;; we have to skip a current line here to avoid having +1 cursor
+    (apply-on-rectangle #'evil--mc-make-cursor-at-col
+                        beg end (line-number-at-pos))
+    (evil-mc-resume-cursors)
+    ;; Because `evil-mc-resume-cursors` produces a cursor, we need to place it on on the
+    ;; same column as the others
+    (move-to-column (evil-mc-column-number end)))
+
+
+  ;; (setq evil-mc-incompatible-minor-modes
+  ;;       (append '(lispy-mode) evil-mc-incompatible-minor-modes))
+  (global-evil-mc-mode))
+
+
+;; https://www.emacswiki.org/emacs/zones.el
+;; well, hard to use.
+(use-package zones)
+
+;; (use-package multiple-cursors
+;;   :disabled
+;;   :custom
+;;   (mc/edit-lines-empty-lines 'ignore)
+;;   (mc/insert-numbers-default 1)
+;;   :config
+
+;;   (defun mc/toggle-cursor-at-point ()
+;;     "Create a fake cursor at point."
+;;     (interactive)
+;;     (let ((existing (mc/fake-cursor-at-point (point))))
+;;       (if existing
+;;           (mc/remove-fake-cursor existing)
+;;         (save-excursion
+;;           (goto-char (point))
+;;           (mc/create-fake-cursor-at-point))))
+;;     (mc/maybe-multiple-cursors-mode))
+
+;;   ;; ./var/mc-list.el
+;;   (defun mc/toggle-cmds-to-run-for-all ()
+;;     "Toggle commands to apply all cursors or not."
+;;     (interactive)
+;;     (if mc/always-run-for-all
+;;         (setq mc/always-run-for-all t)
+;;         (setq mc/always-run-for-all nil)))
+
+;;   )
 
 (use-package evil-exchange
   :config
@@ -565,6 +655,7 @@
   (doom-themes-visual-bell-config)
   (doom-themes-treemacs-config)
   (doom-themes-org-config))
+
 
 
 ;; https://github.com/greduan/emacs-theme-gruvbox
@@ -791,6 +882,12 @@ or
   (setq aw-minibuffer-flag t)
   (setq aw-dispatch-always t))
 
+;; https://github.com/Fanael/edit-indirect
+;; (use-package edit-indirect)
+
+;; https://www.emacswiki.org/emacs/NarrowIndirect
+;; (use-package narrow-indirect)           ; for me, it doesn't have difference with edit-indirect.
+
 ;; use same window.
 (use-package shackle
   :disabled
@@ -815,6 +912,13 @@ or
   ;; (setq which-key-use-c-h-commands nil)
   (which-key-setup-side-window-right-bottom))
 
+(use-package auto-revert
+  :straight nil
+  :ensure nil
+  :defer 1
+  :config
+  (global-auto-revert-mode))
+
 
 
 ;; ---------------------------
@@ -828,7 +932,8 @@ or
   :custom
   (hl-block-style 'bracket)             ; color tint mode disables rainbow mode.
  ;; (hl-block-style 'color-tint)
-  (hl-block-bracket "{")
+  ;; (hl-block-bracket "{")
+  (hl-block-bracket-face '(:inverse-video t)) ; and this fix face t problem.
   :commands (hl-block-mode)
   :hook ((prog-mode . hl-block-mode)))
 
@@ -981,7 +1086,7 @@ or
   (persp-hook-up-emacs-buffer-completion t) ; try to restrict buffer list.
   :config
   (persp-mode)
-   (add-to-list 'window-persistent-parameters '(winner-ring . t))
+  (add-to-list 'window-persistent-parameters '(winner-ring . t))
   (defun +workspaces-load-winner-data-h (_)
     (when (bound-and-true-p winner-mode)
       (cl-destructuring-bind
@@ -1000,8 +1105,29 @@ or
                           winner-pending-undo-ring))))
   (add-hook 'persp-before-deactivate-functions #'+workspaces-load-winner-data-h)
   (add-hook 'persp-activated-functions #'+workspaces-save-winner-data-h)
+
   (with-eval-after-load "persp-mode"
-      (setq persp-interactive-completion-function #'ivy-completing-read)))
+    (with-eval-after-load "ivy"
+      (add-hook 'ivy-ignore-buffers
+                #'(lambda (b)
+                    (when persp-mode
+                      (let ((persp (get-current-persp)))
+                        (if persp
+                            (not (persp-contain-buffer-p b persp))
+                          nil)))))
+
+      (setq ivy-sort-functions-alist
+            (append ivy-sort-functions-alist
+                    '((persp-kill-buffer . nil)
+                      (persp-remove-buffer . nil)
+                      (persp-add-buffer . nil)
+                      (persp-switch . nil)
+                      (persp-window-switch . nil)
+                      (persp-frame-switch . nil))))))
+
+  ;; (setq persp-interactive-completion-function #'ivy-completing-read)
+  )
+
 
 (use-package persp-mode-projectile-bridge
   :after (persp-mode projectile)
@@ -1096,7 +1222,8 @@ or
 ;; https://github.com/Fanael/persistent-scratch
 (use-package persistent-scratch
   :custom
-  (persistent-scratch-setup-default))
+  (persistent-scratch-setup-default)
+  (persistent-scratch-autosave-mode t))
 
 ;; https://github.com/Malabarba/spinner.el
 (use-package spinner
@@ -2194,6 +2321,13 @@ If all failed, try to complete the common part with `company-complete-common'"
 
   :config
 
+  ;; https://github.com/alphapapa/org-ql
+  ;; query for org
+  ;; (use-package org-ql)
+
+
+  ;; https://github.com/jakebox/org-preview-html
+  ;; (use-package org-preview-html)
 
   (use-package org-src
     :ensure nil
@@ -2225,6 +2359,22 @@ If all failed, try to complete the common part with `company-complete-common'"
     '((t (:inherit (shadow))))
     "Face for checked checkbox text")
 
+
+  ;; (org-babel-do-load-languages
+  ;;  'org-babel-load-languages
+  ;;  '((emacs-lisp . t)
+  ;;    ;; (scheme . t)
+  ;;    (racket . t)
+  ;;    (latex . t)
+  ;;    ;; (ledger . t)
+  ;;    ))
+
+  ;; https://github.com/hasu/emacs-ob-racket
+  (use-package ob-racket
+    :straight (ob-racket
+               :type git
+               :host github
+               :repo "hasu/emacs-ob-racket"))
 
   (require 'ox-latex)
   (setq org-format-latex-options (plist-put org-format-latex-options :scale 2.00)) ; latex preview size
@@ -2278,21 +2428,7 @@ If all failed, try to complete the common part with `company-complete-common'"
           ;; org-irc
           ))
 
-;; https://github.com/hasu/emacs-ob-racket
-  (use-package ob-racket
-    :straight (ob-racket
-               :type git
-               :host github
-                :repo "hasu/emacs-ob-racket"))
 
-  (org-babel-do-load-languages
-   'org-babel-load-languages
-   '((emacs-lisp . t)
-     ;; (scheme . t)
-     (racket . t)
-     (latex . t)
-     ;; (ledger . t)
-     ))
 
   (push '("conf-unix" . conf-unix) org-src-lang-modes)
 
@@ -2597,17 +2733,15 @@ output instead."
 
 
 ;; https://emacs.stackexchange.com/questions/7482/restoring-windows-and-layout-after-an-ediff-session
-(defvar ediff-last-windows nil
-  "Last ediff window configuration.")
-(defun ediff-restore-windows ()
-  "Restore window configuration to `ediff-last-windows'."
-  (set-window-configuration ediff-last-windows)
-  (remove-hook 'ediff-after-quit-hook-internal
-               'ediff-restore-windows))
-(defadvice ediff-buffers (around ediff-restore-windows activate)
-  (setq ediff-last-windows (current-window-configuration))
-  (add-hook 'ediff-after-quit-hook-internal 'ediff-restore-windows)
-  ad-do-it)
+(defvar my-ediff-last-windows nil)
+(defun my-store-pre-ediff-winconfig ()
+  (setq my-ediff-last-windows (current-window-configuration)))
+(defun my-restore-pre-ediff-winconfig ()
+  (set-window-configuration my-ediff-last-windows))
+(add-hook 'ediff-before-setup-hook #'my-store-pre-ediff-winconfig)
+(add-hook 'ediff-quit-hook #'my-restore-pre-ediff-winconfig)
+
+
 
 ;; https://www.emacswiki.org/emacs/DuplicateLines
 ;; remove duplicates
@@ -2711,17 +2845,17 @@ Lisp function does not specify a special indentation."
 
 
 
-(el-patch-feature ace-window)
-(with-eval-after-load 'ace-window
-  (el-patch-defun aw--switch-buffer () ;; add persp-mode setting.
-    (cond (el-patch-add ((bound-and-true-p persp-mode)
-                         (call-interactively 'persp-switch-to-buffer)))
-          ((bound-and-true-p ivy-mode)
-           (ivy-switch-buffer))
-          ((bound-and-true-p ido-mode)
-           (ido-switch-buffer))
-          (t
-           (call-interactively 'switch-to-buffer)))))
+;; (el-patch-feature ace-window)
+;; (with-eval-after-load 'ace-window
+;;   (el-patch-defun aw--switch-buffer () ;; add persp-mode setting.
+;;     (cond (el-patch-add ((bound-and-true-p persp-mode)
+;;                          (call-interactively 'persp-switch-to-buffer)))
+;;           ((bound-and-true-p ivy-mode)
+;;            (ivy-switch-buffer))
+;;           ((bound-and-true-p ido-mode)
+;;            (ido-switch-buffer))
+;;           (t
+;;            (call-interactively 'switch-to-buffer)))))
 
 
 
@@ -2831,10 +2965,6 @@ or go back to just one window (by deleting all but the selected window)."
 
 
 
-
-
-
-
 ;; ---------------------------
 ;; Keybinding
 ;; ---------------------------
@@ -2843,8 +2973,11 @@ or go back to just one window (by deleting all but the selected window)."
   "s-p"
   "s-h"
   "s-t"
-
-  )
+  "s-l"
+  "s-j"
+  "s-g"
+  "M-s-h"
+  "M-<down-mouse-1>")
 
 
 
@@ -2874,32 +3007,53 @@ or go back to just one window (by deleting all but the selected window)."
  "s-," help-map                         ; change c-h map.
  )
 
+;; evil-mc
+(general-define-key
+ ;; "s-g" evil-mc-cursors-map
+ "M-<mouse-1>" 'evil-mc-toggle-cursor-on-click
+ "M-s-j" '(evil-mc-make-cursor-move-next-line :which-key "make cursor & go down")
+ "M-s-k" '(evil-mc-make-cursor-move-prev-line :which-key "make cursor & go up")
+ "M-s-h" '(evil-mc-skip-and-goto-prev-cursor :which-key "prev cursor")
+ "M-s-l" '(evil-mc-skip-and-goto-next-cursor :which-key "next cursor")
+ "M-s-q" '(evil-mc-undo-all-cursors :which-key "quit multicursor")
+ "M-s-m" '(evil-mc-toggle-frozen :which-key "pause/resume cursor")
+ "M-s-i" '(evil-mc-toggle-cursor-here :which-key "toggle cursor here")
+ "M-s-u" '(evil-mc-undo-last-added-cursor :which-key "undo cursor")
+ "M-s-n" '(evil-mc-skip-and-goto-next-match :which-key "next match")
+ "M-s-p" '(evil-mc-skip-and-goto-prev-match :which-key "prev match")
+ )
+
 (general-define-key
  :states '(normal insert)
  :keymaps 'repl-mode
  "C-n")
 
 
-(unless is-termux
-  (general-unbind '(normal motion)
-    "<left>"
-    "<right>"
-    "<down>"
-    "<up>"))
+;; (unless is-termux
+;;   (general-unbind '(normal motion)
+;;     "<left>"
+;;     "<right>"
+;;     "<down>"
+;;     "<up>"))
+
 
 (general-define-key
  :states 'insert
- "s-d" 'evil-multiedit-toggle-marker-here)
+  "s-d" 'evil-multiedit-toggle-marker-here
+  ;; "M-j"
+
+
+  )
 
 (general-define-key
  :states 'visual
- "s-n" 'edit-indirect-region
+ ;; "s-n" 'edit-indirect-region
  "R" 'evil-multiedit-match-all
  "C-M-d" 'evil-multiedit-restore)
 
 (general-define-key
  :states '(normal visual)
-  "gl" '(browse-url :which-key "browse-url")
+  ;; "gl" '(browse-url :which-key "browse-url") ; use `gf' instead.
   "s-d" 'evil-multiedit-match-and-next
   "s-D" 'evil-multiedit-match-and-prev)
 
@@ -2950,7 +3104,7 @@ or go back to just one window (by deleting all but the selected window)."
 
 
 (spc-leader
-  :keymaps '(normal insert visual emacs motion)
+  :states '(normal insert visual emacs motion)
   "" nil
   "u" '(undo-tree-visualize :which-key "undo-tree")
   "w" '(ace-window :which-key "ace-window")
@@ -2974,8 +3128,12 @@ or go back to just one window (by deleting all but the selected window)."
   "j" 'evil-avy-goto-line
   "t" 'evil-avy-goto-char-timer
 
+  ;; expand region
+  "v" 'er/expand-region
+)
 
-
+(spc-leader
+  :states '(normal insert visual emacs motion)
   ;; projectile
   "p" '(:ignore t :which-key "projectile/perspective")
   "pf" 'counsel-projectile-find-file
@@ -2985,8 +3143,12 @@ or go back to just one window (by deleting all but the selected window)."
   ;; "pF"  'consult-ripgrep
   "po" 'counsel-projectile
   "pc" 'projectile-compile-project
-  "pd" 'projectile-dired
+  "pd" 'projectile-dired)
 
+
+(spc-leader
+  :states '(normal insert visual emacs motion)
+:keymaps 'persp-key-map
   ;; perspective
   "pn" 'persp-next
   "pp" 'persp-prev
@@ -3023,13 +3185,19 @@ or go back to just one window (by deleting all but the selected window)."
   ;; "p9" '((lambda () (interactive) "Switch to perspective." (persp-switch-by-number 9)) :which-key "switch: 9")
   ;; "p0" '((lambda () (interactive) "Switch to perspective." (persp-switch-by-number 10)) :which-key "switch: 10")
 
-
-
-
-
-  ;; expand region
-  "v" 'er/expand-region
   )
+
+
+(general-define-key
+ :states 'normal
+ :keymaps 'dired-mode-map
+ "SPC" nil
+ "h" 'dired-single-up-directory
+ "H" 'dired-omit-mode
+ "l" 'dired-single-buffer
+ "y" 'dired-ranger-copy
+ "X" 'dired-ranger-move
+ "p" 'dired-ranger-paste)
 
 
 
@@ -3074,7 +3242,7 @@ or go back to just one window (by deleting all but the selected window)."
 
 
 
-;; ;; org-mode
+;; org-mode
 (general-define-key
  :states '(normal insert visual)
  :keymaps 'org-mode-map
@@ -3082,13 +3250,6 @@ or go back to just one window (by deleting all but the selected window)."
  "C-k" 'org-previous-visible-heading)
 
 ;; org-mode src block keybinds.
-
-(defvar org-src-mode-map
-  (let ((map (make-sparse-keymap)))
-    (define-key map "\C-c'" 'org-edit-src-exit)
-    (define-key map "\C-c\C-k" 'org-edit-src-abort)
-    (define-key map "\C-x\C-s" 'org-edit-src-save)
-    map))
 (general-define-key
  :keymaps '(org-src-mode-map)
  "s-k" nil
@@ -3111,10 +3272,9 @@ or go back to just one window (by deleting all but the selected window)."
 
 
 
-
-
 (general-create-definer spc-e
-  :prefix "SPC e")
+  :prefix "SPC e"
+  :global-prefix "M-SPC e")
 
 (spc-e
   :states 'normal
@@ -3128,7 +3288,9 @@ or go back to just one window (by deleting all but the selected window)."
 (spc-e
   :keymaps '(visual)
   ;; :which-key "eval"
-  "r" '(eval-region :which-key "eval region"))
+  "r" '(eval-region :which-key "eval region")
+  "n" 'edit-indirect-region
+  )
 
 (spc-e
   ;; :keymaps '(scheme-mode-map inferior-scheme-mode-map)
@@ -3149,20 +3311,9 @@ or go back to just one window (by deleting all but the selected window)."
   :states 'visual
   "r" 'racket-send-region)
 
-(general-define-key
- :states 'normal
- :keymaps 'dired-mode-map
- "SPC" nil
- "h" 'dired-single-up-directory
- "H" 'dired-omit-mode
- "l" 'dired-single-buffer
- "y" 'dired-ranger-copy
- "X" 'dired-ranger-move
- "p" 'dired-ranger-paste)
-
 
 (spc-e
-  :states '(normal insert visual emacs motion)
+  :states '(normal visual emacs motion)
   :keymaps 'org-mode-map
   "e" '(my/org-edit-this :which-key "edit-this")
   "x" '(org-babel-execute-src-block :which-key "execute this block"))
@@ -3171,8 +3322,6 @@ or go back to just one window (by deleting all but the selected window)."
 ;;  :keymap 'lispyville-mode-map
 ;;  "s-/" 'lispyville-comment-or-uncomment
 ;;  )
-
-
 
 
 ;; apply theme
