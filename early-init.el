@@ -50,7 +50,7 @@
 
 ;; https://github.com/purcell/exec-path-from-shell
 (use-package exec-path-from-shell
-  :if (memq window-system '(mac ns))
+  ;; :if (memq window-system '(mac ns))    ; while in early-init, this not works. maybe window-system is not recognized.
   ;; :custom
   ;; (exec-path-from-shell-arguments nil)
   :config
@@ -70,22 +70,37 @@
 
 
 ;; Disable most GUI widgets early on
-(setq default-frame-alist
-      '((font . "JetBrains Mono")
-        (horizontal-scroll-bars . nil)
-        (vertical-scroll-bars . nil)
-        (ns-appearance . dark)          ; hide titlebar
-        (ns-transparent-titlebar . t)   ; hide titlebar
-        (scroll-bar-mode -1)
-        (tool-bar-mode -1)
-        (menu-bar-lines . 0)
-        (tool-bar-lines . 0)
-        (internal-border-width . 0)
-        (frame-title-format "\n")
-        ;; (height . 50)
-        ;; (width . 95)
-        (ns-use-proxy-icon nil)))
+;; (setq default-frame-alist
+;;       '((font . "JetBrains Mono")
+;;         (horizontal-scroll-bars . nil)
+;;         (vertical-scroll-bars . nil)
+;;         (ns-appearance . dark)          ; hide titlebar
+;;         (ns-transparent-titlebar . t)   ; hide titlebar
+;;         (scroll-bar-mode -1)
+;;         (tool-bar-mode -1)
+;;         (menu-bar-lines . 0)
+;;         (tool-bar-lines . 0)
+;;         (internal-border-width . 0)
+;;         (frame-title-format "\n")
+;;         ;; (height . 50)
+;;         ;; (width . 95)
+;;         (ns-use-proxy-icon nil)
+;;         ))
 
+(push '(menu-bar-lines . 0) default-frame-alist)
+(push '(tool-bar-lines . 0) default-frame-alist)
+(push '(internal-border-width . 0) default-frame-alist)
+(push '(frame-title-format "\n") default-frame-alist)
+(push '(ns-use-proxy-icon nil) default-frame-alist)
+(push '(horizontal-scroll-bars . nil) default-frame-alist)
+(push '(vertical-scroll-bars . nil) default-frame-alist)
+(push '(ns-appearance . dark) default-frame-alist)          ; hide titlebar
+(push '(ns-transparent-titlebar . t) default-frame-alist)   ; hide titlebar
+(push '(scroll-bar-mode -1) default-frame-alist)
+
+
+
+(setq frame-inhibit-implied-resize t)
 
 
 (set-default-coding-systems 'utf-8)

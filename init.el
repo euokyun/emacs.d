@@ -24,6 +24,13 @@
 (set-fontset-font t 'unicode (font-spec :family "github-octicons") nil 'append)
 (set-fontset-font t 'unicode (font-spec :family "FontAwesome") nil 'append)
 (set-fontset-font t 'unicode (font-spec :family "Weather Icons") nil 'append)
+;; (set-fontset-font t 'unicode (font-spec :family "all-the-icons") nil 'prepend)
+;; (set-fontset-font t 'unicode (font-spec :family "file-icons") nil 'prepend)
+;; (set-fontset-font t 'unicode (font-spec :family "Material Icons") nil 'prepend)
+;; (set-fontset-font t 'unicode (font-spec :family "github-octicons") nil 'prepend)
+;; (set-fontset-font t 'unicode (font-spec :family "FontAwesome") nil 'prepend)
+;; (set-fontset-font t 'unicode (font-spec :family "Weather Icons") nil 'prepend)
+
 ;; adjust font scale
 (setq-default face-font-rescale-alist '((".*JetBrains Mono.*" . 1.0)
                                         ;; (".*Iosevka SS08 .*" . 1.2917385677308024)
@@ -149,9 +156,8 @@
   (setq use-dialog-box nil)                ; Disable dialog boxes since they weren't working in Mac OSX
   )
 
-;; 라인&컬럼 넘버
-;; (column-number-mode)
-;; (global-display-line-numbers-mode)
+;; 모드라인에 컬럼 위치 표시
+(column-number-mode)
 
 ;; 커서 라인 강조
 ;; (global-hl-line-mode 1)
@@ -336,7 +342,7 @@
 ;; https://oremacs.com/2016/01/06/ivy-flx/
 (use-package flx  ;; Improves sorting for fuzzy-matched results
   :after ivy
-  ;; :defer t
+  :defer t
   :init
   (setq ivy-flx-limit 10000))
 
@@ -391,7 +397,8 @@
 
 ;; evil-surround, expend-region and embrace
 ;; https://github.com/magnars/expand-region.el
-(use-package expand-region)
+(use-package expand-region
+  :commands er/expand-region)
 
 ;; https://github.com/emacs-evil/evil-surround
 (use-package evil-surround
@@ -425,12 +432,12 @@
 ;; https://github.com/hlissner/evil-multiedit
 ;; this is only solution--works with M-x, and other functions well.
 ;; but this package doesn't have fake cursors.
-(use-package evil-multiedit)
+;; (use-package evil-multiedit)
 
-(use-package iedit)
+;; (use-package iedit)
 
-(use-package evil-iedit-state
-  :after iedit)
+;; (use-package evil-iedit-state
+;;   :after iedit)
 
 ;; ;; https://github.com/gabesoft/evil-mc
 (use-package evil-mc
@@ -475,9 +482,16 @@
     ;; same column as the others
     (move-to-column (evil-mc-column-number end)))
 
-
   ;; (setq evil-mc-incompatible-minor-modes
   ;;       (append '(lispy-mode) evil-mc-incompatible-minor-modes))
+
+  ;;add support for buffer-list
+  (add-to-list 'evil-mc-known-commands '(Buffer-menu-mark . ((:default . evil-mc-execute-default-call))))
+  (add-to-list 'evil-mc-known-commands '(Buffer-menu-unmark . ((:default . evil-mc-execute-default-call))))
+  ;; and magit
+  (add-to-list 'evil-mc-known-commands '(magit-stage . ((:default . evil-mc-execute-default-call))))
+  (add-to-list 'evil-mc-known-commands '(magit-unstage . ((:default . evil-mc-execute-default-call))))
+
   (global-evil-mc-mode))
 
 
@@ -485,33 +499,51 @@
 ;; well, hard to use.
 (use-package zones)
 
-;; (use-package multiple-cursors
-;;   :disabled
-;;   :custom
-;;   (mc/edit-lines-empty-lines 'ignore)
-;;   (mc/insert-numbers-default 1)
-;;   :config
+(use-package multiple-cursors
+  :disabled
+  :custom
+  (mc/edit-lines-empty-lines 'ignore)
+  (mc/insert-numbers-default 1)
+  :config
 
-;;   (defun mc/toggle-cursor-at-point ()
-;;     "Create a fake cursor at point."
-;;     (interactive)
-;;     (let ((existing (mc/fake-cursor-at-point (point))))
-;;       (if existing
-;;           (mc/remove-fake-cursor existing)
-;;         (save-excursion
-;;           (goto-char (point))
-;;           (mc/create-fake-cursor-at-point))))
-;;     (mc/maybe-multiple-cursors-mode))
+  (defun mc/toggle-cursor-at-point ()
+    "Create a fake cursor at point."
+    (interactive)
+    (let ((existing (mc/fake-cursor-at-point (point))))
+      (if existing
+          (mc/remove-fake-cursor existing)
+        (save-excursion
+          (goto-char (point))
+          (mc/create-fake-cursor-at-point))))
+    (mc/maybe-multiple-cursors-mode))
 
-;;   ;; ./var/mc-list.el
-;;   (defun mc/toggle-cmds-to-run-for-all ()
-;;     "Toggle commands to apply all cursors or not."
-;;     (interactive)
-;;     (if mc/always-run-for-all
-;;         (setq mc/always-run-for-all t)
-;;         (setq mc/always-run-for-all nil)))
+  ;; ./var/mc-list.el
+  (defun mc/toggle-cmds-to-run-for-all ()
+    "Toggle commands to apply all cursors or not."
+    (interactive)
+    (if mc/always-run-for-all
+        (setq mc/always-run-for-all t)
+      (setq mc/always-run-for-all nil)))
 
-;;   )
+;; https://xenodium.com/all/
+  (defun adviced:counsel-M-x-action (orig-fun &rest r)
+    "Additional support for multiple cursors."
+    (apply orig-fun r)
+    (let ((cmd (intern (counsel--string-trim-left (nth 0 r) "\\^"))))
+      (when (and (boundp 'multiple-cursors-mode)
+                 multiple-cursors-mode
+                 cmd
+                 (not (memq cmd mc--default-cmds-to-run-once))
+                 (not (memq cmd mc/cmds-to-run-once))
+                 (or mc/always-run-for-all
+                     (memq cmd mc--default-cmds-to-run-for-all)
+                     (memq cmd mc/cmds-to-run-for-all)
+                     (mc/prompt-for-inclusion-in-whitelist cmd)))
+        (mc/execute-command-for-all-fake-cursors cmd))))
+
+  (advice-add #'counsel-M-x-action
+      :around
+    #'adviced:counsel-M-x-action))
 
 (use-package evil-exchange
   :config
@@ -522,26 +554,47 @@
 
 ;; https://github.com/abo-abo/avy
 (use-package avy
-  :custom
-  (avy-background t)
-  (avy-style 'at-full)
-  (avy-timeout-seconds .5)
   ;; :config
   ;; (set-face-italic 'avy-goto-char-timer-face nil)
   ;; (set-face-italic 'avy-lead-face nil)
-)
+  :custom
+  (avy-background t)
+  (avy-style 'at-full)
+  (avy-timeout-seconds 0.8)
+
+  :config
+  ;; https://github.com/abo-abo/avy/issues/127
+  (defun avy-line-saving-column ()
+    (interactive)
+    (let ((col (current-column)))
+      (avy-goto-line)
+      (move-to-column col)))
+  (declare-function avy-line-saving-column "ext:avy")
+  (evil-define-avy-motion avy-line-saving-column line)
+  (dolist (command '(avy-line-saving-column))
+    (define-key evil-motion-state-map
+      (vector 'remap command) (intern-soft (format "evil-%s" command)))))
+
 
 ;; https://github.com/emacsorphanage/anzu
 ;; search and replace feature.
 (use-package anzu
-  :disabled
+  ;; :disabled
   :bind
   ([remap query-replace] . anzu-query-replace-regexp))
 
 ;; https://github.com/redguardtoo/evil-nerd-commenter
-(use-package evil-nerd-commenter)
+(use-package evil-nerd-commenter
+  :general
+  (:states 'normal
+   "gc" 'evilnc-comment-operator
+   "gy" 'evilnc-copy-and-comment-operator))
+
+
+
 
 ;; https://github.com/redguardtoo/evil-matchit
+;; jump with `%'
 (use-package evil-matchit
   :config
   (global-evil-matchit-mode 1))
@@ -583,7 +636,7 @@
   ;; (resize-mini-frames t)
   ;; (resize-mini-frames 'grow-only)
   (mini-frame-ignore-commands
-   '(eval-expression "edebug-eval-expression" debugger-eval-expression completion-at-point ediff-quit evil-ex))
+   '(eval-expression "edebug-eval-expression" debugger-eval-expression completion-at-point ediff-quit evil-ex anzu-query-replace-regexp))
   (mini-frame-color-shift-step 15)
   :hook (after-init . mini-frame-mode))
 ;; TODO: 위치 조절 기능
@@ -613,8 +666,7 @@
   (whitespace-line-column 130)
   (whitespace-display-mappings
    ;; all numbers are Unicode codepoint in decimal. ⁖ (insert-char 182 1)
-   '(
-     (space-mark 32 [183] [46]) ; 32 SPACE 「 」, 183 MIDDLE DOT 「·」, 46 FULL STOP 「.」
+   '((space-mark 32 [183] [46]) ; 32 SPACE 「 」, 183 MIDDLE DOT 「·」, 46 FULL STOP 「.」
      (newline-mark 10 [8617 10]) ; 10 LINE FEED
      (lines-tail 10 [8617 10]) ; 10 LINE FEED
      (tab-mark 9 [8594 9] [183 9]) ; 9 TAB, 9655 WHITE RIGHT-POINTING TRIANGLE 「▷」
@@ -624,9 +676,16 @@
 ;; https://github.com/emacs-dashboard/emacs-dashboard
 (use-package dashboard
   ;; :disabled
+  :custom
+  (dashboard-projects-switch-function 'counsel-projectile-switch-project-by-name)
+  (dashboard-set-init-info t)
+  (dashboard-banner-logo-title "Welcome to Emacs Dashboard")
+  (dashboard-startup-banner 2)
+  (dashboard-set-heading-icons t)
+  (dashboard-set-file-icons t)
+  (dashboard-set-navigator t)
+  (dashboard-projects-switch-function 'counsel-projectile-switch-project-by-name)
   :config
-  (setq dashboard-projects-switch-function 'counsel-projectile-switch-project-by-name)
-  (setq dashboard-set-init-info t)
   (dashboard-setup-startup-hook))
 
 ;; https://gitlab.com/jabranham/mixed-pitch
@@ -639,6 +698,9 @@
 
 ;; https://gitlab.com/thomasluquet/font-lock-plus
 (use-package font-lock+)
+
+(use-package fontawesome
+  :commands counsel-fontawesome)
 
 (use-package all-the-icons)
 
@@ -682,11 +744,11 @@
   ;; :custom
   ;; (mlscroll-shortfun-min-width 11) ; truncate which-func, for default mode-line-format's
   :config
-  ;; (require 'which-func)
-  ;; (setq mlscroll-shortfun-min-width 11) ;truncate which-func, for default mode-line-format's
+  ;; (require 'which-func)t-position 'replace)
   (mlscroll-mode 1))
 
-
+;; https://www.emacswiki.org/emacs/ModeLinePosition
+;; (use-package modeline-posn)
 
 ;; https://github.com/seagle0128/doom-modeline
 ;; (use-package doom-modeline
@@ -769,11 +831,6 @@
 
 ;; (setq-default mode-line-format nil)
 ;; (setq mode-line-format nil)
-
-
-
-
-
 
 
 
@@ -925,6 +982,14 @@ or
 ;; indentation & syntax
 ;; ---------------------------
 
+(use-package prettify-symbols-mode
+  :straight nil
+  :ensure nil
+  ;; :disabled
+  :config
+  (add-to-list 'prettify-symbols-alist '("map" . ?↦))
+  (global-prettify-symbols-mode))
+
 
 ;; https://gitlab.com/ideasman42/emacs-hl-block-mode
 ;; this may cause "face t" problem. when color-tint.
@@ -987,6 +1052,7 @@ or
 ;; fold/unfold
 (use-package origami
   ;; :disabled
+  :defer t
   :straight (origami
              :type git
              :host github
@@ -1005,6 +1071,7 @@ or
 
 ;; https://github.com/lewang/ws-butler
 (use-package ws-butler
+  :defer t
   :hook ((text-mode prog-mode) . ws-butler-mode)
   :config
   (ws-butler-mode))
@@ -1196,7 +1263,7 @@ or
   :config (treemacs-icons-dired-mode))
 
 (use-package treemacs-evil
-    :after (treemacs evil))
+  :after (treemacs evil))
 
 (use-package treemacs-persp
   :after (treemacs persp-mode)
@@ -1212,9 +1279,11 @@ or
 ;; https://github.com/purcell/page-break-lines
 ;; C-q C-c
 (use-package page-break-lines
+  :defer 2
   :config
   (global-page-break-lines-mode))
 
+;; do not kill speical buffers.
 (use-package keep-buffers
   :custom
   (keep-buffers-mode 1))
@@ -1235,8 +1304,9 @@ or
 
 (use-package osx-trash
   :if (memq window-system '(mac))
+  :custom
+  (delete-by-moving-to-trash t)
   :config
-  (setq delete-by-moving-to-trash t)
   (osx-trash-setup))
 
 ;; https://github.com/xuchunyang/osx-dictionary.el
@@ -1286,6 +1356,19 @@ or
 ;; Git
 ;; ---------------------------
 
+(use-package ediff
+  :config
+  ;; https://emacs.stackexchange.com/questions/7482/restoring-windows-and-layout-after-an-ediff-session
+  (defvar my-ediff-last-windows nil)
+  (defun my-store-pre-ediff-winconfig ()
+    (setq my-ediff-last-windows (current-window-configuration)))
+  (defun my-restore-pre-ediff-winconfig ()
+    (set-window-configuration my-ediff-last-windows))
+  (add-hook 'ediff-before-setup-hook #'my-store-pre-ediff-winconfig)
+  (add-hook 'ediff-quit-hook #'my-restore-pre-ediff-winconfig)
+  ;; https://emacs.stackexchange.com/questions/17064/never-create-frame-in-ediff
+  (advice-add 'ediff-window-display-p :override #'ignore))
+
 
 ;; https://magit.vc/manual/magit/
 (use-package magit
@@ -1294,13 +1377,9 @@ or
   :custom
   (magit-display-buffer-function #'magit-display-buffer-same-window-except-diff-v1))
 
+;; https://github.com/magit/git-modes
 ;; Major modes for git files.
-(use-package gitattributes-mode
-  :after magit)
-(use-package gitconfig-mode
-  :after magit)
-(use-package gitignore-mode
-  :after magit)
+(use-package git-modes)
 
 ;; https://github.com/alphapapa/magit-todos
 (use-package magit-todos
@@ -1503,6 +1582,15 @@ or
 ;; ---------------------------
 ;; languages
 ;; ---------------------------
+;; https://emacs-tree-sitter.github.io/
+;; syntax parser
+(use-package tree-sitter
+  :hook (tree-sitter-after-on-hook . tree-sitter-hl-mode-hook)
+  :config
+  (use-package tree-sitter-langs)
+  (global-tree-sitter-mode))
+
+
 
 ;; latex
 (use-package lsp-latex
@@ -1712,16 +1800,14 @@ If all failed, try to complete the common part with `company-complete-common'"
               (throw 'func-suceed t)))
           (company-complete-common))))))
 
-;; ;; https://github.com/tigersoldier/company-lsp
-;; deprecated
-;; (use-package company-lsp
-;; :disabled
-;;   :custom
-;;   (company-lsp-async t)
-;;   (company-lsp-enable-snippet t)
-;;   ;; (company-lsp-enable-recompletion nil)
-;;   :config
-;;   (push 'company-lsp company-backends))
+;; https://github.com/xenodium/company-org-block
+;; https://xenodium.com/emacs-org-block-company-completion/
+(use-package company-org-block
+  :custom
+  (company-org-block-edit-style 'auto) ;; 'auto, 'prompt, or 'inline
+  :hook ((org-mode . (lambda ()
+                       (setq-local company-backends '(company-org-block))
+                       (company-mode +1)))))
 
 ;; https://github.com/TommyX12/company-tabnine
 ;; this requires run `M-x company-tabnine-install-binary' to install the TabNine binary for your system.
@@ -2119,19 +2205,17 @@ If all failed, try to complete the common part with `company-complete-common'"
 ;;       (remove-hook 'after-save-hook #'recompile t)
 ;;     (add-hook 'after-save-hook #'recompile nil t)))
 
-;; (use-package smartparens)
+(use-package smartparens)
 
 ;; ;; https://github.com/expez/evil-smartparens
-;; (use-package evil-smartparens
-;;   :hook smartparens-enabled
-;;   :config
-;;   (setq sp-ignore-modes-list (delete 'minibuffer-inactive-mode sp-ignore-modes-list))
-;;   (setq sp-escape-quotes-after-insert nil)
-;;   ;; (smartparens-global-strict-mode)
-;;   (sp-local-pair 'minibuffer-inactive-mode "'" nil :actions nil)
-;;   (when (version<= "27" emacs-version)
-;;     (dolist (parens '(c-electric-paren c-electric-brace c-electric-slash))
-;;       (add-to-list 'sp--special-self-insert-commands parens))))
+(use-package evil-smartparens
+  :hook (smartparens-enabled-hook . evil-smartparens-mode)
+  :config
+  ;; (add-hook 'smartparens-enabled-hook #'evil-smartparens-mode)
+  (setq sp-ignore-modes-list (delete 'minibuffer-inactive-mode sp-ignore-modes-list))
+  (setq sp-escape-quotes-after-insert nil)
+  ;; (smartparens-global-strict-mode)
+  (sp-local-pair 'minibuffer-inactive-mode "'" nil :actions nil))
 
 ;; https://github.com/Fanael/rainbow-delimiters
 (use-package rainbow-delimiters
@@ -2169,6 +2253,40 @@ If all failed, try to complete the common part with `company-complete-common'"
   (display-line-numbers-mode nil)
   (setq evil-auto-indent nil))
 
+(defun org-icons ()
+  "Beautify org mode keywords."
+  (setq prettify-symbols-alist '(;; ("TODO" . "")
+                                 ;; ("WAIT" . "")
+                                 ;; ("NOPE" . "")
+                                 ;; ("DONE" . "")
+                                 ;; ("[#A]" . "")
+                                 ;; ("[#B]" . "")
+                                 ;; ("[#C]" . "")
+                                 ;; ("[ ]" . "")
+                                 ;; ("[X]" . "")
+                                 ;; ("[-]" . "")
+                                 ("#+BEGIN_SRC" . "")
+                                 ("#+END_SRC" . "")
+                                 ("#+BEGIN_QUOTE" . "")
+                                 ("#+END_QUOTE" . "")
+                                 ("#+BEGIN_EXAMPLE" ."")
+                                 ("#+END_EXAMPLE" ."")
+                                 (":PROPERTIES:" . "")
+                                 (":END:" . "")
+                                 ("#+STARTUP:" . "")
+                                 ("#+TITLE: " . "☰")
+                                 ("#+RESULTS:" . "")
+                                 ("#+TAG:" . "")
+                                 ("#+NAME:" . "")
+                                 ("#+ROAM_TAGS:" . "")
+                                 ("#+FILETAGS:" . "")
+                                 ("#+HTML_HEAD:" . "")
+                                 ("#+SUBTITLE:" . "")
+                                 ("#+AUTHOR:" . "")
+                                 ("SCHEDULED:" . "")
+                                 ("DEADLINE:" . "")
+                                 (":Effort:" . ""))))
+
 (use-package org
   :defer t
   :hook ((org-mode . org-mode-setup)
@@ -2179,6 +2297,7 @@ If all failed, try to complete the common part with `company-complete-common'"
          ;;               (push '("[-]" . "⊡" ) prettify-symbols-alist)
          ;;               (prettify-symbols-mode)))
          (org-mode . prettify-symbols-mode)
+         (org-mode . org-icons)
          ;; (org-mode . webkit-katex-render-mode)
          ;; (org-mode . embrace-org-mode-hook)
          ;; (org-mode . turn-on-auto-fill) ; 자동 줄 끊기(auto fill)를 적용한다.
@@ -2200,11 +2319,10 @@ If all failed, try to complete the common part with `company-complete-common'"
   (org-hide-emphasis-markers t)   ; hide markup indicator
   (prettify-symbols-unprettify-at-point 'right-edge)
   (org-fontify-done-headline t)       ; apply special face to DONE
-  (org-hide-leading-stars t)          ; hide the stars
   (org-pretty-entities t)             ; show entities as UTF-8 char.
   (org-odd-levels-only)               ; odd levels only
   ;; (org-indent-indentation-per-level 2)  ;
-  (org-hide-leading-stars t)            ; hide the stars.
+  ;; (org-hide-leading-stars t)            ; hide the stars.
   (org-ellipsis "⋱")                    ; change ellipsis shape.
   (org-src-fontify-natively t)
   (org-fontify-quote-and-verse-blocks t)
@@ -2217,16 +2335,16 @@ If all failed, try to complete the common part with `company-complete-common'"
   ;; (org-blank-before-new-entry '((heading . auto) (plain-list-item . auto))) ; default value.
   (org-startup-folded 'content)         ; start with folded content.
   (org-confirm-babel-evaluate nil) ; do not ask confirmation when evaluate code block.
-  (prettify-symbols-alist '(("#+BEGIN_SRC" . ?⎡)
-                            ("#+END_SRC" . ?⎣)
-                            ("#+begin_src" . ?⎡)
-                            ("#+end_src" . ?⎣)
-                            ;; (">=" . "≥")
-                            ("#+begin_quote" . ?«)
-                            ("#+end_quote" . ?»)
-                            ("#+header:" . ?☰)
-                            ;; ("=>" . "⇨")
-                            ))
+  ;; (prettify-symbols-alist '(("#+BEGIN_SRC" . ?⎡)
+  ;;                           ("#+END_SRC" . ?⎣)
+  ;;                           ("#+begin_src" . ?⎡)
+  ;;                           ("#+end_src" . ?⎣)
+  ;;                           ;; (">=" . "≥")
+  ;;                           ("#+begin_quote" . ?«)
+  ;;                           ("#+end_quote" . ?»)
+  ;;                           ("#+header:" . ?☰)
+  ;;                           ;; ("=>" . "⇨")
+  ;;                           ))
 
   (org-return-follows-link t)           ; open link with enter key
   (org-refile-targets '((nil :maxlevel . 1)
@@ -2298,8 +2416,7 @@ If all failed, try to complete the common part with `company-complete-common'"
   ;; (org-special-keyword
   ;;  ((t (:inherit (font-lock-comment-face fixed-pitch)))))
   (org-meta-line                        ; #+RESULTS 같은 것들
-   ((t (
-        :extend t
+   ((t (:extend t
         :inherit (font-lock-comment-face fixed-pitch)))))
   ;; Get rid of the background on column views
   ;; (org-column
@@ -2374,10 +2491,25 @@ If all failed, try to complete the common part with `company-complete-common'"
     :straight (ob-racket
                :type git
                :host github
-               :repo "hasu/emacs-ob-racket"))
+               :repo "hasu/emacs-ob-racket")
+    :commands (org-babel-execute:racket))
 
-  (require 'ox-latex)
-  (setq org-format-latex-options (plist-put org-format-latex-options :scale 2.00)) ; latex preview size
+  (use-package ox-latex
+    :straight nil
+    :ensure nil
+    :config
+    (setq org-format-latex-options (plist-put org-format-latex-options :scale 2.0)) ; latex preview size
+    )
+
+;; https://github.com/dandavison/xenops
+  (use-package xenops
+    :hook ((LaTeX-mode latex-mode) . xenops-mode)
+    ;; :custom
+    ;; (xenops-reveal-on-entry t)          ; replace org-fragtog
+    ;; :config
+    ;; (xenops-xen-mode)                   ; prettify like mode for latex.
+    )
+
 
   ;; https://github.com/io12/org-fragtog
   ;; automatically toggle preview while cursor in/leave. perfect LaTeX fragment preview.
@@ -2385,6 +2517,38 @@ If all failed, try to complete the common part with `company-complete-common'"
     :hook (org-mode . org-fragtog-mode))
 
 
+;; https://github.com/astahlman/ob-async
+  ;; async execution of org-babel block.
+  ;; simply add `:async' keyword to header.
+  ;; and invoke `ob-async-org-babel-execute-src-block'
+  (use-package ob-async)
+
+;; https://xenodium.com/emacs-chaining-org-babel-blocks/
+  ;; chaining org babel blocks.
+  ;; first `#+name:' to add name.
+  ;; and next block, add `:include' first name.
+(defun adviced:org-babel-execute-src-block (&optional orig-fun arg info params)
+  (let ((body (nth 1 info))
+        (include (assoc :include (nth 2 info)))
+        (named-blocks (org-element-map (org-element-parse-buffer)
+                          'src-block (lambda (item)
+                                       (when (org-element-property :name item)
+                                         (cons (org-element-property :name item)
+                                               item))))))
+    (while include
+      (unless (cdr include)
+        (user-error ":include without value" (cdr include)))
+      (unless (assoc (cdr include) named-blocks)
+        (user-error "source block \"%s\" not found" (cdr include)))
+      (setq body (concat (org-element-property :value (cdr (assoc (cdr include) named-blocks)))
+                         body))
+      (setf (nth 1 info) body)
+      (setq include (assoc :include
+                           (org-babel-parse-header-arguments
+                            (org-element-property :parameters (cdr (assoc (cdr include) named-blocks)))))))
+    (funcall orig-fun arg info params)))
+
+(advice-add 'org-babel-execute-src-block :around 'adviced:org-babel-execute-src-block)
 
   ;; change emphasis syntax -- acn use without space.
   ;; this changes all regex behavior, and contains bug. (ex: *A*bc *D*efg*H*ij klmn)
@@ -2459,7 +2623,7 @@ If all failed, try to complete the common part with `company-complete-common'"
     (org-superstar-remove-leading-stars t)
     ;; (org-superstar-headline-bullets-list '("◉" "○" "●" "○" "●" "○" "●")))
     ;; (org-superstar-headline-bullets-list '("◉" "☯" "○" "☯" "✸" "☯" "✿" "☯" "✜" "☯" "◆" "☯" "▶")))
-    (org-superstar-headline-bullets-list '("◉" "○" "●" "✜" "●" "✛" "✿" "◆" "▶")))
+    (org-superstar-headline-bullets-list '("◉" "●" "○" "◆" "▶")))
 
   ;; Make sure org-indent face is available
   ;; (require 'org-indent)
@@ -2732,15 +2896,6 @@ output instead."
 
 
 
-;; https://emacs.stackexchange.com/questions/7482/restoring-windows-and-layout-after-an-ediff-session
-(defvar my-ediff-last-windows nil)
-(defun my-store-pre-ediff-winconfig ()
-  (setq my-ediff-last-windows (current-window-configuration)))
-(defun my-restore-pre-ediff-winconfig ()
-  (set-window-configuration my-ediff-last-windows))
-(add-hook 'ediff-before-setup-hook #'my-store-pre-ediff-winconfig)
-(add-hook 'ediff-quit-hook #'my-restore-pre-ediff-winconfig)
-
 
 
 ;; https://www.emacswiki.org/emacs/DuplicateLines
@@ -2997,7 +3152,8 @@ or go back to just one window (by deleting all but the selected window)."
  "s-b" 'treemacs
  "C-SPC" 'completion-at-point
  ;; "s-o" 'find-file
- "s-o" 'counsel-switch-buffer
+ ;; "s-o" 'counsel-switch-buffer
+ "s-o" 'ivy-switch-buffer
  "s-O" 'find-file
  ;; "s-f" 'evil-avy-goto-char-timer
  "s-n" '(nil :which-key "new buffer & frame")
@@ -3037,25 +3193,26 @@ or go back to just one window (by deleting all but the selected window)."
 ;;     "<up>"))
 
 
-(general-define-key
- :states 'insert
-  "s-d" 'evil-multiedit-toggle-marker-here
-  ;; "M-j"
+;; (general-define-key
+;;  :states 'insert
+;;   "s-d" 'evil-multiedit-toggle-marker-here
+;;   ;; "M-j"
+;;   )
 
-
-  )
-
-(general-define-key
- :states 'visual
- ;; "s-n" 'edit-indirect-region
- "R" 'evil-multiedit-match-all
- "C-M-d" 'evil-multiedit-restore)
+;; (general-define-key
+;;  :states 'visual
+;;  ;; "s-n" 'edit-indirect-region
+;;  "R" 'evil-multiedit-match-all
+;;  "C-M-d" 'evil-multiedit-restore)
 
 (general-define-key
  :states '(normal visual)
   ;; "gl" '(browse-url :which-key "browse-url") ; use `gf' instead.
-  "s-d" 'evil-multiedit-match-and-next
-  "s-D" 'evil-multiedit-match-and-prev)
+  ;; "s-d" 'evil-multiedit-match-and-next
+  ;; "s-D" 'evil-multiedit-match-and-prev
+  "s-d" 'evil-mc-make-and-goto-next-match
+  "s-D" 'evil-mc-make-and-goto-prev-match
+  )
 
 (push '((multiedit-insert . evil-multiedit-insert-state-map)
         (multiedit . evil-multiedit-state-map)) general-keymap-aliases)
@@ -3125,7 +3282,7 @@ or go back to just one window (by deleting all but the selected window)."
   "gr" 'magit-rebase
 
   ;; avy
-  "j" 'evil-avy-goto-line
+  "j" 'evil-avy-line-saving-column
   "t" 'evil-avy-goto-char-timer
 
   ;; expand region
@@ -3145,47 +3302,46 @@ or go back to just one window (by deleting all but the selected window)."
   "pc" 'projectile-compile-project
   "pd" 'projectile-dired)
 
+(with-eval-after-load "persp-mode"
+  (spc-leader
+    :states '(normal insert visual emacs motion)
+    ;; :keymaps 'persp-key-map
+    ;; perspective
+    "pn" 'persp-next
+    "pp" 'persp-prev
+    "p TAB" 'persp-switch
 
-(spc-leader
-  :states '(normal insert visual emacs motion)
-:keymaps 'persp-key-map
-  ;; perspective
-  "pn" 'persp-next
-  "pp" 'persp-prev
-  "p TAB" 'persp-switch
-
-  "px" '(:ignore t :which-key "perspective")
-  ;; ;; "pxA" 'persp-set-buffer
-  "pxa" 'persp-add-buffer
-  ;; "pxd" 'persp-kill
-  "pxr" 'persp-rename
-  "pxy" 'persp-copy
-  "pxd" 'persp-kill
-  "pxs" 'persp-state-save
-  "pxS" 'persp-save-to-file-by-names
-  "pxl" 'persp-load-state-from-file
-  "pxL" 'persp-load-from-file-by-names
-  "pxk" 'persp-remove-buffer
-  "pxK" 'persp-kill-buffer
-  "pxi" 'persp-import-buffers
-  "pxI" 'persp-import-win-conf
-  "pxt" 'persp-temporarily-display-buffer
+    "px" '(:ignore t :which-key "perspective")
+    ;; ;; "pxA" 'persp-set-buffer
+    "pxa" 'persp-add-buffer
+    ;; "pxd" 'persp-kill
+    "pxr" 'persp-rename
+    "pxy" 'persp-copy
+    "pxd" 'persp-kill
+    "pxs" 'persp-state-save
+    "pxS" 'persp-save-to-file-by-names
+    "pxl" 'persp-load-state-from-file
+    "pxL" 'persp-load-from-file-by-names
+    "pxk" 'persp-remove-buffer
+    "pxK" 'persp-kill-buffer
+    "pxi" 'persp-import-buffers
+    "pxI" 'persp-import-win-conf
+    "pxt" 'persp-temporarily-display-buffer
 
 
-  ;; "p;" 'persp-switch-last
-  ;; "p`" 'persp-switch-by-number
-  ;; "p1" '((lambda () (interactive) "Switch to perspective." (persp-switch-by-number 1)) :which-key "switch: 1")
-  ;; "p2" '((lambda () (interactive) "Switch to perspective." (persp-switch-by-number 2)) :which-key "switch: 2")
-  ;; "p3" '((lambda () (interactive) "Switch to perspective." (persp-switch-by-number 3)) :which-key "switch: 3")
-  ;; "p4" '((lambda () (interactive) "Switch to perspective." (persp-switch-by-number 4)) :which-key "switch: 4")
-  ;; "p5" '((lambda () (interactive) "Switch to perspective." (persp-switch-by-number 5)) :which-key "switch: 5")
-  ;; "p6" '((lambda () (interactive) "Switch to perspective." (persp-switch-by-number 6)) :which-key "switch: 6")
-  ;; "p7" '((lambda () (interactive) "Switch to perspective." (persp-switch-by-number 7)) :which-key "switch: 7")
-  ;; "p8" '((lambda () (interactive) "Switch to perspective." (persp-switch-by-number 8)) :which-key "switch: 8")
-  ;; "p9" '((lambda () (interactive) "Switch to perspective." (persp-switch-by-number 9)) :which-key "switch: 9")
-  ;; "p0" '((lambda () (interactive) "Switch to perspective." (persp-switch-by-number 10)) :which-key "switch: 10")
-
-  )
+    ;; "p;" 'persp-switch-last
+    ;; "p`" 'persp-switch-by-number
+    ;; "p1" '((lambda () (interactive) "Switch to perspective." (persp-switch-by-number 1)) :which-key "switch: 1")
+    ;; "p2" '((lambda () (interactive) "Switch to perspective." (persp-switch-by-number 2)) :which-key "switch: 2")
+    ;; "p3" '((lambda () (interactive) "Switch to perspective." (persp-switch-by-number 3)) :which-key "switch: 3")
+    ;; "p4" '((lambda () (interactive) "Switch to perspective." (persp-switch-by-number 4)) :which-key "switch: 4")
+    ;; "p5" '((lambda () (interactive) "Switch to perspective." (persp-switch-by-number 5)) :which-key "switch: 5")
+    ;; "p6" '((lambda () (interactive) "Switch to perspective." (persp-switch-by-number 6)) :which-key "switch: 6")
+    ;; "p7" '((lambda () (interactive) "Switch to perspective." (persp-switch-by-number 7)) :which-key "switch: 7")
+    ;; "p8" '((lambda () (interactive) "Switch to perspective." (persp-switch-by-number 8)) :which-key "switch: 8")
+    ;; "p9" '((lambda () (interactive) "Switch to perspective." (persp-switch-by-number 9)) :which-key "switch: 9")
+    ;; "p0" '((lambda () (interactive) "Switch to perspective." (persp-switch-by-number 10)) :which-key "switch: 10")
+    ))
 
 
 (general-define-key
