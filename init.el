@@ -8,28 +8,24 @@
 (load custom-file 'noerror)
 
 
-;; (featurep 'no-littering)
-;; (featurep 'recentf)
-
-
-
 ;; font settings.
 (set-face-attribute 'default nil :family "JetBrains Mono")
 (set-fontset-font t 'hangul "D2Coding")
 
-;; ;; Use 'prepend for the NS and Mac ports or Emacs will crash.
+;; Use 'prepend for the NS and Mac ports or Emacs will crash.
 (set-fontset-font t 'unicode (font-spec :family "all-the-icons") nil 'append)
 (set-fontset-font t 'unicode (font-spec :family "file-icons") nil 'append)
 (set-fontset-font t 'unicode (font-spec :family "Material Icons") nil 'append)
 (set-fontset-font t 'unicode (font-spec :family "github-octicons") nil 'append)
 (set-fontset-font t 'unicode (font-spec :family "FontAwesome") nil 'append)
 (set-fontset-font t 'unicode (font-spec :family "Weather Icons") nil 'append)
-;; (set-fontset-font t 'unicode (font-spec :family "all-the-icons") nil 'prepend)
-;; (set-fontset-font t 'unicode (font-spec :family "file-icons") nil 'prepend)
-;; (set-fontset-font t 'unicode (font-spec :family "Material Icons") nil 'prepend)
-;; (set-fontset-font t 'unicode (font-spec :family "github-octicons") nil 'prepend)
-;; (set-fontset-font t 'unicode (font-spec :family "FontAwesome") nil 'prepend)
-;; (set-fontset-font t 'unicode (font-spec :family "Weather Icons") nil 'prepend)
+
+(set-fontset-font t 'unicode (font-spec :family "all-the-icons") nil 'prepend)
+(set-fontset-font t 'unicode (font-spec :family "file-icons") nil 'prepend)
+(set-fontset-font t 'unicode (font-spec :family "Material Icons") nil 'prepend)
+(set-fontset-font t 'unicode (font-spec :family "github-octicons") nil 'prepend)
+(set-fontset-font t 'unicode (font-spec :family "FontAwesome") nil 'prepend)
+(set-fontset-font t 'unicode (font-spec :family "Weather Icons") nil 'prepend)
 
 ;; adjust font scale
 (setq-default face-font-rescale-alist '((".*JetBrains Mono.*" . 1.0)
@@ -168,13 +164,13 @@
   (add-hook mode
             (lambda ()
               (display-line-numbers-mode 1)
-              ;; (setq-default
-              ;;  ;;  display-line-numbers-type 'relative
+              (setq-default
+                display-line-numbers-type 'relative
               ;;  ;;  display-line-numbers-type t
               ;;  display-line-numbers-grow-only t
               ;;  display-line-numbers-width-start t
-              ;;  )
-              (hl-line-mode)
+               )
+              ;; (hl-line-mode)
               )))
 
 
@@ -224,7 +220,14 @@
   :config
   (general-auto-unbind-keys)
   (general-override-mode)
-  (general-evil-setup t))
+  (general-evil-setup t)
+
+  (general-create-definer spc-leader
+    :keymaps 'override
+    ;; :keymaps '(normal insert visual emacs motion)
+    ;; :global-prefix "C-SPC"
+    :global-prefix "M-SPC"
+    :prefix "SPC"))
 
 ;; https://github.com/mickeynp/ligature.el
 (use-package ligature
@@ -275,6 +278,7 @@
 
 ;; https://github.com/abo-abo/swiper
 (use-package counsel
+  :diminish
   :custom
   (ivy-wrap t)
   (ivy-re-builders-alist '((t . ivy--regex-fuzzy)))
@@ -359,8 +363,14 @@
   :config
   (ivy-prescient-mode 1))
 
-
-
+(use-package company-prescient
+  :straight nil
+  :ensure nil
+  :after (prescient company)
+  :custom
+  (company-prescient-sort-length-enable nil)
+  :config
+  (company-prescient-mode 1))
 
 ;; ---------------------------
 ;; Evils
@@ -369,24 +379,27 @@
 ;; read this : https://emacs.stackexchange.com/questions/61512/
 ;; https://www.dr-qubit.org/Lost_undo-tree_history.html
 (use-package undo-tree
+  :diminish
   :custom
   (undo-tree-auto-save-history t)
+  (undo-tree-enable-undo-in-region t)
   :config
   (global-undo-tree-mode t)
   (defadvice undo-tree-make-history-save-file-name
-    (after undo-tree activate)
+      (after undo-tree activate)
     (setq ad-return-value (concat ad-return-value ".gz"))))
 
+
 (use-package paren
-  :disabled
   :config
-  (set-face-attribute 'show-paren-match-expression nil :background "#363e4a")
+  ;; (set-face-attribute 'show-paren-match-expression nil :background "#363e4a")
   (show-paren-mode 1))
 
 (use-package evil
   :init
   (setq evil-want-keybinding nil)
   :custom
+  (evil-ex-search-vim-style-regexp t)
   (evil-undo-system 'undo-tree)
   (evil-respect-visual-line-mode t)
   (evil-shift-width tab-width)            ; tab option for evil
@@ -439,8 +452,9 @@
 ;; (use-package evil-iedit-state
 ;;   :after iedit)
 
-;; ;; https://github.com/gabesoft/evil-mc
+;; https://github.com/gabesoft/evil-mc
 (use-package evil-mc
+  :diminish
   :config/el-patch
   (evil-define-command evil-mc-make-cursor-here ()
     "Create a cursor at point."
@@ -450,8 +464,9 @@
     (el-patch-wrap 1 1
       (if (equal evil-state 'visual) (evil-mc-make-cursor-at-pos (- (point) 1))
         (evil-mc-make-cursor-at-pos (point)))))
-  :config
 
+
+  :config
   (defun evil-mc-toggle-cursor-here ()
     "Toggle Fake Cursor."
     (interactive)
@@ -485,15 +500,46 @@
   ;; (setq evil-mc-incompatible-minor-modes
   ;;       (append '(lispy-mode) evil-mc-incompatible-minor-modes))
 
+
   ;;add support for buffer-list
   (add-to-list 'evil-mc-known-commands '(Buffer-menu-mark . ((:default . evil-mc-execute-default-call))))
   (add-to-list 'evil-mc-known-commands '(Buffer-menu-unmark . ((:default . evil-mc-execute-default-call))))
   ;; and magit
   (add-to-list 'evil-mc-known-commands '(magit-stage . ((:default . evil-mc-execute-default-call))))
   (add-to-list 'evil-mc-known-commands '(magit-unstage . ((:default . evil-mc-execute-default-call))))
+  ;; add `M-i' tab key.
+  (add-to-list 'evil-mc-known-commands '(tab-to-tab-stop . ((:default . evil-mc-execute-default-call))))
+
+
+  (add-to-list 'evil-mc-known-commands '(tab-to-tab-stop . ((:default . evil-mc-execute-default-call))))
+
+  ;; for dired
+  ;; (add-to-list 'evil-mc-known-commands '(dired-flag-file-deletion . ((:default . evil-mc-execute-default-call))))
+  ;; (add-to-list 'evil-mc-known-commands '(quoted-insert . ((:default . evil-mc-execute-default-evil-repeat))))
+  ;; fix change's wrong cursor position
+  (add-hook 'evil-mc-before-cursors-created (lambda () (setq-default evil-move-cursor-back t)))
+  (add-hook 'evil-mc-after-cursors-deleted (lambda () (setq-default evil-move-cursor-back nil)))
+
+  ;; (delete '(lispyville-substitute        ; s
+  ;;          (:default . evil-mc-execute-default-evil-substitute))
+  ;;        evil-mc-known-commands)
+  ;; (add-to-list 'evil-mc-known-commands '(lispyville-substitute        ; s
+  ;;          (:default . evil-mc-execute-default-evil-)))
 
   (global-evil-mc-mode))
 
+;; https://github.com/gabesoft/evil-mc-extras
+(use-package evil-mc-extras
+  :disabled
+  :after evil-mc
+  :hook (evil-mc-mode . evil-mc-extras-mode))
+
+(use-package kak
+  :straight (kak
+             :type git
+             :host github
+             :repo "aome510/kak.el"
+             :fork (:repo "euokyun/kak.el")))
 
 ;; https://www.emacswiki.org/emacs/zones.el
 ;; well, hard to use.
@@ -525,7 +571,14 @@
         (setq mc/always-run-for-all t)
       (setq mc/always-run-for-all nil)))
 
-;; https://xenodium.com/all/
+  ;; https://xenodium.com/all/
+  (defsubst counsel--string-trim-left (string &optional regexp)
+    "Trim STRING of leading string matching REGEXP.
+
+REGEXP defaults to \"[ \\t\\n\\r]+\"."
+    (if (string-match (concat "\\`\\(?:" (or regexp "[ \t\n\r]+") "\\)") string)
+        (replace-match "" t t string)
+      string))
   (defun adviced:counsel-M-x-action (orig-fun &rest r)
     "Additional support for multiple cursors."
     (apply orig-fun r)
@@ -541,9 +594,9 @@
                      (mc/prompt-for-inclusion-in-whitelist cmd)))
         (mc/execute-command-for-all-fake-cursors cmd))))
 
-  (advice-add #'counsel-M-x-action
-      :around
-    #'adviced:counsel-M-x-action))
+  (advice-add #'counsel-M-x-action :around #'adviced:counsel-M-x-action))
+
+
 
 (use-package evil-exchange
   :config
@@ -619,12 +672,18 @@
         (remove 'lispy evil-collection-mode-list))
   (evil-collection-init))
 
+;; https://github.com/syl20bnr/evil-escape
+(use-package evil-escape
+  :config
+  (evil-escape-mode))
+
 ;; ---------------------------
 ;; Themes Settings
 ;; ---------------------------
 
 ;; https://github.com/muffinmad/emacs-mini-frame
 (use-package mini-frame
+  :disabled
   :custom
   ;; (mini-frame-show-parameters '((top . 50) (width . 0.7) (left . 0.5) (min-height . 10)))
   (mini-frame-show-parameters '(;; (top . 0.1)
@@ -706,10 +765,12 @@
 
 ;; https://github.com/iqbalansari/emacs-emojify
 (use-package emojify
+  :disabled
   :hook (after-init . global-emojify-mode))
 
 ;; https://github.com/hlissner/emacs-doom-themes
 (use-package doom-themes
+  :disabled
   :custom
   (doom-themes-enable-bold t)          ; if nil, bold is universally disabled
   (doom-themes-enable-italic t)        ; if nil, italics is universally disabled
@@ -721,8 +782,14 @@
 
 
 ;; https://github.com/greduan/emacs-theme-gruvbox
-;; (use-package gruvbox-theme)
-
+(use-package gruvbox-theme
+  :straight (gruvbox-theme
+             :fork (:repo "euokyun/emacs-theme-gruvbox"))
+  )
+;; https://github.com/Malabarba/beacon
+(use-package beacon
+  :custom
+  (beacon-mode 1))
 
 ;; https://github.com/purcell/default-text-scale
 (use-package default-text-scale)
@@ -741,10 +808,10 @@
 
 ;; https://github.com/jdtsmith/mlscroll
 (use-package mlscroll
-  ;; :custom
+  :custom
+  (mlscroll-width-chars 7)
   ;; (mlscroll-shortfun-min-width 11) ; truncate which-func, for default mode-line-format's
   :config
-  ;; (require 'which-func)t-position 'replace)
   (mlscroll-mode 1))
 
 ;; https://www.emacswiki.org/emacs/ModeLinePosition
@@ -752,16 +819,18 @@
 
 ;; https://github.com/seagle0128/doom-modeline
 ;; (use-package doom-modeline
+
 ;;   ;; :after eshell
-;;   :hook ((after-init . doom-modeline-mode)
+;;   :hook (;; (after-init . doom-modeline-mode)
 ;;          (doom-modeline-mode . minions-mode))
 ;;   :custom
 ;;   ;; (doom-modeline-height 15)             ; default is 25
-;;   (doom-modeline-height 1)              ; default is 25
-;;   (doom-modeline-bar-width 4)
+;;   (doom-modeline-height 0)              ; default is 25
+;;   (doom-modeline-bar-width 0)
 ;;   (doom-modeline-project-detection 'auto)
 ;;   ;; (doom-modeline-buffer-file-name-style 'truncate-except-project)
-;;   (doom-modeline-buffer-file-name-style 'truncate-upto-root)
+;;   ;; (doom-modeline-buffer-file-name-style 'truncate-upto-root)
+;;   (doom-modeline-buffer-file-name-style 'truncate-with-project)
 ;;   (doom-modeline-icon (display-graphic-p))
 ;;   (doom-modeline-major-mode-icon t)
 ;;   (doom-modeline-major-mode-color-icon t)
@@ -789,24 +858,35 @@
 ;;   ;; (doom-modeline-gnus t)
 ;;   ;; (doom-modeline-gnus-timer 2)
 ;;   ;; (doom-modeline-gnus-excluded-groups '("dummy.group"))
-;;   (doom-modeline-irc nil)
+;;   ;; (doom-modeline-irc nil)
 ;;   ;; (doom-modeline-irc-stylize 'identity)
 ;;   (doom-modeline-env-version t)
 ;;   (doom-modeline-env-load-string "...")
 ;;   (doom-modeline-before-update-env-hook nil)
 ;;   (doom-modeline-after-update-env-hook nil)
-;;   (line-number-mode nil)                ; disable line number in modeline.
+;;   (line-number-mode t)                ; disable line number in modeline.
 
 ;;   :custom-face
-;;   ;; (mode-line ((t (:height 0.8))))
-;;   ;; (mode-line-inactive ((t (:height 0.8))))
+;;   ;; (mode-line ((t (:height 0.9))))
+;;   ;; (mode-line-inactive ((t (:height 0.9))))
+;;   (doom-modeline-warning ((t (:inherit warning))))
 ;;   ;; (doom-modeline-vspc-face ((t (:height 0.8))))
 ;;   ;; (doom-modeline-spc-face ((t (:height 0.8))))
 ;;   ;; global-theme-settings
 ;;   (doom-modeline-evil-normal-state
-;;    ((t (:foreground "orange" :weight bold))))
+;;    ((t (:foreground "orange"))))
 ;;   (doom-modeline-evil-insert-state
-;;    ((t (:background "#fb4934" :Weight bold))))
+;;    ((t (:background "#fb4934"))))
+
+;; ;;   :config/el-patch
+;; ;; (defun doom-modeline-buffer-file-state-icon (icon unicode text face)
+;; ;;   "Displays an ICON of buffer state with FACE.
+;; ;; UNICODE and TEXT are the alternatives if it is not applicable.
+;; ;; Uses `all-the-icons-material' to fetch the icon."
+;; ;;   (doom-modeline-icon 'material icon unicode text
+;; ;;                       :face face
+;; ;;                       (el-patch-remove :height 1.1
+;; ;;                                        :v-adjust -0.225)))
 
 ;;   :config
 ;;   (defun my-doom-modeline--font-height ()
@@ -815,22 +895,57 @@
 ;;   (advice-add #'doom-modeline--font-height :override #'my-doom-modeline--font-height)
 
 ;;   ;; " <N> " is too wide
-;;   (doom-modeline-def-segment my/slim-modals
-;;     (concat " " (string-trim (doom-modeline-segment--modals))))
+;;   (defun my/slim-modals (orig-fun &rest args)
+;;     (concat " " (string-trim (apply orig-fun args))))
+;;   (advice-add 'doom-modeline-segment--modals :around #'my/slim-modals)
 
-;;   (doom-modeline-def-segment my/buffer-info
-;;     (concat
-;;      (doom-modeline-spc)
-;;      (doom-modeline--buffer-mode-icon)
-;;      (doom-modeline--buffer-name)
-;;      (doom-modeline--buffer-state-icon)))
+;;   (defun my/window-number (orig-fun &rest args)
+;;     (propertize (upcase (apply orig-fun args))
+;;                 'face '(:background "orange")))
+;;   (advice-add 'doom-modeline-segment--window-number :around #'my/window-number)
 
-;;   (doom-modeline-def-modeline 'main
-;;     '(bar workspace-name window-number my/slim-modals matches my/buffer-info remote-host buffer-position word-count parrot selection-info)
-;;     '(objed-state misc-info persp-name battery grip irc mu4e gnus github debug repl lsp minor-modes input-method indent-info buffer-encoding major-mode process vcs checker)))
 
-;; (setq-default mode-line-format nil)
-;; (setq mode-line-format nil)
+;; ;; (defun my/buffer-info ()
+;; ;;     (concat
+;; ;;      (doom-modeline-spc)
+;; ;;      (let ((icon (all-the-icons-icon-for-buffer)))
+;; ;;        (cl-destructuring-bind (&key family height inherit &allow-other-keys) (get-text-property 0 'font-lock-face icon)
+;; ;;          (propertize icon 'font-lock-face `(:inherit ,(or (if (doom-modeline--active) 'mode-line 'mode-line-inactive) inherit props)
+;; ;;                                             :family ,family
+;; ;;                                             :height 1.0)
+;; ;;                      'face `(:inherit ,(or (if (doom-modeline--active) 'mode-line 'mode-line-inactive) inherit props)
+;; ;;                              :family ,family
+;; ;;                              :height 1.0))))
+;; ;;      (doom-modeline-spc)
+;; ;;      (doom-modeline--buffer-name)
+;; ;;      (doom-modeline--buffer-state-icon)
+;; ;;      ))
+;; ;;   (advice-add 'doom-modeline-segment--buffer-info :override #'my/buffer-info)
+
+
+;; (doom-modeline-segment--buffer-info)
+
+
+
+
+
+
+
+
+
+
+;;   (defun my-doom-modeline-advice (fun &rest args)
+;;     (let ((system-type 'not-darwin))
+;;       (apply fun args)))
+;;   (advice-add #'doom-modeline--font-height :around #'my-doom-modeline-advice)
+;;   )
+
+
+(use-package powerline
+  ;; :config
+  ;; (powerline-default-theme)
+  ;; (powerline-center-evil-theme)
+  )
 
 
 
@@ -863,81 +978,131 @@
 (use-package transpose-frame)
 
 (use-package ace-window
-  :init
-  ;; (defun my/aw-test-func ()
-  ;;   "test function."
-  ;;   (interactive)
-  ;;   (message "%s" "is?"))
-  ;; (defun my/aw-winner-undo ()
-  ;;   "undo window change."
-  ;;   (interactive)
-  ;;   (winner-undo))
-  ;; (defun my/aw-winner-redo ()
-  ;;   "redo window change."
-  ;;   (interactive)
-  ;;   (winner-redo))
-  (defun my/aw-vterm ()
-    "open terminal here"
-    (interactive)
-    (vterm))
-  :init/el-patch
-  (defvar aw-dispatch-alist
-    '(((el-patch-swap ?x ?k) aw-delete-window "delete Window")
-      (?m aw-swap-window "Swap Windows")
-      (?M aw-move-window "Move Window")
-      (?c aw-copy-window "Copy Window")
-      ((el-patch-swap ?j ?o) aw-switch-buffer-in-window "Select Buffer")
-      ((el-patch-swap ?n ?`) aw-flip-window)
-      ((el-patch-swap ?u ?O) aw-switch-buffer-other-window "Switch Buffer Other Window")
-      (?e aw-execute-command-other-window "Execute Command Other Window")
-      ((el-patch-swap ?F ?f) aw-split-window-fair "Split Fair Window")
-      ((el-patch-swap ?v ?j) aw-split-window-vert "Split Vert Window")
-      ((el-patch-swap ?b ?l) aw-split-window-horz "Split Horz Window")
-      ((el-patch-swap ?o ?K) delete-other-windows "Delete Other Windows")
-      ((el-patch-swap ?T ?t) aw-transpose-frame "Transpose Frame")
-      ;; (el-patch-add (?r my/aw-winner-redo))
-      ;; (el-patch-add (?u my/aw-winner-undo))
-      (el-patch-add (?! my/aw-vterm))
-      ;; ?i ?r ?t are used by hyperbole.el
-      (?? aw-show-dispatch-help))
-    "List of actions for `aw-dispatch-default'.
+ :init
+ (defun my/aw-vterm ()
+   "open terminal here"
+   (interactive)
+   (vterm))
+ :init/el-patch
+ (defvar aw-dispatch-alist
+   '(((el-patch-swap ?x ?k) aw-delete-window "delete Window")
+     (?m aw-swap-window "Swap Windows")
+     (?M aw-move-window "Move Window")
+     (?c aw-copy-window "Copy Window")
+     ((el-patch-swap ?j ?o) aw-switch-buffer-in-window "Select Buffer")
+     ((el-patch-swap ?n ?`) aw-flip-window)
+     ((el-patch-swap ?u ?O) aw-switch-buffer-other-window "Switch Buffer Other Window")
+     (?e aw-execute-command-other-window "Execute Command Other Window")
+     ((el-patch-swap ?F ?f) aw-split-window-fair "Split Fair Window")
+     ((el-patch-swap ?v ?j) aw-split-window-vert "Split Vert Window")
+     ((el-patch-swap ?b ?l) aw-split-window-horz "Split Horz Window")
+     ((el-patch-swap ?o ?K) delete-other-windows "Delete Other Windows")
+     ((el-patch-swap ?T ?t) aw-transpose-frame "Transpose Frame")
+     ;; (el-patch-add (?r my/aw-winner-redo))
+     ;; (el-patch-add (?u my/aw-winner-undo))
+     (el-patch-add (?! my/aw-vterm))
+     ;; (el-patch-add (27 aw--done "exit"))
+     (el-patch-add (27 aw--done))
+     ;; ?i ?r ?t are used by hyperbole.el
+     (?? aw-show-dispatch-help))
+   "List of actions for `aw-dispatch-default'.
 each action is a list of either:
   (char function description) where function takes a single window argument
 or
   (char function) where function takes no argument and the description is omitted.")
 
-  ;; (defvar aw-dispatch-alist
-;;     '((?c aw-copy-window "copy window")
-;;       (?e aw-execute-command-other-window "execute command other window")
-;;       (?f aw-split-window-fair "split fair window")
-;;       (?j aw-split-window-vert "split vert window")
-;;       (?k aw-delete-window "delete window")
-;;       (?K delete-other-windows "delete other windows")
-;;       (?l aw-split-window-horz "split horz window")
-;;       (?m aw-swap-window "swap windows")
-;;       (?m aw-move-window "move window")
-;;       (?o aw-switch-buffer-in-window "select buffer")
-;;       (?o aw-switch-buffer-other-window "switch buffer other window")
-;;       (?r my/aw-winner-redo)
-;;       (?t aw-transpose-frame "transpose frame")
-;;       (?u my/aw-winner-undo)
+ ;; this not works.
+ ;; (define-minor-mode ace-window-display-mode
+ ;;   "Minor mode for showing the ace window key in the mode line."
+ ;;   :global t
+ ;;   (if ace-window-display-mode
+ ;;       (progn
+ ;;         (aw-update)
+ ;;         (set-default
+ ;;          'mode-line-format
+ ;;          `((ace-window-display-mode
+ ;;             (:eval (el-patch-swap (window-parameter (selected-window) 'ace-window-path)
+ ;;                                   (format " %s " (window-parameter (selected-window) 'ace-window-path)))))
+ ;;            ,@(assq-delete-all
+ ;;               'ace-window-display-mode
+ ;;               (default-value 'mode-line-format))))
+ ;;         (force-mode-line-update t)
+ ;;         (add-hook 'window-configuration-change-hook 'aw-update)
+ ;;         ;; Add at the end so does not precede select-frame call.
+ ;;         (add-hook 'after-make-frame-functions #'aw--after-make-frame t))
+ ;;     (set-default
+ ;;      'mode-line-format
+ ;;      (assq-delete-all
+ ;;       'ace-window-display-mode
+ ;;       (default-value 'mode-line-format)))
+ ;;     (remove-hook 'window-configuration-change-hook 'aw-update)
+ ;;     (remove-hook 'after-make-frame-functions 'aw--after-make-frame)))
 
-;;       (?! my/aw-vterm)
-;;       ;; ?i ?r ?t are used by hyperbole.el
-;;       (?? aw-show-dispatch-help))
-;;     "list of actions for `aw-dispatch-default'.
-;; each action is a list of either:
-;;   (char function description) where function takes a single window argument
-;; or
-;;   (char function) where function takes no argument and the description is omitted.")
-  :custom-face
-  (aw-leading-char-face ((t (:height 400 :background "darkorange1" :foreground "#3c3836" :weight bold))))
-                                        ; fixed size.
-  :config
-  (setq aw-keys '(?a ?s ?d ?g ?h ?i ?n ?p ?v ?w ?x ?y ?z ?b ?v ?q))
-  ;; (setq aw-ignore-current t) ; 이러면 split이 현재 윈도우에서 작동하지 않는다.
-  (setq aw-minibuffer-flag t)
-  (setq aw-dispatch-always t))
+
+ ;; (defvar aw-dispatch-alist
+ ;;     '((?c aw-copy-window "copy window")
+ ;;       (?e aw-execute-command-other-window "execute command other window")
+ ;;       (?f aw-split-window-fair "split fair window")
+ ;;       (?j aw-split-window-vert "split vert window")
+ ;;       (?k aw-delete-window "delete window")
+ ;;       (?K delete-other-windows "delete other windows")
+ ;;       (?l aw-split-window-horz "split horz window")
+ ;;       (?m aw-swap-window "swap windows")
+ ;;       (?m aw-move-window "move window")
+ ;;       (?o aw-switch-buffer-in-window "select buffer")
+ ;;       (?o aw-switch-buffer-other-window "switch buffer other window")
+ ;;       (?r my/aw-winner-redo)
+ ;;       (?t aw-transpose-frame "transpose frame")
+ ;;       (?u my/aw-winner-undo)
+
+ ;;       (?! my/aw-vterm)
+ ;;       (27 aw--done)
+
+ ;;       ;; ?i ?r ?t are used by hyperbole.el
+ ;;       (?? aw-show-dispatch-help))
+ ;;     "list of actions for `aw-dispatch-default'.
+ ;; each action is a list of either:
+ ;;   (char function description) where function takes a single window argument
+ ;; or
+ ;;   (char function) where function takes no argument and the description is omitted.")
+
+ ;; :custom-face
+ ;; (aw-leading-char-face ((t (:height 400 :background "darkorange1" :foreground gruvbox-dark1 :weight bold))))
+ ;; (aw-mode-line-face ((t (:background "darkorange1" :foreground "#3c3836" :weight bold))))
+ :config
+
+ ;; (define-minor-mode ace-window-display-mode
+ ;;   "Minor mode for showing the ace window key in the mode line."
+ ;;   :global t
+ ;;   (if ace-window-display-mode
+ ;;       (progn
+ ;;         (aw-update)
+ ;;         (set-default
+ ;;          'mode-line-format
+ ;;          `((ace-window-display-mode
+ ;;             (:eval (propertize (format " %s " (upcase (window-parameter (selected-window) 'ace-window-path)))
+ ;;                                'face 'aw-mode-line-face)))
+ ;;            ,@(assq-delete-all
+ ;;               'ace-window-display-mode
+ ;;               (default-value 'mode-line-format))))
+ ;;         (force-mode-line-update t)
+ ;;         (add-hook 'window-configuration-change-hook 'aw-update)
+ ;;         ;; Add at the end so does not precede select-frame call.
+ ;;         (add-hook 'after-make-frame-functions #'aw--after-make-frame t))
+ ;;     (set-default
+ ;;      'mode-line-format
+ ;;      (assq-delete-all
+ ;;       'ace-window-display-mode
+ ;;       (default-value 'mode-line-format)))
+ ;;     (remove-hook 'window-configuration-change-hook 'aw-update)
+ ;;     (remove-hook 'after-make-frame-functions 'aw--after-make-frame)))
+
+ (setq aw-keys '(?a ?s ?d ?g ?h ?i ?n ?p ?v ?w ?x ?y ?z ?b ?v ?q))
+ ;; (setq aw-ignore-current t) ; 이러면 split이 현재 윈도우에서 작동하지 않는다.
+ (ace-window-display-mode)             ; showing window identifier on modeline.
+ (setq aw-minibuffer-flag t)
+ (setq aw-dispatch-always t)
+ )
 
 ;; https://github.com/Fanael/edit-indirect
 ;; (use-package edit-indirect)
@@ -985,20 +1150,32 @@ or
 (use-package prettify-symbols-mode
   :straight nil
   :ensure nil
-  ;; :disabled
+  :disabled
   :config
   (add-to-list 'prettify-symbols-alist '("map" . ?↦))
   (global-prettify-symbols-mode))
 
+;; https://github.com/fgeller/highlight-thing.el
+(use-package highlight-thing
+  ;; :disabled
+  :diminish
+  :commands (highlight-thing-mode hilight-thing-do)
+  :custom
+  (highlight-thing-exclude-thing-under-point t)
+  ;; :hook (prog-mode . highlight-thing-mode)
+  ;; :config
+  )
 
 ;; https://gitlab.com/ideasman42/emacs-hl-block-mode
 ;; this may cause "face t" problem. when color-tint.
 (use-package hl-block-mode
   :custom
-  (hl-block-style 'bracket)             ; color tint mode disables rainbow mode.
- ;; (hl-block-style 'color-tint)
+  ;; (hl-block-style 'color-tint)
   ;; (hl-block-bracket "{")
+  ;; (hl-block-single-level t)
+  (hl-block-style 'bracket)             ; color tint mode disables rainbow mode.
   (hl-block-bracket-face '(:inverse-video t)) ; and this fix face t problem.
+  ;; (hl-block-color-tint "#040404")
   :commands (hl-block-mode)
   :hook ((prog-mode . hl-block-mode)))
 
@@ -1014,6 +1191,7 @@ or
 
 ;; https://github.com/darthfennec/highlight-indent-guides
 (use-package highlight-indent-guides
+  :diminish
   :hook ((prog-mode
           ;; org-mode
           )
@@ -1071,6 +1249,7 @@ or
 
 ;; https://github.com/lewang/ws-butler
 (use-package ws-butler
+  :diminish
   :defer t
   :hook ((text-mode prog-mode) . ws-butler-mode)
   :config
@@ -1096,7 +1275,6 @@ or
                               (dired-hide-details-mode 1)
                               (all-the-icons-dired-mode 1)
                               (hl-line-mode 1)
-
                               ))
          (dired-mode-hook . auto-revert-mode))
   :config
@@ -1144,7 +1322,34 @@ or
     :defer t)
 
   (use-package dired-collapse
-    :defer t))
+    :defer t)
+
+  ;; https://github.com/purcell/diredfl
+  ;; colorful dired
+  ;; (use-package diredfl
+  ;;   :straight (diredfl
+  ;;              :type git
+  ;;              :host github
+  ;;              :repo "purcell/diredfl")
+  ;;   ;; :config
+  ;;   ;; (diredfl-global-mode)
+  ;;   )
+  )
+
+(use-package dogears
+  :straight (dogears
+             :type git
+             :host github
+             :repo "alphapapa/dogears.el")
+  :config
+  (defun toggle-dogears (orig-fun &rest args)
+    (unless (ignore-errors (kill-buffer "*Dogears List*"))
+      (apply orig-fun args)))
+  (advice-add 'dogears-sidebar :around #'toggle-dogears)
+  (dogears-mode))
+
+
+
 
 ;; https://github.com/Bad-ptr/persp-mode.el
 (use-package persp-mode
@@ -1210,9 +1415,13 @@ or
                   (persp-mode-projectile-bridge-mode 1))
               t)))
 
+;; https://github.com/emacsorphanage/zoom-window
+(use-package zoom-window)
 
 
-;; ;; https://github.com/nex3/perspective-el
+
+
+;; https://github.com/nex3/perspective-el
 ;; (use-package perspective
 ;;   :demand t
 ;;   ;; :bind (("C-M-k" . persp-switch)
@@ -1248,7 +1457,7 @@ or
      (treemacs-git-mode 'simple)))
   ;; (use-package treemacs-all-the-icons)
   (general-define-key
-   :map treemacs-mode-map
+   :keymaps '(treemacs-mode-map evil-treemacs-state-map)
    [mouse-1] #'treemacs-single-click-expand-action ; allow click to expand/collapse node.
    ))
 
@@ -1258,9 +1467,10 @@ or
 (use-package treemacs-magit
   :after (treemacs magit))
 
-(use-package treemacs-icons-dired
-  :after (treemacs dired)
-  :config (treemacs-icons-dired-mode))
+;; this uses imagemagick.
+;; (use-package treemacs-icons-dired
+;;   :after (treemacs dired)
+;;   :config (treemacs-icons-dired-mode))
 
 (use-package treemacs-evil
   :after (treemacs evil))
@@ -1276,9 +1486,27 @@ or
 ;; etc
 ;; ---------------------------
 
+;; (use-package ctable)
+
+;; (use-package xwwp-full
+;;   :after ctable
+;;   :straight (xwwp
+;;              :type git
+;;              :host github
+;;              :repo "BlueFlo0d/xwwp"
+;;              :branch "master")
+;;   :load-path "~/.config/emacs/straight/repos/xwwp")
+
+;; (use-package xwwp-follow-link-ivy
+;;   :after xwwp
+;;   :custom
+;;   (xwwp-follow-link-completion-system 'ivy))
+
+
 ;; https://github.com/purcell/page-break-lines
 ;; C-q C-c
 (use-package page-break-lines
+  :diminish
   :defer 2
   :config
   (global-page-break-lines-mode))
@@ -1310,9 +1538,9 @@ or
   (osx-trash-setup))
 
 ;; https://github.com/xuchunyang/osx-dictionary.el
-(use-package osx-dictionary)
+;; (use-package osx-dictionary)
 ;; alternative : https://github.com/abo-abo/define-word
-
+(use-package define-word)
 ;; https://github.com/bbatsov/super-save
 (use-package super-save
   :disabled
@@ -1339,7 +1567,37 @@ or
   ([remap describe-symbol] . helpful-symbol)
   ([remap describe-variable] . helpful-variable)
   ([remap describe-command] . helpful-command)
-  ([remap describe-key] . helpful-key))
+  ([remap describe-key] . helpful-key)
+  ;; :config
+  ;; https://xenodium.com/basic-imenu-in-helpful-mode/
+  ;; (defun helpful--create-imenu-index ()
+  ;;   "Create an `imenu' index for helpful."
+  ;;   (beginning-of-buffer)
+  ;;   (let ((imenu-items '()))
+  ;;     (while (progn
+  ;;              (beginning-of-line)
+  ;;              ;; Not great, but determine if looking at heading:
+  ;;              ;; 1. if it has bold face.
+  ;;              ;; 2. if it is capitalized.
+  ;;              (when (and (eq 'bold (face-at-point))
+  ;;                         (string-match-p
+  ;;                          "[A-Z]"
+  ;;                          (buffer-substring (line-beginning-position)
+  ;;                                            (line-end-position))))
+  ;;                (add-to-list 'imenu-items
+  ;;                             (cons (buffer-substring (line-beginning-position)
+  ;;                                                     (line-end-position))
+  ;;                                   (line-beginning-position))))
+  ;;              (= 0 (forward-line 1))))
+  ;;     imenu-items))
+
+  ;; (defun helpful-mode-hook-function ()
+  ;;   "A hook function for `helpful-mode'."
+  ;;   (setq imenu-create-index-function #'helpful--create-imenu-index))
+
+  ;; (add-hook 'helpful-mode-hook
+  ;;           #'helpful-mode-hook-function)
+  )
 
 
 ;; https://github.com/lastquestion/explain-pause-mode
@@ -1433,9 +1691,8 @@ or
         backend
       (append (if (consp backend) backend (list backend))
               '(:with company-yasnippet))))
-  ;; (setq company-backends (mapcar #'company-mode/backend-with-yas company-backends))
+  (setq company-backends (mapcar #'company-mode/backend-with-yas company-backends))
   )
-
 
 ;; ---------------------------
 ;; Programming configure
@@ -1460,7 +1717,7 @@ or
   :defer t
   :commands lsp
   :hook ((java-mode
-          typescript-mode
+          typescript-mode               ; https://github.com/typescript-language-server/typescript-language-server
           js2-mode
           web-mode
           racket-mode) . lsp-deferred)
@@ -1515,7 +1772,6 @@ or
   ;; to enable the lenses
   (add-hook 'lsp-mode-hook #'lsp-lens-mode)
   (add-hook 'java-mode-hook #'lsp-java-boot-lens-mode))
-
 
 
 ;; https://github.com/emacs-lsp/dap-mode
@@ -1759,12 +2015,13 @@ or
 
 (use-package company
   :diminish company-mode
-  :hook ((prog-mode LaTeX-mode latex-mode ess-r-mode) . company-mode)
+  ;; :hook ((prog-mode LaTeX-mode latex-mode ess-r-mode) . company-mode)
   :bind (:map company-active-map
-              ;; ("RET" . nil)
-              ;; ([return] . nil)
-              ([tab] . smarter-tab-to-complete)
-              ("TAB" . smarter-tab-to-complete))
+         ;; ("RET" . nil)
+         ;; ([return] . nil)
+         ;; ("c-SPC" . company-box-doc)
+         ([tab] . smarter-tab-to-complete)
+         ("TAB" . smarter-tab-to-complete))
   :custom
   (company-minimum-prefix-length 1)
   (company-tooltip-align-annotations t)
@@ -1779,6 +2036,10 @@ or
   ;; (company-show-quick-access t nil nil "Customized with use-package company")
   (company-show-quick-access t) ;; "Customized with use-package company"
   :config
+  (add-hook 'emacs-lisp-mode-hook
+            '(lambda ()
+               (require 'company-elisp)
+               (push 'company-elisp company-backends)))
   ;; (unless clangd-p (delete 'company-clang company-backends))
   (global-company-mode 1)
 
@@ -1798,19 +2059,22 @@ If all failed, try to complete the common part with `company-complete-common'"
             (unless (and (eq old-point (point))
                          (eq old-tick (buffer-chars-modified-tick)))
               (throw 'func-suceed t)))
-          (company-complete-common))))))
+          (company-complete-common)
+          ;; (company-indent-or-complete-common)
+          ))))
 
-;; https://github.com/xenodium/company-org-block
-;; https://xenodium.com/emacs-org-block-company-completion/
-(use-package company-org-block
-  :custom
-  (company-org-block-edit-style 'auto) ;; 'auto, 'prompt, or 'inline
-  :hook ((org-mode . (lambda ()
-                       (setq-local company-backends '(company-org-block))
-                       (company-mode +1)))))
+
+;; (defun company-mode-minibuffer-setup ()
+;;     "Setup company-mode in minibuffer."
+;;     (company-mode 1)
+;;     (setq-local company-tooltip-limit 4)
+;;     (setq-local company-tooltip-minimum 1))
+;;   (add-hook 'eval-expression-minibuffer-setup-hook 'company-mode-minibuffer-setup)
+
+  )
 
 ;; https://github.com/TommyX12/company-tabnine
-;; this requires run `M-x company-tabnine-install-binary' to install the TabNine binary for your system.
+;; this requires run `M-x company-tabnine-install-binary' to install the TabNine binary for your system
 (use-package company-tabnine
   :defer 1
   :custom
@@ -1873,12 +2137,12 @@ If all failed, try to complete the common part with `company-complete-common'"
   :custom
   ;; (company-box-doc-enable nil)
   ;; (company-box-backends-colors nil)
-  ;; (company-box-doc-delay 0.5)
-  (company-box-doc-delay 0)
+  (company-box-doc-delay 0.2)
+  ;; (company-box-doc-delay 0)
   ;; (company-box-doc-frame-parameters '((internal-border-width . 1)
-  ;;                                     (left-fringe . 3)
-  ;;                                     (right-fringe . 3)))
-  ;; :config
+  ;;                                     (left-fringe . -1)
+  ;;                                     (right-fringe . -1)))
+  :config
   ;; (with-no-warnings
   ;;   ;; Prettify icons
   ;;   (defun my-company-box-icons--elisp (candidate)
@@ -1911,7 +2175,8 @@ If all failed, try to complete the common part with `company-complete-common'"
   ;;       (company-box--update-scrollbar frame t)
   ;;       (set-face-background 'internal-border border-color frame)
   ;;       (when (facep 'child-frame-border)
-  ;;         (set-face-background 'child-frame-border border-color frame)))
+  ;;         (set-face-background 'child-frame-border border-color frame))
+  ;;       )
   ;;     (with-current-buffer (company-box--get-buffer)
   ;;       (company-box--maybe-move-number (or company-box--last-start 1))))
   ;;   (advice-add #'company-box--display :override #'my-company-box--display)
@@ -1981,8 +2246,8 @@ If all failed, try to complete the common part with `company-complete-common'"
   ;;             (setq frame (company-box-doc--make-frame doc))
   ;;             (frame-local-setq company-box-doc-frame frame))
   ;;           (set-face-background 'internal-border border-color frame)
-  ;;           (when (facep 'child-frame-border)
-  ;;             (set-face-background 'child-frame-border border-color frame))
+  ;;           ;; (when (facep 'child-frame-border)
+  ;;           ;;   (set-face-background 'child-frame-border border-color frame))
   ;;           (company-box-doc--set-frame-position frame)
 
   ;;           ;; Fix hr props. @see `lsp-ui-doc--fix-hr-props'
@@ -2037,114 +2302,171 @@ If all failed, try to complete the common part with `company-complete-common'"
   ;;                      (t y))))
   ;;       (set-frame-position frame (max x 0) (max y 0))
   ;;       (set-frame-size frame text-width text-height t)))
-  ;;   (advice-add #'company-box-doc--set-frame-position
-  ;;       :override #'my-company-box-doc--set-frame-position))
 
-  ;; (when (require 'all-the-icons nil t)
-  ;;   (declare-function all-the-icons-faicon 'all-the-icons)
-  ;;   (declare-function all-the-icons-material 'all-the-icons)
-  ;;   (declare-function all-the-icons-octicon 'all-the-icons)
-  ;;   (setq company-box-icons-all-the-icons
-  ;;         `((Unknown . ,(all-the-icons-material "find_in_page"
-  ;;                                               :height 1.0
-  ;;                                               :v-adjust -0.2))
-  ;;           (Text . ,(all-the-icons-faicon "text-width"
-  ;;                                          :height 1.0
-  ;;                                          :v-adjust -0.02))
-  ;;           (Method . ,(all-the-icons-faicon "cube"
-  ;;                                            :height 1.0
-  ;;                                            :v-adjust -0.02
-  ;;                                            :face 'all-the-icons-purple))
-  ;;           (Function . ,(all-the-icons-faicon "cube"
-  ;;                                              :height 1.0
-  ;;                                              :v-adjust -0.02
-  ;;                                              :face 'all-the-icons-purple))
-  ;;           (Constructor . ,(all-the-icons-faicon "cube"
-  ;;                                                 :height 1.0
-  ;;                                                 :v-adjust -0.02
-  ;;                                                 :face 'all-the-icons-purple))
-  ;;           (Field . ,(all-the-icons-octicon "tag"
-  ;;                                            :height 1.1
-  ;;                                            :v-adjust 0
-  ;;                                            :face 'all-the-icons-lblue))
-  ;;           (Variable . ,(all-the-icons-octicon "tag"
-  ;;                                               :height 1.1
-  ;;                                               :v-adjust 0
-  ;;                                               :face 'all-the-icons-lblue))
-  ;;           (Class . ,(all-the-icons-material "settings_input_component"
-  ;;                                             :height 1.0
-  ;;                                             :v-adjust -0.2
-  ;;                                             :face 'all-the-icons-orange))
-  ;;           (Interface . ,(all-the-icons-material "share"
-  ;;                                                 :height 1.0
-  ;;                                                 :v-adjust -0.2
-  ;;                                                 :face 'all-the-icons-lblue))
-  ;;           (Module . ,(all-the-icons-material "view_module"
-  ;;                                              :height 1.0
-  ;;                                              :v-adjust -0.2
-  ;;                                              :face 'all-the-icons-lblue))
-  ;;           (Property . ,(all-the-icons-faicon "wrench"
-  ;;                                              :height 1.0
-  ;;                                              :v-adjust -0.02))
-  ;;           (Unit . ,(all-the-icons-material "settings_system_daydream"
-  ;;                                            :height 1.0
-  ;;                                            :v-adjust -0.2))
-  ;;           (Value . ,(all-the-icons-material "format_align_right"
-  ;;                                             :height 1.0
-  ;;                                             :v-adjust -0.2
-  ;;                                             :face 'all-the-icons-lblue))
-  ;;           (Enum . ,(all-the-icons-material "storage"
-  ;;                                            :height 1.0
-  ;;                                            :v-adjust -0.2
-  ;;                                            :face 'all-the-icons-orange))
-  ;;           (Keyword . ,(all-the-icons-material "filter_center_focus"
-  ;;                                               :height 1.0
-  ;;                                               :v-adjust -0.2))
-  ;;           (Snippet . ,(all-the-icons-material "format_align_center"
-  ;;                                               :height 1.0
-  ;;                                               :v-adjust -0.2))
-  ;;           (Color . ,(all-the-icons-material "palette"
-  ;;                                             :height 1.0
-  ;;                                             :v-adjust -0.2))
-  ;;           (File . ,(all-the-icons-faicon "file-o"
-  ;;                                          :height 1.0
-  ;;                                          :v-adjust -0.02))
-  ;;           (Reference . ,(all-the-icons-material "collections_bookmark"
-  ;;                                                 :height 1.0
-  ;;                                                 :v-adjust -0.2))
-  ;;           (Folder . ,(all-the-icons-faicon "folder-open"
-  ;;                                            :height 1.0
-  ;;                                            :v-adjust -0.02))
-  ;;           (EnumMember . ,(all-the-icons-material "format_align_right"
-  ;;                                                  :height 1.0
-  ;;                                                  :v-adjust -0.2))
-  ;;           (Constant . ,(all-the-icons-faicon "square-o"
-  ;;                                              :height 1.0
-  ;;                                              :v-adjust -0.1))
-  ;;           (Struct . ,(all-the-icons-material "settings_input_component"
-  ;;                                              :height 1.0
-  ;;                                              :v-adjust -0.2
-  ;;                                              :face 'all-the-icons-orange))
-  ;;           (Event . ,(all-the-icons-octicon "zap"
-  ;;                                            :height 1.0
-  ;;                                            :v-adjust 0
-  ;;                                            :face 'all-the-icons-orange))
-  ;;           (Operator . ,(all-the-icons-material "control_point"
-  ;;                                                :height 1.0
-  ;;                                                :v-adjust -0.2))
-  ;;           (TypeParameter . ,(all-the-icons-faicon "arrows"
-  ;;                                                   :height 1.0
-  ;;                                                   :v-adjust -0.02))
-  ;;           (Template . ,(all-the-icons-material "format_align_left"
-  ;;                                                :height 1.0
-  ;;                                                :v-adjust -0.2)))
-  ;;         company-box-icons-alist 'company-box-icons-all-the-icons))
+  ;;   ;; (advice-add #'company-box-doc--set-frame-position
+  ;;   ;;     :override #'my-company-box-doc--set-frame-position)
+  ;;   )
+
+  (when (require 'all-the-icons nil t)
+    (declare-function all-the-icons-faicon 'all-the-icons)
+    (declare-function all-the-icons-material 'all-the-icons)
+    (declare-function all-the-icons-octicon 'all-the-icons)
+    (setq company-box-icons-all-the-icons
+          `((Unknown . ,(all-the-icons-material "find_in_page"
+                                                :height 1.0
+                                                :v-adjust -0.2))
+            (Text . ,(all-the-icons-faicon "text-width"
+                                           :height 1.0
+                                           :v-adjust -0.02))
+            (Method . ,(all-the-icons-faicon "cube"
+                                             :height 1.0
+                                             :v-adjust -0.02
+                                             :face 'all-the-icons-purple))
+            (Function . ,(all-the-icons-faicon "cube"
+                                               :height 1.0
+                                               :v-adjust -0.02
+                                               :face 'all-the-icons-purple))
+            (Constructor . ,(all-the-icons-faicon "cube"
+                                                  :height 1.0
+                                                  :v-adjust -0.02
+                                                  :face 'all-the-icons-purple))
+            (Field . ,(all-the-icons-octicon "tag"
+                                             :height 1.1
+                                             :v-adjust 0
+                                             :face 'all-the-icons-lblue))
+            (Variable . ,(all-the-icons-octicon "tag"
+                                                :height 1.1
+                                                :v-adjust 0
+                                                :face 'all-the-icons-lblue))
+            (Class . ,(all-the-icons-material "settings_input_component"
+                                              :height 1.0
+                                              :v-adjust -0.2
+                                              :face 'all-the-icons-orange))
+            (Interface . ,(all-the-icons-material "share"
+                                                  :height 1.0
+                                                  :v-adjust -0.2
+                                                  :face 'all-the-icons-lblue))
+            (Module . ,(all-the-icons-material "view_module"
+                                               :height 1.0
+                                               :v-adjust -0.2
+                                               :face 'all-the-icons-lblue))
+            (Property . ,(all-the-icons-faicon "wrench"
+                                               :height 1.0
+                                               :v-adjust -0.02))
+            (Unit . ,(all-the-icons-material "settings_system_daydream"
+                                             :height 1.0
+                                             :v-adjust -0.2))
+            (Value . ,(all-the-icons-material "format_align_right"
+                                              :height 1.0
+                                              :v-adjust -0.2
+                                              :face 'all-the-icons-lblue))
+            (Enum . ,(all-the-icons-material "storage"
+                                             :height 1.0
+                                             :v-adjust -0.2
+                                             :face 'all-the-icons-orange))
+            (Keyword . ,(all-the-icons-material "filter_center_focus"
+                                                :height 1.0
+                                                :v-adjust -0.2))
+            (Snippet . ,(all-the-icons-material "format_align_center"
+                                                :height 1.0
+                                                :v-adjust -0.2))
+            (Color . ,(all-the-icons-material "palette"
+                                              :height 1.0
+                                              :v-adjust -0.2))
+            (File . ,(all-the-icons-faicon "file-o"
+                                           :height 1.0
+                                           :v-adjust -0.02))
+            (Reference . ,(all-the-icons-material "collections_bookmark"
+                                                  :height 1.0
+                                                  :v-adjust -0.2))
+            (Folder . ,(all-the-icons-faicon "folder-open"
+                                             :height 1.0
+                                             :v-adjust -0.02))
+            (EnumMember . ,(all-the-icons-material "format_align_right"
+                                                   :height 1.0
+                                                   :v-adjust -0.2))
+            (Constant . ,(all-the-icons-faicon "square-o"
+                                               :height 1.0
+                                               :v-adjust -0.1))
+            (Struct . ,(all-the-icons-material "settings_input_component"
+                                               :height 1.0
+                                               :v-adjust -0.2
+                                               :face 'all-the-icons-orange))
+            (Event . ,(all-the-icons-octicon "zap"
+                                             :height 1.0
+                                             :v-adjust 0
+                                             :face 'all-the-icons-orange))
+            (Operator . ,(all-the-icons-material "control_point"
+                                                 :height 1.0
+                                                 :v-adjust -0.2))
+            (TypeParameter . ,(all-the-icons-faicon "arrows"
+                                                    :height 1.0
+                                                    :v-adjust -0.02))
+            (Template . ,(all-the-icons-material "format_align_left"
+                                                 :height 1.0
+                                                 :v-adjust -0.2)))
+          company-box-icons-alist 'company-box-icons-all-the-icons))
   )
 
+;; (use-package corfu
+;;   ;; Optional customizations
+;;   :custom
+;;   ;; (corfu-cycle t)                ;; Enable cycling for `corfu-next/previous'
+;;   ;; (corfu-auto t)                 ;; Enable auto completion
+;;   ;; (corfu-commit-predicate nil)   ;; Do not commit selected candidates on next input
+;;   (corfu-quit-at-boundary nil)     ;; Automatically quit at word boundary
+;;   ;; (corfu-quit-no-match t)        ;; Automatically quit if there is no match
+;;   ;; (corfu-echo-documentation nil) ;; Do not show documentation in the echo are
+
+;;   ;; Optionally use TAB for cycling, default is `corfu-complete'.
+;;   :bind (:map corfu-map
+;;          ("M-n" . nil)
+;;          ("M-p" . nil)
+;;          ("C-n" . corfu-next)
+;;          ("C-p" . corfu-previous)
+;;          ;; ("TAB" . corfu-next)
+;;          ;; ([tab] . corfu-next)
+;;          ;; ("S-TAB" . corfu-previous)
+;;          ;; ([backtab] . corfu-previous)
+;;          :map evil-insert-state-map
+;;          ("C-n" . nil)
+;;          ("C-p" . nil)
+;;          )
+
+;;   ;; You may want to enable Corfu only for certain modes.
+;;   ;; :hook ((prog-mode . corfu-mode)
+;;   ;;        (shell-mode . corfu-mode)
+;;   ;;        (eshell-mode . corfu-mode))
+
+;;   ;; Recommended: Enable Corfu globally.
+;;   ;; This is recommended since dabbrev can be used globally (M-/).
+;;   ;; :init
+;;   (corfu-global-mode)
+;;   )
+
+;; ;; Optionally use the `orderless' completion style. See `+orderless-dispatch'
+;; ;; in the Consult wiki for an advanced Orderless style dispatcher.
+;; ;; Enable `partial-completion' for files to allow path expansion.
+;; ;; You may prefer to use `initials' instead of `partial-completion'.
+;; (use-package orderless
+;;   :init
+;;   ;; Configure a custom style dispatcher (see the Consult wiki)
+;;   ;; (setq orderless-style-dispatchers '(+orderless-dispatch)
+;;   ;;       orderless-component-separator #'orderless-escapable-split-on-space)
+;;   (setq completion-styles '(orderless)
+;;         completion-category-defaults nil
+;;         completion-category-overrides '((file (styles . (partial-completion))))))
+
+;; ;; Dabbrev works with Corfu
+;; (use-package dabbrev
+;;   :disabled
+;;   ;; Swap M-/ and C-M-/
+;;   :bind (("M-/" . dabbrev-completion)
+;;          ("C-M-/" . dabbrev-expand)))
 
 
 
-;; https://github.com/raxod502/apheleia
+ ;; https://github.com/raxod502/apheleia
 ;; auto code formatter
 (use-package apheleia
   :disabled
@@ -2207,7 +2529,7 @@ If all failed, try to complete the common part with `company-complete-common'"
 
 (use-package smartparens)
 
-;; ;; https://github.com/expez/evil-smartparens
+;; https://github.com/expez/evil-smartparens
 (use-package evil-smartparens
   :hook (smartparens-enabled-hook . evil-smartparens-mode)
   :config
@@ -2223,6 +2545,7 @@ If all failed, try to complete the common part with `company-complete-common'"
 
 ;; set background color to string's color
 (use-package rainbow-mode
+  :diminish
   :defer t
   :hook (org-mode
          help-mode
@@ -2277,12 +2600,12 @@ If all failed, try to complete the common part with `company-complete-common'"
                                  ("#+TITLE: " . "☰")
                                  ("#+RESULTS:" . "")
                                  ("#+TAG:" . "")
-                                 ("#+NAME:" . "")
+                                 ;; ("#+NAME:" . " ")
                                  ("#+ROAM_TAGS:" . "")
                                  ("#+FILETAGS:" . "")
                                  ("#+HTML_HEAD:" . "")
                                  ("#+SUBTITLE:" . "")
-                                 ("#+AUTHOR:" . "")
+                                 ("#+AUTHOR:" . " ")
                                  ("SCHEDULED:" . "")
                                  ("DEADLINE:" . "")
                                  (":Effort:" . ""))))
@@ -2323,7 +2646,7 @@ If all failed, try to complete the common part with `company-complete-common'"
   (org-odd-levels-only)               ; odd levels only
   ;; (org-indent-indentation-per-level 2)  ;
   ;; (org-hide-leading-stars t)            ; hide the stars.
-  (org-ellipsis "⋱")                    ; change ellipsis shape.
+  ;; (org-ellipsis "⋱")                    ; change ellipsis shape.
   (org-src-fontify-natively t)
   (org-fontify-quote-and-verse-blocks t)
   (org-src-tab-acts-natively t)
@@ -2368,19 +2691,19 @@ If all failed, try to complete the common part with `company-complete-common'"
   :custom-face
   (fixed-pitch ((t (:family "JetBrains Mono"))))
   (variable-pitch ((t (:family "D2Coding"))))
-  (org-level-1 ((t (:height 1.75))))
-  (org-level-2 ((t (:height 1.50))))
-  (org-level-3 ((t (:height 1.25))))
-  (org-level-4 ((t (:height 1.00))))    ; ivy-org inherit this.
-  (org-level-5 ((t (:height 1.00))))
-  (org-level-6 ((t (:height 1.00))))
-  (org-level-7 ((t (:height 1.00))))
-  (org-level-8 ((t (:height 1.00))))
+  ;; (org-level-1 ((t (:height 1.40))))
+  ;; (org-level-2 ((t (:height 1.25))))
+  ;; (org-level-3 ((t (:height 1.15))))
+  ;; (org-level-4 ((t (:height 1.00))))    ; ivy-org inherit this.
+  ;; (org-level-5 ((t (:height 1.00))))
+  ;; (org-level-6 ((t (:height 1.00))))
+  ;; (org-level-7 ((t (:height 1.00))))
+  ;; (org-level-8 ((t (:height 1.00))))
   ;; (org-ellipsis
   ;;  ((t (:foreground ""))))
-  (org-document-title
-   ((t (:height 1.1
-        :weight bold))))
+  ;; (org-document-title
+  ;;  ((t (:height 1.50
+  ;;       :weight bold))))
   ;; (org-done
   ;;  ((t (
   ;;       :foreground "PaleGreen"
@@ -2388,18 +2711,19 @@ If all failed, try to complete the common part with `company-complete-common'"
   ;; (org-headline-done
   ;;  ((t ())))
   ;; Ensure that anything that should be fixed-pitch in Org files appears that way
+
   ;; [ ] [X]
-  (org-checkbox
-   ((t (:inherit (fixed-pitch font-lock-keyword-face)))))
-  (org-checkbox-done-text
-   ((t (:inherit (org-done shadow)))))
-  (org-checkbox-statistics-done
-   ((t (:inherit (org-done shadow)))))
+  ;; (org-checkbox
+  ;;  ((t (:inherit (fixed-pitch font-lock-keyword-face)))))
+  ;; (org-checkbox-done-text
+  ;;  ((t (:inherit (org-done shadow)))))
+  ;; (org-checkbox-statistics-done
+  ;;  ((t (:inherit (org-done shadow)))))
 
   ;; (org-indent
   ;;  ((t (:inherit (org-hide fixed-pitch)))))
   ;; (org-code                             ; ~code~
-  ;;  ((t (:inherit (shadow fixed-pitch)))))
+  ;;  ((t (:inherit (font-lock-builtin-face fixed-pitch)))))
   ;; (org-block
   ;;  ((t (;; :foreground nil
   ;;       :inherit fixed-pitch))))
@@ -2415,9 +2739,9 @@ If all failed, try to complete the common part with `company-complete-common'"
   ;;  ((t (:inherit (shadow fixed-pitch)))))
   ;; (org-special-keyword
   ;;  ((t (:inherit (font-lock-comment-face fixed-pitch)))))
-  (org-meta-line                        ; #+RESULTS 같은 것들
-   ((t (:extend t
-        :inherit (font-lock-comment-face fixed-pitch)))))
+  ;; (org-meta-line                        ; #+RESULTS 같은 것들
+  ;;  ((t (:extend t
+  ;;       :inherit (font-lock-comment-face fixed-pitch)))))
   ;; Get rid of the background on column views
   ;; (org-column
   ;;  ((t (:background nil))))
@@ -2425,8 +2749,8 @@ If all failed, try to complete the common part with `company-complete-common'"
   ;;  ((t (:background nil))))
   ;; (org-date                             ; 날짜
   ;;  ((t ())))
-  (org-list-dt
-   ((t (:inherit (font-lock-constant-face)))))
+  ;; (org-list-dt
+  ;;  ((t (:inherit (font-lock-constant-face)))))
 
 
 
@@ -2445,19 +2769,115 @@ If all failed, try to complete the common part with `company-complete-common'"
 
   ;; https://github.com/jakebox/org-preview-html
   ;; (use-package org-preview-html)
+  ;; changed function ::
+  ;; https://github.com/alphapapa/org-sticky-header
+  ;; (defun org-sticky-header--fetch-stickyline ()
+  ;;   "Return string of Org heading or outline path for display in header line."
+  ;;   (org-with-wide-buffer
+  ;;    (goto-char (window-start))
+  ;;    (if (org-before-first-heading-p)
+  ;;        ""
+  ;;      (progn
+  ;;        ;; No non-header lines above top displayed header
+  ;;        (when (or org-sticky-header-always-show-header
+  ;;                  (not (org-at-heading-p)))
+  ;;          ;; Header should be shown
+  ;;          (when (fboundp 'org-inlinetask-in-task-p)
+  ;;            ;; Skip inline tasks
+  ;;            (while (and (org-back-to-heading)
+  ;;                        (org-inlinetask-in-task-p))
+  ;;              (forward-line -1)))
+  ;;          (propertize
+  ;;           (string-trim
+  ;;            (pcase org-sticky-header-full-path
+  ;;              ((pred null)
+  ;;               (concat (org-sticky-header--get-prefix)
+  ;;                       (org-sticky-header--heading-string)))
+  ;;              ('full
+  ;;               (concat (org-sticky-header--get-prefix)
+  ;;                       (mapconcat 'identity
+  ;;                                  (nreverse
+  ;;                                   (save-excursion
+  ;;                                     (cl-loop collect (org-sticky-header--heading-string)
+  ;;                                              while (org-up-heading-safe))))
+  ;;                                  org-sticky-header-outline-path-separator)))
+  ;;              ('reversed
+  ;;               (let ((s (concat
+  ;;                         (org-sticky-header--get-prefix)
+  ;;                         (mapconcat 'identity
+  ;;                                    (save-excursion
+  ;;                                      (cl-loop collect (org-sticky-header--heading-string)
+  ;;                                               while (org-up-heading-safe)))
+  ;;                                    org-sticky-header-outline-path-reversed-separator))))
+  ;;                 (if (> (string-width s) (window-width))
+  ;;                     (concat (substring s 0 (- (window-width) 2))
+  ;;                             "..")
+  ;;                   s)))
+  ;;              (t "")))
+  ;;           'face '()))))))
+  (use-package org-sticky-header
+    :custom
+    (org-sticky-header-full-path 'full)
+    (org-sticky-header-show-keyword nil) ; about to-do keyword.
+    :hook (org-mode . org-sticky-header-mode))
+
+
 
   (use-package org-src
     :ensure nil
     :straight nil
     :custom
     (org-src-window-setup 'split-window-below) ; show edit buffer below current buffer
-    :init/el-patch
+    ;; :init/el-patch
+    :config/el-patch
     (defvar org-src-mode-map
       (let ((map (make-sparse-keymap)))
-        (define-key map (el-patch-swap "\C-c'"		[?\s-s]) 'org-edit-src-exit)
-        (define-key map (el-patch-swap "\C-c\C-k"	[?\s-k]) 'org-edit-src-abort)
-        (define-key map (el-patch-swap "\C-x\C-s"	"\C-x\C-s") 'org-edit-src-save)
+        (define-key map (el-patch-swap "\C-c'" [?\s-s]) 'org-edit-src-exit)
+        (define-key map (el-patch-swap "\C-c\C-k" [?\s-k]) 'org-edit-src-abort)
+        (define-key map (el-patch-swap "\C-x\C-s" "\C-x\C-s") 'org-edit-src-save)
         map)))
+
+  ;; https://www.reddit.com/r/emacs/comments/ouh44f/company_completion_for_org_links/
+  (defun org-link-complete-at-point ()
+    "`completion-at-point' function for att: and file: org links."
+    (let ((end (point))
+          (start (point))
+          (exit-fn (lambda (&rest _) nil))
+          collection)
+      (when (looking-back "\\(att\\|attachment\\|file\\):\\(.*\\)" (line-beginning-position))
+        (setq start (match-beginning 2)
+              end (point))
+        (setq collection (pcase (cons (match-string 1) (match-string 2))
+                           (`(,(rx "att" (zero-or-more (any))) . ,val)
+                            (->> (org-attach-dir-get-create)
+                                 (directory-files)
+                                 (cl-remove-if (lambda (file)
+                                                 (pcase file
+                                                   ((or "." "..") t)
+                                                   (_ nil))))))
+                           (`(,(rx "file") . ,val)
+                            (company-files--complete (expand-file-name (or val "~"))))
+                           (_ '()))))
+      (when collection
+        (let ((prefix (buffer-substring-no-properties start end)))
+          (list start end collection
+                :exit-function exit-fn)))))
+
+  ;; https://github.com/xenodium/company-org-block
+  ;; https://xenodium.com/emacs-org-block-company-completion/
+  (use-package company-org-block
+    :after (org company)
+    :custom
+    (company-org-block-edit-style 'auto) ;; 'auto, 'prompt, or 'inline
+    :hook ((org-mode . (lambda ()
+                         (setq-local company-backends '(company-org-block))
+                         (company-mode 1))))
+    :config
+    ;; set original buffer normal state, and when org edit exit, move cursor outside of src block.
+    (advice-add 'org-edit-src-code :before #'evil-force-normal-state)
+    (advice-add 'org-edit-src-code :after #'evil-insert-state)
+    (advice-add 'org-edit-src-exit :after #'(lambda (&rest args) (evil-org-forward-sentence))))
+
 
   ;; https://seorenn.tistory.com/65
   ;; add external image link support.
@@ -2501,8 +2921,9 @@ If all failed, try to complete the common part with `company-complete-common'"
     (setq org-format-latex-options (plist-put org-format-latex-options :scale 2.0)) ; latex preview size
     )
 
-;; https://github.com/dandavison/xenops
+  ;; https://github.com/dandavison/xenops
   (use-package xenops
+    :disabled
     :hook ((LaTeX-mode latex-mode) . xenops-mode)
     ;; :custom
     ;; (xenops-reveal-on-entry t)          ; replace org-fragtog
@@ -2517,38 +2938,38 @@ If all failed, try to complete the common part with `company-complete-common'"
     :hook (org-mode . org-fragtog-mode))
 
 
-;; https://github.com/astahlman/ob-async
+  ;; https://github.com/astahlman/ob-async
   ;; async execution of org-babel block.
   ;; simply add `:async' keyword to header.
   ;; and invoke `ob-async-org-babel-execute-src-block'
   (use-package ob-async)
 
-;; https://xenodium.com/emacs-chaining-org-babel-blocks/
+  ;; https://xenodium.com/emacs-chaining-org-babel-blocks/
   ;; chaining org babel blocks.
   ;; first `#+name:' to add name.
   ;; and next block, add `:include' first name.
-(defun adviced:org-babel-execute-src-block (&optional orig-fun arg info params)
-  (let ((body (nth 1 info))
-        (include (assoc :include (nth 2 info)))
-        (named-blocks (org-element-map (org-element-parse-buffer)
-                          'src-block (lambda (item)
-                                       (when (org-element-property :name item)
-                                         (cons (org-element-property :name item)
-                                               item))))))
-    (while include
-      (unless (cdr include)
-        (user-error ":include without value" (cdr include)))
-      (unless (assoc (cdr include) named-blocks)
-        (user-error "source block \"%s\" not found" (cdr include)))
-      (setq body (concat (org-element-property :value (cdr (assoc (cdr include) named-blocks)))
-                         body))
-      (setf (nth 1 info) body)
-      (setq include (assoc :include
-                           (org-babel-parse-header-arguments
-                            (org-element-property :parameters (cdr (assoc (cdr include) named-blocks)))))))
-    (funcall orig-fun arg info params)))
+  (defun adviced:org-babel-execute-src-block (&optional orig-fun arg info params)
+    (let ((body (nth 1 info))
+          (include (assoc :include (nth 2 info)))
+          (named-blocks (org-element-map (org-element-parse-buffer)
+                            'src-block (lambda (item)
+                                         (when (org-element-property :name item)
+                                           (cons (org-element-property :name item)
+                                                 item))))))
+      (while include
+        (unless (cdr include)
+          (user-error ":include without value" (cdr include)))
+        (unless (assoc (cdr include) named-blocks)
+          (user-error "source block \"%s\" not found" (cdr include)))
+        (setq body (concat (org-element-property :value (cdr (assoc (cdr include) named-blocks)))
+                           body))
+        (setf (nth 1 info) body)
+        (setq include (assoc :include
+                        (org-babel-parse-header-arguments
+                         (org-element-property :parameters (cdr (assoc (cdr include) named-blocks)))))))
+      (funcall orig-fun arg info params)))
 
-(advice-add 'org-babel-execute-src-block :around 'adviced:org-babel-execute-src-block)
+  (advice-add 'org-babel-execute-src-block :around 'adviced:org-babel-execute-src-block)
 
   ;; change emphasis syntax -- acn use without space.
   ;; this changes all regex behavior, and contains bug. (ex: *A*bc *D*efg*H*ij klmn)
@@ -2584,15 +3005,13 @@ If all failed, try to complete the common part with `company-complete-common'"
    'append)
 
 
-  (setq org-modules
-        '(org-crypt
-          org-habit
-          org-bookmark
-          org-eshell
-          ;; org-irc
-          ))
-
-
+  ;; (setq org-modules
+  ;;       '(org-crypt
+  ;;         org-habit
+  ;;         org-bookmark
+  ;;         org-eshell
+  ;;         org-irc
+  ;;         ))
 
   (push '("conf-unix" . conf-unix) org-src-lang-modes)
 
@@ -2605,25 +3024,53 @@ If all failed, try to complete the common part with `company-complete-common'"
     :custom
     (org-auto-expand-nodes 'heading))
 
+  ;; https://github.com/tonyaldon/org-bars
+  ;; vertical outline indentation.
+  (use-package org-bars
+    :straight (org-bars
+               :type git
+               :host github
+               :repo "tonyaldon/org-bars")
+    :if (not is-termux)
+    :hook (org-mode . org-bars-mode)
+    ;; :custom
+    ;; (org-bars-extra-pixels-height 7)
+    ;; :custom-face
+    ;; (org-bars-star-empty ((t (:weight bold))))
+    ;; (org-bars-star-invisible ((t (:weight bold))))
+    ;; (org-bars-star-visible ((t (:weight bold))))
+    :config
+    ;; (setq org-bars-stars '(:empty ?⊙
+    ;;                        :invisible ?⊕
+    ;;                        :visible ?⊝))
+    (setq org-bars-stars '(:empty "-"
+                           :invisible "+"
+                           :visible "=")))
 
-
-
+  (defun org-no-ellipsis-in-headlines ()
+    "Remove use of ellipsis in headlines.
+See `buffer-invisibility-spec'."
+    (remove-from-invisibility-spec '(outline . t))
+    (add-to-invisibility-spec 'outline))
+  (add-hook 'org-mode-hook 'org-no-ellipsis-in-headlines)
 
   ;; https://github.com/integral-dw/org-superstar-mode
   (use-package org-superstar
+    ;; :disabled
     :if (not is-termux)
-    :after org
+    ;; :after org
     :hook (org-mode . org-superstar-mode)
     :custom
     (org-superstar-prettify-item-bullets t)
     (org-superstar-item-bullet-alist '((?* . ?•)
-                                       ;; (?+ . ?➤)
                                        (?+ . ?‣)
                                        (?- . ?•)))
-    (org-superstar-remove-leading-stars t)
+    (org-superstar-headline-bullets-list nil)
+    ;; (org-superstar-remove-leading-stars t)
     ;; (org-superstar-headline-bullets-list '("◉" "○" "●" "○" "●" "○" "●")))
     ;; (org-superstar-headline-bullets-list '("◉" "☯" "○" "☯" "✸" "☯" "✿" "☯" "✜" "☯" "◆" "☯" "▶")))
-    (org-superstar-headline-bullets-list '("◉" "●" "○" "◆" "▶")))
+    ;; (org-superstar-headline-bullets-list '("◉" "●" "○" "◆" "▶"))
+    (org-bars-mode))
 
   ;; Make sure org-indent face is available
   ;; (require 'org-indent)
@@ -2663,7 +3110,7 @@ If all failed, try to complete the common part with `company-complete-common'"
 
 
   ;; https://github.com/Somelauw/evil-org-mode
-  (use-package evil-org
+  (use-package evil-org-mode
     :after org
     :hook ((org-mode . evil-org-mode)
            (org-agenda-mode . evil-org-mode)
@@ -2828,6 +3275,7 @@ prompted for."
 
 
 (use-package vterm
+  :commands vterm
   :defer)
 
 (use-package comint
@@ -2883,6 +3331,12 @@ output instead."
 ;; ---------------------------
 ;; Custom functions
 ;; ---------------------------
+
+;; https://emacs.stackexchange.com/questions/24657/unadvise-a-function-remove-all-advice-from-it
+(defun advice-unadvice (sym)
+  "Remove all advices from symbol SYM."
+  (interactive "aFunction symbol: ")
+  (advice-mapc (lambda (advice _props) (advice-remove sym advice)) sym))
 
 
 (defun my/org-edit-this ()
@@ -3117,6 +3571,18 @@ or go back to just one window (by deleting all but the selected window)."
           (with-selected-window window
             (goto-char (point-max))))))))
 
+;; https://www.reddit.com/r/emacs/comments/qgxz43/allow_use_of_to_repeat_emacs_command_aliased_as/
+(defun my-enlarge-window ()
+  "Enlarge window horizontally or vertically"
+  (interactive)
+  (let ((echo-keystrokes nil))
+    (message "Enlarge window: [h]orizontally [v]ertically [q]uit")
+    (set-transient-map
+     (let ((map (make-sparse-keymap)))
+       (define-key map (kbd "h") #'enlarge-window-horizontally)
+       (define-key map (kbd "v") (lambda (delta) (interactive "p") (enlarge-window delta)))
+       map)
+     t)))
 
 
 
@@ -3125,6 +3591,10 @@ or go back to just one window (by deleting all but the selected window)."
 ;; ---------------------------
 
 (general-unbind 'global
+  "s-z"
+  "s-Z"
+  "s-f"
+  "s-F"
   "s-p"
   "s-h"
   "s-t"
@@ -3132,7 +3602,9 @@ or go back to just one window (by deleting all but the selected window)."
   "s-j"
   "s-g"
   "M-s-h"
+  "M-s-f"
   "M-<down-mouse-1>")
+
 
 
 
@@ -3142,15 +3614,17 @@ or go back to just one window (by deleting all but the selected window)."
  ;; "s-w" 'delete-window
  ;; "s-W" 'delete-other-window
  ;; undo, redo
- ;; "s-z" 'undo-tree-undo
- ;; "s-Z" 'undo-tree-redo
+ "s-z" 'undo-tree-undo
+ "s-Z" 'undo-tree-redo
  "C-M-u" 'universal-argument            ; C-u is now evil-scroll-up
  ;; "s-?" 'evilnc-copy-and-comment-lines
  ;; "s-/" 'evilnc-comment-or-uncomment-lines
  "<f17>" 'toggle-input-method
  "M-y" 'insert-last-message
  "s-b" 'treemacs
- "C-SPC" 'completion-at-point
+ ;; "C-SPC" 'completion-at-point
+ "C-SPC" 'company-complete-common
+ ;; "C-SPC" 'corfu-complete
  ;; "s-o" 'find-file
  ;; "s-o" 'counsel-switch-buffer
  "s-o" 'ivy-switch-buffer
@@ -3169,14 +3643,26 @@ or go back to just one window (by deleting all but the selected window)."
  "M-<mouse-1>" 'evil-mc-toggle-cursor-on-click
  "M-s-j" '(evil-mc-make-cursor-move-next-line :which-key "make cursor & go down")
  "M-s-k" '(evil-mc-make-cursor-move-prev-line :which-key "make cursor & go up")
- "M-s-h" '(evil-mc-skip-and-goto-prev-cursor :which-key "prev cursor")
- "M-s-l" '(evil-mc-skip-and-goto-next-cursor :which-key "next cursor")
- "M-s-q" '(evil-mc-undo-all-cursors :which-key "quit multicursor")
- "M-s-m" '(evil-mc-toggle-frozen :which-key "pause/resume cursor")
  "M-s-i" '(evil-mc-toggle-cursor-here :which-key "toggle cursor here")
- "M-s-u" '(evil-mc-undo-last-added-cursor :which-key "undo cursor")
  "M-s-n" '(evil-mc-skip-and-goto-next-match :which-key "next match")
  "M-s-p" '(evil-mc-skip-and-goto-prev-match :which-key "prev match")
+ "M-s-q" '(evil-mc-undo-all-cursors :which-key "quit multicursor")
+ "M-s-h" '(evil-mc-skip-and-goto-prev-cursor :which-key "prev cursor")
+ "M-s-l" '(evil-mc-skip-and-goto-next-cursor :which-key "next cursor")
+ "M-s-0" 'kak-insert-index
+ "M-s-u" '(evil-mc-undo-last-added-cursor :which-key "undo cursor")
+ "M-s-m" '(evil-mc-toggle-frozen :which-key "pause/resume cursor")
+ )
+
+(general-define-key
+ :states 'visual
+  "u" nil
+ ;; :keymaps 'evil-mc-key-map
+ "s-f" '(lambda (beg end) (interactive "r") (kak-select beg end nil))
+ "s-F" '(lambda (beg end) (interactive "r") (kak-select beg end t))
+ "M-s-t" 'kak-split-lines
+ "M-s-f" '(lambda () (interactive) (kak-filter t))
+ "M-s-F" '(lambda () (interactive) (kak-filter nil))
  )
 
 (general-define-key
@@ -3184,6 +3670,10 @@ or go back to just one window (by deleting all but the selected window)."
  :keymaps 'repl-mode
  "C-n")
 
+(general-define-key
+ :states '(visual)
+  "v" 'er/expand-region
+  )
 
 ;; (unless is-termux
 ;;   (general-unbind '(normal motion)
@@ -3214,50 +3704,52 @@ or go back to just one window (by deleting all but the selected window)."
   "s-D" 'evil-mc-make-and-goto-prev-match
   )
 
-(push '((multiedit-insert . evil-multiedit-insert-state-map)
-        (multiedit . evil-multiedit-state-map)) general-keymap-aliases)
+;; (push '((multiedit-insert . evil-multiedit-insert-state-map)
+;;         (multiedit . evil-multiedit-state-map)) general-keymap-aliases)
 
-(general-define-key
- :states '(multiedit motion)
- "RET" 'evil-multiedit-toggle-or-restrict-region)
+;; (general-define-key
+;;  :states '(multiedit motion)
+;;  "RET" 'evil-multiedit-toggle-or-restrict-region)
 
-(general-define-key
- :states '(multiedit multiedit-insert)
- "C-n" 'evil-multiedit-next
- "C-p" 'evil-multiedit-prev)
-
-
+;; (general-define-key
+;;  :states '(multiedit multiedit-insert)
+;;  "C-n" 'evil-multiedit-next
+;;  "C-p" 'evil-multiedit-prev)
 
 
 
 
-;; ESCAPERS--
-(general-define-key
- :states '(motion)
- :keymaps '(undo-tree-visualizer-mode-map)
- "<escape>" 'undo-tree-visualizer-quit)
 
-(general-define-key
- :states '(normal)
- :keymaps '(help-mode-map helpful-mode-map)
- "<escape>" 'kill-current-buffer)
 
-(general-define-key
- :states '(normal)
- :keymaps 'debugger-mode-map
- "<escape>" 'top-level)
+;; ESCAPERS-- use evil-escape.
+;; (general-define-key
+;;  :states '(motion)
+;;  :keymaps '(undo-tree-visualizer-mode-map)
+;;   "<escape>" 'undo-tree-visualizer-quit
+;;   "t" 'undo-tree-visualizer-toggle-timestamps
+;;   )
+
+;; (general-define-key
+;;  :states '(normal)
+;;  :keymaps '(help-mode-map helpful-mode-map)
+;;  "<escape>" 'kill-current-buffer)
+
+;; (general-define-key
+;;  :states '(normal)
+;;  :keymaps 'debugger-mode-map
+;;  "<escape>" 'top-level)
 ;; --ESCAPERS
 ;; (general-define-key
 ;;  ;; :keymaps '(help-mode-map helpful-mode-map backtrace-mode-map custom-mode-map diff-minor-mode-map )
 ;;   :keymaps 'override
 ;;  "SPC" nil)
 
-(general-create-definer spc-leader
-  :keymaps 'override
-  ;; :keymaps '(normal insert visual emacs motion)
-  ;; :global-prefix "C-SPC"
-  :global-prefix "M-SPC"
-  :prefix "SPC")
+;; (general-create-definer spc-leader
+;;   :keymaps 'override
+;;   ;; :keymaps '(normal insert visual emacs motion)
+;;   ;; :global-prefix "C-SPC"
+;;   :global-prefix "M-SPC"
+;;   :prefix "SPC")
 
 
 (spc-leader
@@ -3286,7 +3778,7 @@ or go back to just one window (by deleting all but the selected window)."
   "t" 'evil-avy-goto-char-timer
 
   ;; expand region
-  "v" 'er/expand-region
+  ;; "v" 'er/expand-region
 )
 
 (spc-leader
@@ -3312,7 +3804,7 @@ or go back to just one window (by deleting all but the selected window)."
     "p TAB" 'persp-switch
 
     "px" '(:ignore t :which-key "perspective")
-    ;; ;; "pxA" 'persp-set-buffer
+    ;; "pxA" 'persp-set-buffer
     "pxa" 'persp-add-buffer
     ;; "pxd" 'persp-kill
     "pxr" 'persp-rename
@@ -3374,6 +3866,16 @@ or go back to just one window (by deleting all but the selected window)."
   "lX" 'lsp-execute-code-action)
 
 
+(spc-leader
+ :states '(normal visual)
+ "`" (general-key-dispatch 'dogears-go
+       :timeout 0.5
+       "n" 'dogears-forward
+       "p" 'dogears-back
+       "`" 'dogears-sidebar))
+
+
+
 ;; org-mode
 (spc-leader
   :states '(normal insert visual emacs motion)
@@ -3433,7 +3935,7 @@ or go back to just one window (by deleting all but the selected window)."
   :global-prefix "M-SPC e")
 
 (spc-e
-  :states 'normal
+  :states '(normal visual)
   ;; :which-key "eval"
   ;; :keymaps
   "" '(nil :which-key "eval")
@@ -3445,13 +3947,12 @@ or go back to just one window (by deleting all but the selected window)."
   :keymaps '(visual)
   ;; :which-key "eval"
   "r" '(eval-region :which-key "eval region")
-  "n" 'edit-indirect-region
-  )
+  "e" 'edit-indirect-region)
 
 (spc-e
   ;; :keymaps '(scheme-mode-map inferior-scheme-mode-map)
   :keymaps '(racket-mode-map)
-  :states 'normal
+  :states '(normal visual)
   ;; "p" 'racket-repl
   "b" 'racket-run-module-at-point
   ;; "x" 'racket-send-last-sexp-evil-fix
@@ -3487,10 +3988,10 @@ or go back to just one window (by deleting all but the selected window)."
   "Load theme, taking current system APPEARANCE into consideration."
   (mapc #'disable-theme custom-enabled-themes)
   (pcase appearance
-    ('light (load-theme 'doom-gruvbox-light t))
-    ('dark (load-theme 'doom-gruvbox t))
-    ;; ('light (load-theme 'gruvbox-light-soft t))
-    ;; ('dark (load-theme 'gruvbox-dark-soft t))
+    ;; ('light (load-theme 'doom-gruvbox-light t))
+    ;; ('dark (load-theme 'doom-gruvbox t))
+    ('light (load-theme 'gruvbox-light-soft t))
+    ('dark (load-theme 'gruvbox-dark-soft t))
     )
   (when (facep 'git-gutter:modified)
     (pcase appearance
@@ -3501,7 +4002,8 @@ or go back to just one window (by deleting all but the selected window)."
     (pcase appearance
       ('light (face-remap-add-relative 'git-gutter:added nil '(:foreground "DarkGreen")))
       ;; ('dark (face-remap-add-relative 'git-gutter:added nil '(:foreground "LightGreen")))
-      )))
+      ))
+  (if (featurep 'powerline) (powerline-reset)))
 
 (add-hook 'ns-system-appearance-change-functions #'my/apply-theme)
 (my/apply-theme ns-system-appearance)

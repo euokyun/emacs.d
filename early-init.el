@@ -13,7 +13,7 @@
 
 ;; prevent use stale byte-code.
 ;; Otherwise skip mtime check on every *.elc file.
-(setq load-prefer-newer noninteractive)
+(setq load-prefer-newer 'noninteractive)
 
 ;; package initialization occurs before `user-init-file' is loaded, but after the `early-init-file'.
 (setq package-enable-at-startup nil)
