@@ -105,6 +105,7 @@
 
 (set-default-coding-systems 'utf-8)
 (set-language-environment "UTF-8")
+(setq buffer-file-coding-system 'utf-8)
 (add-hook 'emacs-startup-hook
           (lambda (&rest _)
             (setq file-name-handler-alist default-file-name-handler-alist)
