@@ -99,7 +99,6 @@
 (push '(scroll-bar-mode -1) default-frame-alist)
 
 
-
 (setq frame-inhibit-implied-resize t)
 
 

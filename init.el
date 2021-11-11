@@ -8,27 +8,41 @@
 (load custom-file 'noerror)
 
 
+;; 가나다라마  1520
+;; abcdefghij  1820
+
+
 ;; font settings.
-(set-face-attribute 'default nil :family "JetBrains Mono")
-(set-fontset-font t 'hangul "D2Coding")
+;; (set-face-attribute 'default nil :family "JetBrains Mono")
+(set-face-attribute 'default nil :font "JetBrains Mono" :height 170)
+(set-frame-font "JetBrains Mono" nil t)
+
 
 ;; Use 'prepend for the NS and Mac ports or Emacs will crash.
-(set-fontset-font t 'unicode (font-spec :family "all-the-icons") nil 'append)
-(set-fontset-font t 'unicode (font-spec :family "file-icons") nil 'append)
-(set-fontset-font t 'unicode (font-spec :family "Material Icons") nil 'append)
-(set-fontset-font t 'unicode (font-spec :family "github-octicons") nil 'append)
-(set-fontset-font t 'unicode (font-spec :family "FontAwesome") nil 'append)
-(set-fontset-font t 'unicode (font-spec :family "Weather Icons") nil 'append)
+;; (set-fontset-font "fontset-default" 'unicode (font-spec :family "Weather Icons") nil)
+;; (set-fontset-font "fontset-default" 'unicode (font-spec :family "Material Icons") nil)
+;; (set-fontset-font "fontset-default" 'unicode (font-spec :family "file-icons") nil)
+(set-fontset-font "fontset-default" 'unicode (font-spec :family "Material Icons") nil)
+(set-fontset-font "fontset-default" 'unicode (font-spec :family "github-octicons") nil 'prepend)
+(set-fontset-font "fontset-default" 'unicode (font-spec :family "FontAwesome") nil 'prepend)
+(set-fontset-font "fontset-default" 'unicode (font-spec :family "all-the-icons") nil 'prepend)
 
-(set-fontset-font t 'unicode (font-spec :family "all-the-icons") nil 'prepend)
-(set-fontset-font t 'unicode (font-spec :family "file-icons") nil 'prepend)
-(set-fontset-font t 'unicode (font-spec :family "Material Icons") nil 'prepend)
-(set-fontset-font t 'unicode (font-spec :family "github-octicons") nil 'prepend)
-(set-fontset-font t 'unicode (font-spec :family "FontAwesome") nil 'prepend)
-(set-fontset-font t 'unicode (font-spec :family "Weather Icons") nil 'prepend)
+(set-fontset-font t 'hangul "D2Coding" nil 'prepend)
+
+;; (set-fontset-font t 'unicode (font-spec :family "all-the-icons") nil 'prepend)
+;; (set-fontset-font t 'unicode (font-spec :family "file-icons") nil 'prepend)
+;; (set-fontset-font t 'unicode (font-spec :family "github-octicons") nil 'prepend)
+;; (set-fontset-font t 'unicode (font-spec :family "FontAwesome") nil 'prepend)
+;; (set-fontset-font t 'unicode (font-spec :family "Weather Icons") nil 'prepend)
+
+;; (dolist (charset '(kana han cjk-misc bopomofo gb18030))
+;;         (set-fontset-font "fontset-default" charset "github-octicons" nil 'append)
+;;         (set-fontset-font "fontset-default" charset "FontAwesome" nil 'append)
+;;         (set-fontset-font "fontset-default" charset "Material Icons" nil 'append))
 
 ;; adjust font scale
 (setq-default face-font-rescale-alist '((".*JetBrains Mono.*" . 1.0)
+                                        (".*Hack Nerd Font.*" . 1.0)
                                         ;; (".*Iosevka SS08 .*" . 1.2917385677308024)
                                         (".*D2Coding.*" . 1.1973684210526316)))
 
@@ -52,7 +66,6 @@
  indent-tabs-mode nil                   ; tab=space!
  tab-width 4                            ; space=4!
  inhibit-startup-screen t               ;
- inhibit-startup-screen nil               ;
  initial-scratch-message nil            ; empty *scratch* buffer.
  keyboard-coding-system 'utf-8-unix     ; utf-8
  large-file-warning-threshold nil       ; do not warn file size.
@@ -64,11 +77,10 @@
  show-help-function nil                 ; t
  straight-use-package-by-default t      ; use use-package
  straight-check-for-modifications '(check-on-save find-when-checking) ; don't catch modification unless `save buffer' command.
- use-package-always-ensure t     		; if package is not installed, then install it.
- tramp-default-method "ssh"      		; remote connection default.
- use-dialog-box nil              		;
- vc-follow-symlinks t            		; silent warning for symlink.
- warning-minimum-level :error    		;
+ tramp-default-method "ssh"      ; remote connection default.
+ use-dialog-box nil              ;
+ vc-follow-symlinks t            ; silent warning for symlink.
+ warning-minimum-level :error    ;
  warning-suppress-log-types '((comp))   ; silent warning for native-comp.
  warning-suppress-types '((use-package) (use-package))
  fill-column 80                         ; default is `70'. force line breaker.
@@ -92,13 +104,14 @@
  display-buffer-base-action '((display-buffer-reuse-window display-buffer-same-window)
                               (reusable-frames . t)) ; perspective - fix window layout.
  ;; tab-bar-format '(tab-bar-format-global) ; global modeline using emacs28 tab-bar
- ;; tab-bar-mode t                     ; http://ruzkuku.com/texts/emacs-global.html
+ ;; tab-bar-mode t                         ; http://ruzkuku.com/texts/emacs-global.html
  ;; tab-line-mode t
+ use-default-font-for-symbols nil
+ require-final-newline t                ; according to POSIX, every text file should end with newline.
+ ;; completion-styles '(basic partial-completion initials flex)
+ ;; completion-category-overrides '((file (styles . (partial-completion))))
  )
 
-;; after + 12
-;; 가나다라마  1520
-;; abcdefghij  1820
 
 
 
@@ -112,9 +125,6 @@
   (setq-default
    ;; ns-use-mwheel-momentum nil
    ns-pop-up-frames nil))
-
-(set-face-attribute 'default nil :height 170) ; initial font size
-
 
 
 (use-package auto-package-update
@@ -356,21 +366,16 @@
 (use-package prescient
   :after counsel
   :config
-  (prescient-persist-mode 1))
+  (prescient-persist-mode 1)
+
+  (require 'company-prescient)
+  (company-prescient-mode 1)
+  )
 
 (use-package ivy-prescient
   :after prescient
   :config
   (ivy-prescient-mode 1))
-
-(use-package company-prescient
-  :straight nil
-  :ensure nil
-  :after (prescient company)
-  :custom
-  (company-prescient-sort-length-enable nil)
-  :config
-  (company-prescient-mode 1))
 
 ;; ---------------------------
 ;; Evils
@@ -385,12 +390,17 @@
   (undo-tree-enable-undo-in-region t)
   :config
   (global-undo-tree-mode t)
-  (defadvice undo-tree-make-history-save-file-name
-      (after undo-tree activate)
-    (setq ad-return-value (concat ad-return-value ".gz"))))
+  ;; (defadvice undo-tree-make-history-save-file-name
+  ;;     (after undo-tree activate)
+  ;;   (setq ad-return-value (concat ad-return-value ".gz")))
+  )
 
 
 (use-package paren
+  :custom
+  (show-paren-style 'parenthesis)
+  (show-paren-delay 0)
+  (show-paren-when-point-inside-paren t)
   :config
   ;; (set-face-attribute 'show-paren-match-expression nil :background "#363e4a")
   (show-paren-mode 1))
@@ -755,11 +765,11 @@ REGEXP defaults to \"[ \\t\\n\\r]+\"."
   ;; If you want it in all text modes:
   ((text-mode) . mixed-pitch-mode))
 
-;; https://gitlab.com/thomasluquet/font-lock-plus
-(use-package font-lock+)
+;; ;; https://gitlab.com/thomasluquet/font-lock-plus
+;; (use-package font-lock+)
 
-(use-package fontawesome
-  :commands counsel-fontawesome)
+;; (use-package fontawesome
+;;   :commands counsel-fontawesome)
 
 (use-package all-the-icons)
 
@@ -1455,17 +1465,19 @@ or
      (treemacs-git-mode 'deferred))
     (`(t . _)
      (treemacs-git-mode 'simple)))
-  ;; (use-package treemacs-all-the-icons)
   (general-define-key
    :keymaps '(treemacs-mode-map evil-treemacs-state-map)
-   [mouse-1] #'treemacs-single-click-expand-action ; allow click to expand/collapse node.
-   ))
+   [mouse-1] #'treemacs-single-click-expand-action) ; allow click to expand/collapse node.
+  (use-package treemacs-all-the-icons
+    :config
+    (treemacs-load-theme "all-the-icons"))
 
-(use-package treemacs-projectile
-  :after (treemacs projectile))
+  (use-package treemacs-projectile
+    :after projectile)
 
-(use-package treemacs-magit
-  :after (treemacs magit))
+  (use-package treemacs-magit
+    :after magit))
+
 
 ;; this uses imagemagick.
 ;; (use-package treemacs-icons-dired
@@ -1485,6 +1497,13 @@ or
 ;; ---------------------------
 ;; etc
 ;; ---------------------------
+
+
+
+
+;; https://github.com/magnars/s.el
+;; string manipulation library
+(use-package s)
 
 ;; (use-package ctable)
 
@@ -1644,6 +1663,46 @@ or
   :defer t
   :after magit)
 
+;; http://www.modernemacs.com/post/pretty-magit/
+(use-package pretty-magit
+  :ensure nil
+  :straight nil
+  :disabled
+  :load-path (expand-file-name "./lisp/pretty-magit.el" user-emacs-directory)
+  :config
+  (pretty-magit-add-leaders
+       '(("Feature" ? (:foreground "slate gray" :height 1.2))
+         ("Add"     ? (:foreground "#375E97" :height 1.2))
+         ("Fix"     ? (:foreground "#FB6542" :height 1.2))
+         ("Clean"   ? (:foreground "#FFBB00" :height 1.2))
+         ("Docs"    ? (:foreground "#3F681C" :height 1.2))))
+  (pretty-magit-setup))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 ;; https://github.com/emacsorphanage/git-gutter
 (use-package git-gutter
   :straight t
@@ -1691,8 +1750,10 @@ or
         backend
       (append (if (consp backend) backend (list backend))
               '(:with company-yasnippet))))
-  (setq company-backends (mapcar #'company-mode/backend-with-yas company-backends))
-  )
+  (setq company-backends (mapcar #'company-mode/backend-with-yas company-backends)))
+
+;; https://github.com/AndreaCrotti/yasnippet-snippets
+(use-package yasnippet-snippets)
 
 ;; ---------------------------
 ;; Programming configure
@@ -1730,6 +1791,7 @@ or
   (lsp-prefer-flymake nil)           ; Use flycheck instead of flymake
   (lsp-enable-file-watchers nil)
   (lsp-enable-folding nil)
+  (lsp-enable-semantic-highlighting t)
   (read-process-output-max (* 1024 1024))
   (lsp-keep-workspace-alive nil)
   ;; (lsp-eldoc-hook nil)
@@ -1791,27 +1853,27 @@ or
 
 ;; https://github.com/abo-abo/lispy
 ;; (use-package lispy
-;;   :hook ((emacs-lisp-mode . lispy-mode)
-;;          (scheme-mode . lispy-mode)))
+;;   :hook (emacs-lisp-mode . lispy-mode)
+;;   )
 
 ;; https://github.com/noctuid/lispyville
 (use-package lispyville
-  :hook ((emacs-lisp-mode . lispyville-mode)
-         ;; (scheme-mode . lispyville-mode)
-         (racket-mode . lispyville-mode))
+  :init
+  (general-add-hook '(emacs-lisp-mode-hook lisp-mode-hook) #'lispyville-mode)
+
+  :hook ((emacs-lisp-mode racket-mode lisp-interaction-mode) . lispyville-mode)
   ;; :hook ((lispy-mode . lispyville-mode))
   :config
   (lispyville-set-key-theme
-   '(operators                          ; change evil commands. y d c j .... all.
-     c-w                                ; remap evil-delete-backword-word
-     additional                         ; drag, join and splice, etc.
-     additional-movement                ; H,L []{}()
-     slurp/barf-cp                      ; <>
-     prettify                           ; indent
-     commentary                         ; gc, gy, s/
+   '(operators                     ; change evil commands. y d c j .... all.
+     c-w                           ; remap evil-delete-backword-word
+     additional                    ; drag, join and splice, etc.
+     additional-movement           ; H,L []{}()
+     slurp/barf-cp                 ; <>
+     prettify                          ; indent
+     commentary                        ; gc, gy, s/
      ))
-  (lispyville-enter-visual-when-marking)
-  (diminish 'lispyville-mode (lispyville-mode-line-string " 🍰" " 🍰")))
+  (lispyville-enter-visual-when-marking))
 
 (use-package parinfer
   :disabled
@@ -1820,19 +1882,19 @@ or
   :hook
   ((clojure-mode-hook
     emacs-lisp-mode-hook
-    common-lisp-mode-hook)
-   (scheme-mode-hook)
-   (lisp-mode-hook) . parinfer-mode)
+    common-lisp-mode-hook
+    scheme-mode-hook
+    lisp-mode-hook) . parinfer-mode)
   :init
   (progn
     (setq parinfer-extensions
-          '(defaults       ; should be included.
-             pretty-parens ; different paren styles for different modes.
-             evil          ; If you use Evil.
+          '(defaults               ; should be included.
+             pretty-parens         ; different paren styles for different modes.
+             evil                  ; If you use Evil.
              lispy ; If you use Lispy. With this extension, you should install Lispy and do not enable lispy-mode directly.
              ;; paredit        ; Introduce some paredit commands.
              ;; smart-tab      ; C-b & C-f jump positions and smart shift with tab & S-tab.
-             smart-yank))              ; Yank behavior depend on mode.
+             smart-yank))               ; Yank behavior depend on mode.
     ))
 
 ;; ---------------------------
@@ -2016,12 +2078,6 @@ or
 (use-package company
   :diminish company-mode
   ;; :hook ((prog-mode LaTeX-mode latex-mode ess-r-mode) . company-mode)
-  :bind (:map company-active-map
-         ;; ("RET" . nil)
-         ;; ([return] . nil)
-         ;; ("c-SPC" . company-box-doc)
-         ([tab] . smarter-tab-to-complete)
-         ("TAB" . smarter-tab-to-complete))
   :custom
   (company-minimum-prefix-length 1)
   (company-tooltip-align-annotations t)
@@ -2035,43 +2091,51 @@ or
   (company-show-numbers t)
   ;; (company-show-quick-access t nil nil "Customized with use-package company")
   (company-show-quick-access t) ;; "Customized with use-package company"
+  (company-echo-delay 0)
   :config
-  (add-hook 'emacs-lisp-mode-hook
-            '(lambda ()
-               (require 'company-elisp)
-               (push 'company-elisp company-backends)))
   ;; (unless clangd-p (delete 'company-clang company-backends))
-  (global-company-mode 1)
-
-  (defun smarter-tab-to-complete ()
-    "Try to `org-cycle', `yas-expand', and `yas-next-field' at current cursor position.
-If all failed, try to complete the common part with `company-complete-common'"
-    (interactive)
-    (when yas-minor-mode
-      (let ((old-point (point))
-            (old-tick (buffer-chars-modified-tick))
-            (func-list
-             (if (equal major-mode 'org-mode) '(org-cycle yas-expand yas-next-field)
-               '(yas-expand yas-next-field))))
-        (catch 'func-suceed
-          (dolist (func func-list)
-            (ignore-errors (call-interactively func))
-            (unless (and (eq old-point (point))
-                         (eq old-tick (buffer-chars-modified-tick)))
-              (throw 'func-suceed t)))
-          (company-complete-common)
-          ;; (company-indent-or-complete-common)
-          ))))
 
 
-;; (defun company-mode-minibuffer-setup ()
-;;     "Setup company-mode in minibuffer."
-;;     (company-mode 1)
-;;     (setq-local company-tooltip-limit 4)
-;;     (setq-local company-tooltip-minimum 1))
-;;   (add-hook 'eval-expression-minibuffer-setup-hook 'company-mode-minibuffer-setup)
 
-  )
+
+        ;;  company-org-block
+     ;; company-bbdb
+     ;; company-semantic
+     ;; company-cmake
+     ;; company-capf
+     ;; company-clang
+     ;; company-files
+     ;; (company-dabbrev-code
+     ;;  company-gtags
+     ;;  company-etags
+     ;;  company-keywords)
+     ;; company-oddmuse
+     ;; company-dabbrev
+ (setq company-backends
+       '(company-capf
+         company-keywords
+         company-semantic
+         company-files
+         company-etags
+         company-yasnippet))
+
+  (defun company-mode-minibuffer-setup ()
+    "Setup company-mode in minibuffer."
+    (company-mode 1)
+    (setq-local company-tooltip-limit 4)
+    (setq-local company-tooltip-minimum 1))
+  (add-hook 'eval-expression-minibuffer-setup-hook 'company-mode-minibuffer-setup)
+
+  (global-company-mode))
+
+
+
+
+
+
+
+
+
 
 ;; https://github.com/TommyX12/company-tabnine
 ;; this requires run `M-x company-tabnine-install-binary' to install the TabNine binary for your system
@@ -2122,10 +2186,13 @@ If all failed, try to complete the common part with `company-complete-common'"
       (company-tabnine-kill-process)
       (message "TabNine disabled.")))
   :hook
-  (kill-emacs . company-tabnine-kill-process)
+  ((kill-emacs . company-tabnine-kill-process)
+   ;; (prog-mode . (lambda () (company-tabnine-toggle t)))
+   )
   :config
   (add-to-list 'lsp-client-packages 'lsp-racket)
-  (company-tabnine-toggle t))
+  ;; (company-tabnine-toggle t)
+  )
 
 ;; https://github.com/sebastiencs/company-box
 (use-package company-box
@@ -2405,8 +2472,10 @@ If all failed, try to complete the common part with `company-complete-common'"
             (Template . ,(all-the-icons-material "format_align_left"
                                                  :height 1.0
                                                  :v-adjust -0.2)))
-          company-box-icons-alist 'company-box-icons-all-the-icons))
-  )
+          company-box-icons-alist 'company-box-icons-all-the-icons)))
+
+
+
 
 ;; (use-package corfu
 ;;   ;; Optional customizations
@@ -2444,25 +2513,51 @@ If all failed, try to complete the common part with `company-complete-common'"
 ;;   (corfu-global-mode)
 ;;   )
 
-;; ;; Optionally use the `orderless' completion style. See `+orderless-dispatch'
-;; ;; in the Consult wiki for an advanced Orderless style dispatcher.
-;; ;; Enable `partial-completion' for files to allow path expansion.
-;; ;; You may prefer to use `initials' instead of `partial-completion'.
-;; (use-package orderless
-;;   :init
-;;   ;; Configure a custom style dispatcher (see the Consult wiki)
-;;   ;; (setq orderless-style-dispatchers '(+orderless-dispatch)
-;;   ;;       orderless-component-separator #'orderless-escapable-split-on-space)
-;;   (setq completion-styles '(orderless)
-;;         completion-category-defaults nil
-;;         completion-category-overrides '((file (styles . (partial-completion))))))
+
+
+;; https://github.com/oantolin/orderless
+(use-package orderless
+  :init
+  ;; Configure a custom style dispatcher (see the Consult wiki)
+  ;; (setq orderless-style-dispatchers '(+orderless-dispatch)
+  ;;       orderless-component-separator #'orderless-escapable-split-on-space)
+
+  (setq completion-styles '(orderless))
+  (setq completion-category-defaults
+        (append completion-category-defaults
+                '((file (styles . (partial-completion))))))
+
+  :custom
+  (complet
+
+
+  :config
+  ;; (setq orderless-component-separator "[  ]")
+  ;; (define-key company-active-map (kbd "SPC")
+  ;;   (defun company-insert-separator+ ()
+  ;;     (interactive)
+  ;;     (insert " ")))
+  (setq orderless-component-separator "[ _]")
+  (define-key company-active-map (kbd "SPC")
+    (defun company-insert-separator+ ()
+      (interactive)
+      (insert "_")))
+
+  (defun orderless--use-completions-common-part (fn &rest args)
+    (let ((orderless-match-faces [completions-common-part]))
+      (apply fn args)))
+
+  (advice-add 'company-capf--candidates
+      :around #'orderless--use-completions-common-part))
+
 
 ;; ;; Dabbrev works with Corfu
-;; (use-package dabbrev
-;;   :disabled
-;;   ;; Swap M-/ and C-M-/
-;;   :bind (("M-/" . dabbrev-completion)
-;;          ("C-M-/" . dabbrev-expand)))
+(use-package dabbrev
+  ;; :disabled
+  ;; Swap M-/ and C-M-/
+  ;; :bind (("M-/" . dabbrev-completion)
+  ;;        ("C-M-/" . dabbrev-expand))
+  )
 
 
 
@@ -2574,55 +2669,81 @@ If all failed, try to complete the common part with `company-complete-common'"
   ;; (variable-pitch-mode nil)
   (visual-line-mode 1)
   (display-line-numbers-mode nil)
+      ;; (setq company-backends (delete 'company-tabnine company-backends))
+      ;; (setq company-backends (delete '(company-capf :with company-tabnine :separate) company-backends))
+      ;; (remove-hook 'lsp-after-open-hook #'lsp-after-open-tabnine)
+      ;; (company-tabnine-kill-process)
+      ;; (message "TabNine disabled.")
   (setq evil-auto-indent nil))
 
 (defun org-icons ()
   "Beautify org mode keywords."
-  (setq prettify-symbols-alist '(;; ("TODO" . "")
+  (setq prettify-symbols-alist '(
+                                ;; ("TODO" . "")
                                  ;; ("WAIT" . "")
                                  ;; ("NOPE" . "")
                                  ;; ("DONE" . "")
                                  ;; ("[#A]" . "")
                                  ;; ("[#B]" . "")
                                  ;; ("[#C]" . "")
-                                 ;; ("[ ]" . "")
-                                 ;; ("[X]" . "")
-                                 ;; ("[-]" . "")
                                  ("#+BEGIN_SRC" . "")
                                  ("#+END_SRC" . "")
                                  ("#+BEGIN_QUOTE" . "")
                                  ("#+END_QUOTE" . "")
-                                 ("#+BEGIN_EXAMPLE" ."")
-                                 ("#+END_EXAMPLE" ."")
+                                 ("#+BEGIN_EXAMPLE" . "")
+                                 ("#+END_EXAMPLE" . "")
                                  (":PROPERTIES:" . "")
                                  (":END:" . "")
                                  ("#+STARTUP:" . "")
-                                 ("#+TITLE: " . "☰")
+                                 ("#+TITLE:" . "")
                                  ("#+RESULTS:" . "")
                                  ("#+TAG:" . "")
-                                 ;; ("#+NAME:" . " ")
+                                 ("#+NAME:" . "")
                                  ("#+ROAM_TAGS:" . "")
                                  ("#+FILETAGS:" . "")
                                  ("#+HTML_HEAD:" . "")
-                                 ("#+SUBTITLE:" . "")
+                                 ("#+SUBTITLE:" . "")
                                  ("#+AUTHOR:" . " ")
                                  ("SCHEDULED:" . "")
                                  ("DEADLINE:" . "")
-                                 (":Effort:" . ""))))
+                                 ("CLOSED:" . "")
+
+                                 ("#+begin_src" . "")
+                                 ("#+end_src" . "")
+                                 ("#+begin_quote" . "")
+                                 ("#+end_quote" . "")
+                                 ("#+begin_example" ."")
+                                 ("#+end_example" ."")
+                                 (":properties:" . "")
+                                 (":end:" . "")
+                                 ("#+startup:" . "")
+                                 ("#+title:" . "")
+                                 ("#+results:" . "")
+                                 ("#+tag:" . "")
+                                 ("#+name:" . "")
+                                 ("#+roam_tags:" . "")
+                                 ("#+filetags:" . "")
+                                 ("#+html_head:" . "")
+                                 ;; ("#+subtitle:" . "")
+                                 ("#+subtitle:" . "")
+                                 ("#+author:" . " ")
+                                 ("scheduled:" . "")
+                                 ("deadline:" . "")
+
+                                 (":Effort:" . "")
+                                 ;; ("[ ]" . "☐")
+                                 ;; ("[X]" . "☑")
+                                 ;; ("[-]" . "⊡")
+                                 ("[ ]" . "")
+                                 ("[X]" . "")
+                                 ("[-]" . ""))))
 
 (use-package org
   :defer t
   :hook ((org-mode . org-mode-setup)
-         ;; (org-mode . (lambda ()
-         ;;               "Beautify Org Checkbox Symbol"
-         ;;               (push '("[ ]" . "☐" ) prettify-symbols-alist)
-         ;;               (push '("[X]" . "☑" ) prettify-symbols-alist)
-         ;;               (push '("[-]" . "⊡" ) prettify-symbols-alist)
-         ;;               (prettify-symbols-mode)))
-         (org-mode . prettify-symbols-mode)
-         (org-mode . org-icons)
+         ;; (org-mode . prettify-symbols-mode)
+         ;; (org-mode . org-icons)
          ;; (org-mode . webkit-katex-render-mode)
-         ;; (org-mode . embrace-org-mode-hook)
          ;; (org-mode . turn-on-auto-fill) ; 자동 줄 끊기(auto fill)를 적용한다.
          ;; https://emacs.stackexchange.com/questions/16845/expand-org-mode-subtree-with-point-after-ellipsis/44568
          (org-tab-first-hook . org-end-of-line) ; expand when press TAB after ellipsis.
@@ -2634,6 +2755,10 @@ If all failed, try to complete the common part with `company-complete-common'"
 
 
   :custom
+  (org-clock-persist t)
+  (org-clock-in-resume t)
+  (org-clock-persist-query-resume nil)
+  ;; (org-clock-idle-time 15)
   (org-id-link-to-org-use-id t)   ; create ID if need to make link.
   (org-startup-indented t)        ; Keep the indentation
   (org-src-tab-acts-natively t)   ; indentation setting
@@ -2643,12 +2768,12 @@ If all failed, try to complete the common part with `company-complete-common'"
   (prettify-symbols-unprettify-at-point 'right-edge)
   (org-fontify-done-headline t)       ; apply special face to DONE
   (org-pretty-entities t)             ; show entities as UTF-8 char.
-  (org-odd-levels-only)               ; odd levels only
+  ;; (org-odd-levels-only t)               ; odd levels only
   ;; (org-indent-indentation-per-level 2)  ;
   ;; (org-hide-leading-stars t)            ; hide the stars.
   ;; (org-ellipsis "⋱")                    ; change ellipsis shape.
   (org-src-fontify-natively t)
-  (org-fontify-quote-and-verse-blocks t)
+  (org-fontify-quote-and-verse-blocks t) ; fontify quote, verse too
   (org-src-tab-acts-natively t)
   ;; (org-edit-src-content-indentation 4)   ; indentation for contents of code block.
   (org-edit-src-content-indentation 0) ; indentation for contents of code block. if `org-src-preserve-indentation' is `non-nil' this will be ignored.
@@ -2658,18 +2783,7 @@ If all failed, try to complete the common part with `company-complete-common'"
   ;; (org-blank-before-new-entry '((heading . auto) (plain-list-item . auto))) ; default value.
   (org-startup-folded 'content)         ; start with folded content.
   (org-confirm-babel-evaluate nil) ; do not ask confirmation when evaluate code block.
-  ;; (prettify-symbols-alist '(("#+BEGIN_SRC" . ?⎡)
-  ;;                           ("#+END_SRC" . ?⎣)
-  ;;                           ("#+begin_src" . ?⎡)
-  ;;                           ("#+end_src" . ?⎣)
-  ;;                           ;; (">=" . "≥")
-  ;;                           ("#+begin_quote" . ?«)
-  ;;                           ("#+end_quote" . ?»)
-  ;;                           ("#+header:" . ?☰)
-  ;;                           ;; ("=>" . "⇨")
-  ;;                           ))
-
-  (org-return-follows-link t)           ; open link with enter key
+  ;; (org-return-follows-link t)           ; open link with enter key
   (org-refile-targets '((nil :maxlevel . 1)
                         (org-agenda-files :maxlevel . 1)))
   (org-refile-use-outline-path t)
@@ -2681,87 +2795,12 @@ If all failed, try to complete the common part with `company-complete-common'"
   (org-latex-create-formula-image-program 'dvisvgm) ; latex to svg
 
 
-
-
-
-
-
-
-
   :custom-face
   (fixed-pitch ((t (:family "JetBrains Mono"))))
   (variable-pitch ((t (:family "D2Coding"))))
-  ;; (org-level-1 ((t (:height 1.40))))
-  ;; (org-level-2 ((t (:height 1.25))))
-  ;; (org-level-3 ((t (:height 1.15))))
-  ;; (org-level-4 ((t (:height 1.00))))    ; ivy-org inherit this.
-  ;; (org-level-5 ((t (:height 1.00))))
-  ;; (org-level-6 ((t (:height 1.00))))
-  ;; (org-level-7 ((t (:height 1.00))))
-  ;; (org-level-8 ((t (:height 1.00))))
-  ;; (org-ellipsis
-  ;;  ((t (:foreground ""))))
-  ;; (org-document-title
-  ;;  ((t (:height 1.50
-  ;;       :weight bold))))
-  ;; (org-done
-  ;;  ((t (
-  ;;       :foreground "PaleGreen"
-  ;;       :strike-through t))))
-  ;; (org-headline-done
-  ;;  ((t ())))
-  ;; Ensure that anything that should be fixed-pitch in Org files appears that way
-
-  ;; [ ] [X]
-  ;; (org-checkbox
-  ;;  ((t (:inherit (fixed-pitch font-lock-keyword-face)))))
-  ;; (org-checkbox-done-text
-  ;;  ((t (:inherit (org-done shadow)))))
-  ;; (org-checkbox-statistics-done
-  ;;  ((t (:inherit (org-done shadow)))))
-
-  ;; (org-indent
-  ;;  ((t (:inherit (org-hide fixed-pitch)))))
-  ;; (org-code                             ; ~code~
-  ;;  ((t (:inherit (font-lock-builtin-face fixed-pitch)))))
-  ;; (org-block
-  ;;  ((t (;; :foreground nil
-  ;;       :inherit fixed-pitch))))
-  ;; (org-block-begin-line
-  ;;  ((t (:inherit fixed-pitch))))
-  ;; (org-block-end-line
-  ;;  ((t (:inherit fixed-pitch))))
-  ;; (org-table
-  ;;  ((t (:inherit fixed-pitch))))
-  ;; (org-formula
-  ;;  ((t (:inherit fixed-pitch))))
-  ;; (org-verbatim                         ; =verbatim=
-  ;;  ((t (:inherit (shadow fixed-pitch)))))
-  ;; (org-special-keyword
-  ;;  ((t (:inherit (font-lock-comment-face fixed-pitch)))))
-  ;; (org-meta-line                        ; #+RESULTS 같은 것들
-  ;;  ((t (:extend t
-  ;;       :inherit (font-lock-comment-face fixed-pitch)))))
-  ;; Get rid of the background on column views
-  ;; (org-column
-  ;;  ((t (:background nil))))
-  ;; (org-column-title
-  ;;  ((t (:background nil))))
-  ;; (org-date                             ; 날짜
-  ;;  ((t ())))
-  ;; (org-list-dt
-  ;;  ((t (:inherit (font-lock-constant-face)))))
-
-
-
-
-
-
-
-
 
   :config
-
+  (defface org-checkbox-done-text '((t (:inherit 'org-done))) "")
   ;; https://github.com/alphapapa/org-ql
   ;; query for org
   ;; (use-package org-ql)
@@ -2769,6 +2808,8 @@ If all failed, try to complete the common part with `company-complete-common'"
 
   ;; https://github.com/jakebox/org-preview-html
   ;; (use-package org-preview-html)
+
+
   ;; changed function ::
   ;; https://github.com/alphapapa/org-sticky-header
   ;; (defun org-sticky-header--fetch-stickyline ()
@@ -2815,13 +2856,12 @@ If all failed, try to complete the common part with `company-complete-common'"
   ;;                   s)))
   ;;              (t "")))
   ;;           'face '()))))))
+
   (use-package org-sticky-header
     :custom
     (org-sticky-header-full-path 'full)
     (org-sticky-header-show-keyword nil) ; about to-do keyword.
     :hook (org-mode . org-sticky-header-mode))
-
-
 
   (use-package org-src
     :ensure nil
@@ -2863,20 +2903,41 @@ If all failed, try to complete the common part with `company-complete-common'"
           (list start end collection
                 :exit-function exit-fn)))))
 
+;; ;; #+ completion
+;; ;; https://emacs.stackexchange.com/a/30691
+;; (defun org-keyword-backend (command &optional arg &rest ignored)
+;;   (interactive (list 'interactive))
+;;   (cl-case command
+;;     (interactive (company-begin-backend 'org-keyword-backend))
+;;     (prefix (and (eq major-mode 'org-mode)
+;;                  (cons (company-grab-line "^#\\+\\(\\w*\\)" 1)
+;;                        t)))
+;;     (candidates (mapcar #'upcase
+;;                         (cl-remove-if-not
+;;                          (lambda (c) (string-prefix-p arg c))
+;;                          (pcomplete-completions))))
+;;     (ignore-case t)
+;;     (duplicates t)))
+;; (add-to-list 'company-backends 'org-keyword-backend)
+
   ;; https://github.com/xenodium/company-org-block
   ;; https://xenodium.com/emacs-org-block-company-completion/
   (use-package company-org-block
-    :after (org company)
+    ;; :after (org company)
     :custom
     (company-org-block-edit-style 'auto) ;; 'auto, 'prompt, or 'inline
     :hook ((org-mode . (lambda ()
                          (setq-local company-backends '(company-org-block))
+                         ;; (add-to-list 'company-backends 'company-org-block)
                          (company-mode 1))))
     :config
-    ;; set original buffer normal state, and when org edit exit, move cursor outside of src block.
+    ;; (add-to-list 'company-backends 'company-org-block)
+    ;; set original buffer normal state, and when org edit exit, move cursor
+    ;; outside of src block.
     (advice-add 'org-edit-src-code :before #'evil-force-normal-state)
     (advice-add 'org-edit-src-code :after #'evil-insert-state)
     (advice-add 'org-edit-src-exit :after #'(lambda (&rest args) (evil-org-forward-sentence))))
+
 
 
   ;; https://seorenn.tistory.com/65
@@ -2888,14 +2949,7 @@ If all failed, try to complete the common part with `company-complete-common'"
            (format "<img src=\"%s\" alt=\"%s\"/>" path desc))))
   (org-add-link-type "img" 'org-custom-link-img-follow 'org-custom-link-img-export)
 
-
   (add-to-list 'org-emphasis-alist '("$" latex))
-
-
-  (defface org-checkbox-done-text
-    '((t (:inherit (shadow))))
-    "Face for checked checkbox text")
-
 
   ;; (org-babel-do-load-languages
   ;;  'org-babel-load-languages
@@ -2918,7 +2972,9 @@ If all failed, try to complete the common part with `company-complete-common'"
     :straight nil
     :ensure nil
     :config
-    (setq org-format-latex-options (plist-put org-format-latex-options :scale 2.0)) ; latex preview size
+    (setq org-format-latex-options
+          (plist-put org-format-latex-options
+              :scale 2.0)) ;; for hidpi display.
     )
 
   ;; https://github.com/dandavison/xenops
@@ -2947,7 +3003,7 @@ If all failed, try to complete the common part with `company-complete-common'"
   ;; https://xenodium.com/emacs-chaining-org-babel-blocks/
   ;; chaining org babel blocks.
   ;; first `#+name:' to add name.
-  ;; and next block, add `:include' first name.
+  ;; and next block, add `:include'+`name' to begin line.
   (defun adviced:org-babel-execute-src-block (&optional orig-fun arg info params)
     (let ((body (nth 1 info))
           (include (assoc :include (nth 2 info)))
@@ -2968,7 +3024,6 @@ If all failed, try to complete the common part with `company-complete-common'"
                         (org-babel-parse-header-arguments
                          (org-element-property :parameters (cdr (assoc (cdr include) named-blocks)))))))
       (funcall orig-fun arg info params)))
-
   (advice-add 'org-babel-execute-src-block :around 'adviced:org-babel-execute-src-block)
 
   ;; change emphasis syntax -- acn use without space.
@@ -3031,7 +3086,7 @@ If all failed, try to complete the common part with `company-complete-common'"
                :type git
                :host github
                :repo "tonyaldon/org-bars")
-    :if (not is-termux)
+    ;; :if (not is-termux)
     :hook (org-mode . org-bars-mode)
     ;; :custom
     ;; (org-bars-extra-pixels-height 7)
@@ -3043,9 +3098,12 @@ If all failed, try to complete the common part with `company-complete-common'"
     ;; (setq org-bars-stars '(:empty ?⊙
     ;;                        :invisible ?⊕
     ;;                        :visible ?⊝))
-    (setq org-bars-stars '(:empty "-"
-                           :invisible "+"
-                           :visible "=")))
+    ;; (setq org-bars-stars '(:empty "-"
+    ;;                        :invisible "+"
+    ;;                        :visible "="))
+    (setq org-bars-stars '(:empty ""
+                           :invisible ""
+                           :visible "")))
 
   (defun org-no-ellipsis-in-headlines ()
     "Remove use of ellipsis in headlines.
@@ -3070,7 +3128,8 @@ See `buffer-invisibility-spec'."
     ;; (org-superstar-headline-bullets-list '("◉" "○" "●" "○" "●" "○" "●")))
     ;; (org-superstar-headline-bullets-list '("◉" "☯" "○" "☯" "✸" "☯" "✿" "☯" "✜" "☯" "◆" "☯" "▶")))
     ;; (org-superstar-headline-bullets-list '("◉" "●" "○" "◆" "▶"))
-    (org-bars-mode))
+    ;; (org-bars-mode)
+    )
 
   ;; Make sure org-indent face is available
   ;; (require 'org-indent)
@@ -3111,7 +3170,6 @@ See `buffer-invisibility-spec'."
 
   ;; https://github.com/Somelauw/evil-org-mode
   (use-package evil-org-mode
-    :after org
     :hook ((org-mode . evil-org-mode)
            (org-agenda-mode . evil-org-mode)
            (evil-org-mode . (lambda () (evil-org-set-key-theme '(navigation
@@ -3331,6 +3389,45 @@ output instead."
 ;; ---------------------------
 ;; Custom functions
 ;; ---------------------------
+
+;; patches for flex completion style
+;; https://github.com/company-mode/company-mode/pull/1215#issuecomment-927857584
+(defvar x/flex-minimum-prefix-length 2)
+(advice-add #'completion-flex--make-flex-pattern :override
+  (lambda (pattern)
+    "Turn (prefix \"foo\" point) to (\"fo\" any \"o\" point)."
+    (when (and x/flex-minimum-prefix-length (equal (car pattern) 'prefix))
+      (setq pattern (cdr pattern)))
+    (let ((prefix-len 0))
+      (mapcan (lambda (elem)
+                (prog1
+                    (if (stringp elem)
+                        (mapcan
+                         (lambda (char)
+                           (when prefix-len (cl-incf prefix-len))
+                           (if (and prefix-len
+                                    (<= prefix-len x/flex-minimum-prefix-length))
+                               (list (string char))
+                             (list 'any (string char) 'any)))
+                         elem)
+                      (list elem))
+                  (setq prefix-len nil)))
+              pattern)))
+  '((name . --prefix-match)))
+
+
+
+
+;; https://www.reddit.com/r/emacs/comments/3n1j4x/anyway_to_tab_out_of_parentheses/
+(defun smart-tab-jump-out-or-indent (&optional arg)
+  (interactive "P")
+  (let ((closings (mapcar #'cdr electric-pair-pairs))
+        (after (char-after)))
+    (if (member after closings)
+        (forward-char 1)
+      (indent-for-tab-command arg))))
+
+
 
 ;; https://emacs.stackexchange.com/questions/24657/unadvise-a-function-remove-all-advice-from-it
 (defun advice-unadvice (sym)
@@ -3591,6 +3688,7 @@ or go back to just one window (by deleting all but the selected window)."
 ;; ---------------------------
 
 (general-unbind 'global
+  "s-q"
   "s-z"
   "s-Z"
   "s-f"
@@ -3635,23 +3733,24 @@ or go back to just one window (by deleting all but the selected window)."
  "s-n b" '(clone-indirect-buffer-other-window :which-key "clone indirect buffer - other window")
  "s-n B" '(make-indirect-buffer :which-key "make indirect buffer")
  "s-," help-map                         ; change c-h map.
+ ;; [remap indent-for-tab-command] 'smart-tab-jump-out-or-indent
  )
 
 ;; evil-mc
 (general-define-key
  ;; "s-g" evil-mc-cursors-map
- "M-<mouse-1>" 'evil-mc-toggle-cursor-on-click
- "M-s-j" '(evil-mc-make-cursor-move-next-line :which-key "make cursor & go down")
- "M-s-k" '(evil-mc-make-cursor-move-prev-line :which-key "make cursor & go up")
- "M-s-i" '(evil-mc-toggle-cursor-here :which-key "toggle cursor here")
- "M-s-n" '(evil-mc-skip-and-goto-next-match :which-key "next match")
- "M-s-p" '(evil-mc-skip-and-goto-prev-match :which-key "prev match")
- "M-s-q" '(evil-mc-undo-all-cursors :which-key "quit multicursor")
- "M-s-h" '(evil-mc-skip-and-goto-prev-cursor :which-key "prev cursor")
- "M-s-l" '(evil-mc-skip-and-goto-next-cursor :which-key "next cursor")
- "M-s-0" 'kak-insert-index
- "M-s-u" '(evil-mc-undo-last-added-cursor :which-key "undo cursor")
- "M-s-m" '(evil-mc-toggle-frozen :which-key "pause/resume cursor")
+ "M-<mouse-1>"      'evil-mc-toggle-cursor-on-click
+ "M-s-j"            '(evil-mc-make-cursor-move-next-line :which-key "make cursor & go down")
+ "M-s-k"            '(evil-mc-make-cursor-move-prev-line :which-key "make cursor & go up")
+ "M-s-i"            '(evil-mc-toggle-cursor-here :which-key "toggle cursor here")
+ "M-s-n"            '(evil-mc-skip-and-goto-next-match :which-key "next match")
+ "M-s-p"            '(evil-mc-skip-and-goto-prev-match :which-key "prev match")
+ "M-s-q"            '(evil-mc-undo-all-cursors :which-key "quit multicursor")
+ "M-s-h"            '(evil-mc-skip-and-goto-prev-cursor :which-key "prev cursor")
+ "M-s-l"            '(evil-mc-skip-and-goto-next-cursor :which-key "next cursor")
+ "M-s-0"            'kak-insert-index
+ "M-s-u"            '(evil-mc-undo-last-added-cursor :which-key "undo cursor")
+ "M-s-m"            '(evil-mc-toggle-frozen :which-key "pause/resume cursor")
  )
 
 (general-define-key
@@ -3672,8 +3771,12 @@ or go back to just one window (by deleting all but the selected window)."
 
 (general-define-key
  :states '(visual)
-  "v" 'er/expand-region
-  )
+  "v" 'er/expand-region)
+
+
+(general-define-key
+ :keymaps 'company-active-map
+  "C-SPC" 'company-abort)
 
 ;; (unless is-termux
 ;;   (general-unbind '(normal motion)
@@ -3700,9 +3803,9 @@ or go back to just one window (by deleting all but the selected window)."
   ;; "gl" '(browse-url :which-key "browse-url") ; use `gf' instead.
   ;; "s-d" 'evil-multiedit-match-and-next
   ;; "s-D" 'evil-multiedit-match-and-prev
-  "s-d" 'evil-mc-make-and-goto-next-match
-  "s-D" 'evil-mc-make-and-goto-prev-match
-  )
+ "s-d" 'evil-mc-make-and-goto-next-match
+ "s-D" 'evil-mc-make-and-goto-prev-match
+ )
 
 ;; (push '((multiedit-insert . evil-multiedit-insert-state-map)
 ;;         (multiedit . evil-multiedit-state-map)) general-keymap-aliases)
@@ -3776,10 +3879,8 @@ or go back to just one window (by deleting all but the selected window)."
   ;; avy
   "j" 'evil-avy-line-saving-column
   "t" 'evil-avy-goto-char-timer
-
-  ;; expand region
-  ;; "v" 'er/expand-region
 )
+
 
 (spc-leader
   :states '(normal insert visual emacs motion)
