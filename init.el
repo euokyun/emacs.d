@@ -284,6 +284,8 @@
 
 
 (use-package ivy
+  :custom
+  (ivy-initial-inputs-alist nil)        ; remove M-x "^"
   :diminish)
 
 ;; https://github.com/abo-abo/swiper
@@ -364,17 +366,12 @@
 
 ;; https://github.com/raxod502/prescient.el
 (use-package prescient
+  :straight (prescient.el
+             :repo "raxod502/prescient.el")
   :after counsel
   :config
   (prescient-persist-mode 1)
-
-  (require 'company-prescient)
   (company-prescient-mode 1)
-  )
-
-(use-package ivy-prescient
-  :after prescient
-  :config
   (ivy-prescient-mode 1))
 
 ;; ---------------------------
@@ -553,7 +550,7 @@
 
 ;; https://www.emacswiki.org/emacs/zones.el
 ;; well, hard to use.
-(use-package zones)
+;; (use-package zones)
 
 (use-package multiple-cursors
   :disabled
@@ -794,8 +791,9 @@ REGEXP defaults to \"[ \\t\\n\\r]+\"."
 ;; https://github.com/greduan/emacs-theme-gruvbox
 (use-package gruvbox-theme
   :straight (gruvbox-theme
-             :fork (:repo "euokyun/emacs-theme-gruvbox"))
-  )
+             :fork (:repo "euokyun/emacs-theme-gruvbox")))
+
+
 ;; https://github.com/Malabarba/beacon
 (use-package beacon
   :custom
@@ -1120,20 +1118,7 @@ or
 ;; https://www.emacswiki.org/emacs/NarrowIndirect
 ;; (use-package narrow-indirect)           ; for me, it doesn't have difference with edit-indirect.
 
-;; use same window.
-(use-package shackle
-  :disabled
-  :hook
-  (after-init . shackle-mode)
-  :custom
-  (shackle-inhibit-window-quit-on-same-windows t)
-  (shackle-rules '((help-mode :same t)
-                   (helpful-mode :same t)
-                   (process-menu-mode :same t)))
-  (shackle-select-reused-windows t))
-
-
-;;cheatsheet
+;; cheatsheet
 (use-package which-key
   :init (which-key-mode)
   :diminish which-key-mode
@@ -1150,7 +1135,6 @@ or
   :defer 1
   :config
   (global-auto-revert-mode))
-
 
 
 ;; ---------------------------
@@ -1541,12 +1525,6 @@ or
   (persistent-scratch-setup-default)
   (persistent-scratch-autosave-mode t))
 
-;; https://github.com/Malabarba/spinner.el
-(use-package spinner
-  :disabled
-  :config
-  (spinner-start 'moon))
-
 (use-package restart-emacs)
 
 (use-package osx-trash
@@ -1753,11 +1731,36 @@ or
   (setq company-backends (mapcar #'company-mode/backend-with-yas company-backends)))
 
 ;; https://github.com/AndreaCrotti/yasnippet-snippets
-(use-package yasnippet-snippets)
+(use-package yasnippet-snippets
+  :after company)
 
 ;; ---------------------------
 ;; Programming configure
 ;; ---------------------------
+
+
+;; https://github.com/Fanael/highlight-defined
+;; highlights defined Emacs Lisp symbols in source code
+(use-package highlight-defined
+  :hook (emacs-lisp-mode . highlight-defined-mode))
+
+ ;; https://github.com/cpitclaudel/easy-escape
+;; make ELisp regular expressions more readable
+(use-package easy-escape
+  :config
+  ;; Replace 'lisp-mode-hook with 'prog-mode-hook to enable everywhere
+  (add-hook 'lisp-mode-hook 'easy-escape-minor-mode)
+  (add-hook 'emacs-lisp-mode-hook 'easy-escape-minor-mode))
+
+
+
+;; https://github.com/jacktasia/dumb-jump
+;; this package requires `silver_searcher' and `ripgrep'
+;; https://github.com/ggreer/the_silver_searcher#installing
+;; https://github.com/BurntSushi/ripgrep#installation
+(use-package dumb-jump
+  :config
+  (add-hook 'xref-backend-functions #'dumb-jump-xref-activate))
 
 
 ;; https://github.com/flycheck/flycheck
@@ -1839,6 +1842,7 @@ or
 ;; https://github.com/emacs-lsp/dap-mode
 (use-package dap-mode
   :straight t
+  :after (company lsp)
   :custom
   (lsp-enable-dap-auto-configure nil)
   :config
@@ -1848,6 +1852,7 @@ or
   (dap-node-setup))
 
 (use-package dap-java
+  :after company
   :ensure nil
   :straight nil)
 
@@ -1912,6 +1917,7 @@ or
 
 ;; latex
 (use-package lsp-latex
+  :after company
   :config
   (with-eval-after-load "tex-mode"
     (add-hook 'tex-mode-hook 'lsp)
@@ -1932,7 +1938,9 @@ or
 
 
 ;; racket
-(use-package racket-mode)
+(use-package racket-mode
+  :catch (lambda (keyword err)
+           (message (error-message-string err))))
 
 ;; https://mullikine.github.io/posts/setting-up-lsp-with-emacs-attempt-2/
 (use-package lsp-racket
@@ -1940,7 +1948,7 @@ or
   :straight (lsp-racket
              :type git
              :host github
-              :repo "mullikine/lsp-racket-el"))
+             :repo "mullikine/lsp-racket-el"))
 
 
 ;; (use-package lsp-racket
@@ -2516,39 +2524,39 @@ or
 
 
 ;; https://github.com/oantolin/orderless
-(use-package orderless
-  :init
-  ;; Configure a custom style dispatcher (see the Consult wiki)
-  ;; (setq orderless-style-dispatchers '(+orderless-dispatch)
-  ;;       orderless-component-separator #'orderless-escapable-split-on-space)
+;; (use-package orderless
+;;   :init
+;;   ;; Configure a custom style dispatcher (see the Consult wiki)
+;;   ;; (setq orderless-style-dispatchers '(+orderless-dispatch)
+;;   ;;       orderless-component-separator #'orderless-escapable-split-on-space)
 
-  (setq completion-styles '(orderless))
-  (setq completion-category-defaults
-        (append completion-category-defaults
-                '((file (styles . (partial-completion))))))
+;;   (setq completion-styles '(orderless))
+;;   (setq completion-category-defaults
+;;         (append completion-category-defaults
+;;                 '((file (styles . (partial-completion))))))
 
-  :custom
-  (complet
+;;   ;; :custom
+;;   ;; complet
 
 
-  :config
-  ;; (setq orderless-component-separator "[  ]")
-  ;; (define-key company-active-map (kbd "SPC")
-  ;;   (defun company-insert-separator+ ()
-  ;;     (interactive)
-  ;;     (insert " ")))
-  (setq orderless-component-separator "[ _]")
-  (define-key company-active-map (kbd "SPC")
-    (defun company-insert-separator+ ()
-      (interactive)
-      (insert "_")))
+;;   :config
+;;   ;; (setq orderless-component-separator "[  ]")
+;;   ;; (define-key company-active-map (kbd "SPC")
+;;   ;;   (defun company-insert-separator+ ()
+;;   ;;     (interactive)
+;;   ;;     (insert " ")))
+;;   (setq orderless-component-separator "[ _]")
+;;   (define-key company-active-map (kbd "SPC")
+;;     (defun company-insert-separator+ ()
+;;       (interactive)
+;;       (insert "_")))
 
-  (defun orderless--use-completions-common-part (fn &rest args)
-    (let ((orderless-match-faces [completions-common-part]))
-      (apply fn args)))
+;;   (defun orderless--use-completions-common-part (fn &rest args)
+;;     (let ((orderless-match-faces [completions-common-part]))
+;;       (apply fn args)))
 
-  (advice-add 'company-capf--candidates
-      :around #'orderless--use-completions-common-part))
+;;   (advice-add 'company-capf--candidates
+;;       :around #'orderless--use-completions-common-part))
 
 
 ;; ;; Dabbrev works with Corfu
@@ -2564,17 +2572,17 @@ or
  ;; https://github.com/raxod502/apheleia
 ;; auto code formatter
 (use-package apheleia
-  :disabled
+  ;; :disabled
   :straight (apheleia
              :host github
              :repo "raxod502/apheleia")
   :config
   (apheleia-global-mode +1))
 
-(use-package prettier-js
-  :hook (js2-mode typescript-mode)
-  :config
-  (setq prettier-js-show-errors nil))
+;; (use-package prettier-js
+;;   :hook (js2-mode typescript-mode)
+;;   :config
+;;   (setq prettier-js-show-errors nil))
 
 
 ;; https://github.com/skeeto/impatient-mode
@@ -2742,7 +2750,7 @@ or
   :defer t
   :hook ((org-mode . org-mode-setup)
          ;; (org-mode . prettify-symbols-mode)
-         ;; (org-mode . org-icons)
+         (org-mode . org-icons)
          ;; (org-mode . webkit-katex-render-mode)
          ;; (org-mode . turn-on-auto-fill) ; 자동 줄 끊기(auto fill)를 적용한다.
          ;; https://emacs.stackexchange.com/questions/16845/expand-org-mode-subtree-with-point-after-ellipsis/44568
@@ -2791,7 +2799,7 @@ or
   ;; emphasis using zero with space
   (org-emphasis-regexp-components '("   ('\"{\x200B" "-     .,:!?;'\")}\\[\x200B" " ,\"'" "." 1))
   (org-startup-with-inline-images t)                ; start with inline images
-  (org-startup-with-latex-preview t)                ; start with latex preview
+  ;; (org-startup-with-latex-preview t)                ; start with latex preview
   (org-latex-create-formula-image-program 'dvisvgm) ; latex to svg
 
 
@@ -3773,10 +3781,17 @@ or go back to just one window (by deleting all but the selected window)."
  :states '(visual)
   "v" 'er/expand-region)
 
-
 (general-define-key
  :keymaps 'company-active-map
-  "C-SPC" 'company-abort)
+  "C-SPC" 'company-abort
+  ;; "SPC" '(lambda () (interactive) (insert "-"))
+  ;; "SPC" nil
+  "SPC" (general-key-dispatch 'self-insert-command
+          :timeout 0.25
+          "SPC" '(lambda () (interactive) (insert "-"))))
+
+
+
 
 ;; (unless is-termux
 ;;   (general-unbind '(normal motion)
