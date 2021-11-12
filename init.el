@@ -1,4 +1,3 @@
-
 ;;; init.el -*- lexical-binding: t; -*-
 ;;; Commentary: euokyun's emacs init file.
 ;;; Code:
@@ -51,9 +50,9 @@
 
 
 (setq-default
- ;; frame-title-format "\n" ; hide frame size info that will be second line and not visible.
+ frame-title-format "\n"                ; hide frame size info that will be second line and not visible.
  ad-redefinition-action 'accept         ; silent warning for redifinition.
- auto-save-default nil ; do not make temporary auto-save files. now i use `super-save' instead.
+ auto-save-default nil                  ; do not make temporary auto-save files. now i use `super-save' instead.
  byte-compile-warnings '(cl-functions)  ; silent old cl-functions warning.
  comp-async-report-warnings-errors nil  ; silent gccemacs native comp warning.
  cursor-in-non-selected-windows nil     ; only shows the cursor of focus buffer.
@@ -61,7 +60,7 @@
  default-input-method "korean-hangul"   ; input method for korean
  delete-by-moving-to-trash t            ; delete = trash
  delete-selection-mode t                ; override selection
- ;; desktop-save-mode 1                    ; save last frame -- can break perspective.
+ desktop-save-mode 1                    ; save last frame -- can break perspective.
  frame-resize-pixelwise t               ; fix frame margin/padding
  mouse-wheel-flip-direction t           ; for OSX -- reverse horizontal scroll.
  mouse-wheel-tilt-scroll t              ; horizontal scroll
@@ -99,7 +98,7 @@
  version-control t               ;
  ;; scroll-bar-mode 0               ;
  ;; tool-bar-mode 0                 ;
- frame-title-format " "          ; empty titlebar
+ ;; frame-title-format " "          ; empty titlebar
  ns-use-proxy-icon nil           ; do not use icon in titlebar
  x-underline-at-descent-line t   ; Underline looks a bit better when drawn lower
  inhibit-compacting-font-caches t       ; for fix all-the-icons slow rendering
@@ -304,6 +303,21 @@
   :config
   (ivy-mode 1)
   (counsel-mode))
+
+;; https://github.com/raxod502/ctrlf
+;; isearch-like text search
+(use-package ctrlf
+  :straight (ctrlf
+             :repo "raxod502/ctrlf")
+  :general
+  (:keymaps 'ctrlf-minibuffer-mode-map
+   :states '(insert normal)
+   "C-n" 'ctrlf-forward-default
+   "C-p" 'ctrlf-backward-default)
+  (:keymaps 'ctrlf-minibuffer-mode-map
+   :states normal
+   "j" 'ctrlf-forward-default
+   "k" 'ctrlf-backward-default))
 
 (use-package smex ;; history 기반 M-x 정렬
   :config
@@ -650,6 +664,12 @@ REGEXP defaults to \"[ \\t\\n\\r]+\"."
     (define-key evil-motion-state-map
       (vector 'remap command) (intern-soft (format "evil-%s" command)))))
 
+;; https://github.com/abo-abo/ace-link
+(use-package ace-link
+  :config
+  (ace-link-setup-default))
+
+
 
 ;; https://github.com/emacsorphanage/anzu
 ;; search and replace feature.
@@ -672,7 +692,9 @@ REGEXP defaults to \"[ \\t\\n\\r]+\"."
 ;; jump with `%'
 (use-package evil-matchit
   :config
-  (global-evil-matchit-mode 1))
+  (global-evil-matchit-mode 1)
+  :catch (lambda (keyword err)
+           (message (error-message-string err))))
 
 ;; https://github.com/cofi/evil-numbers
 (use-package evil-numbers)
@@ -723,6 +745,26 @@ REGEXP defaults to \"[ \\t\\n\\r]+\"."
 ;; TODO: 위치 조절 기능
 ;; M-x는 안 되는데 swiper search같은건 setq 할당으로도 금방 바뀐다.
 ;; 명령어 구분을 통해서 화면의 어느 위치에 미니프레임을 띄울지 판단하는 방식으로 만들어야 함
+
+
+;; https://github.com/hlissner/emacs-solaire-mode
+;; change background color of "unreal" buffer.
+(use-package solaire-mode
+  :config
+  (solaire-global-mode t))
+
+;; ((default .                        solaire-default-face)
+;;  (hl-line .                        solaire-hl-line-face)
+;;  (region .                         solaire-region-face)
+;;  (org-hide .                       solaire-org-hide-face)
+;;  (org-indent .                     solaire-org-hide-face)
+;;  (linum .                          solaire-line-number-face)
+;;  (line-number .                    solaire-line-number-face)
+;;  (header-line .                    solaire-header-line-face)
+;;  (mode-line .                      solaire-mode-line-face)
+;;  (mode-line-inactive .             solaire-mode-line-inactive-face)
+;;  (highlight-indentation-face .     solaire-hl-line-face)
+;;  (fringe .                         solaire-fringe-face))
 
 
 (use-package whitespace
@@ -792,10 +834,14 @@ REGEXP defaults to \"[ \\t\\n\\r]+\"."
 
 ;; https://github.com/hlissner/emacs-doom-themes
 (use-package doom-themes
+  ;; :straight (doom-modeline
+  ;;            :repo "hlissner/emacs-doom-themes")
   :disabled
   :custom
   (doom-themes-enable-bold t)          ; if nil, bold is universally disabled
   (doom-themes-enable-italic t)        ; if nil, italics is universally disabled
+  (doom-gruvbox-light-variant "soft")
+  (doom-gruvbox-dark-variant "soft")
   :config
   (doom-themes-visual-bell-config)
   (doom-themes-treemacs-config)
@@ -813,6 +859,15 @@ REGEXP defaults to \"[ \\t\\n\\r]+\"."
 (use-package beacon
   :custom
   (beacon-mode 1))
+
+(use-package volatile-highlights
+  :config
+  (vhl/define-extension 'undo-tree 'undo-tree-yank 'undo-tree-move)
+  (vhl/install-extension 'undo-tree)
+  (vhl/define-extension 'evil 'evil-paste-after 'evil-paste-before
+                        'evil-paste-pop 'evil-move)
+  (vhl/install-extension 'evil)
+  (volatile-highlights-mode t))
 
 ;; https://github.com/purcell/default-text-scale
 (use-package default-text-scale)
@@ -1162,7 +1217,7 @@ or
   :disabled
   :config
   (add-to-list 'prettify-symbols-alist '("map" . ?↦))
-  (global-prettify-symbols-mode))
+  (global-prettify-symbols-mode t))
 
 ;; https://github.com/fgeller/highlight-thing.el
 (use-package highlight-thing
@@ -1457,6 +1512,12 @@ or
   (imenu-auto-rescan t) ; seems like it's global setting. it will search definitions by name in file.
   (treemacs-tag-follow-mode)
   (treemacs-indent-guide-style 'line)
+  ;; (treemacs-fringe-indicator-mode 'always)
+  :general
+  (:keymaps '(treemacs-mode-map evil-treemacs-state-map)
+   [mouse-1] #'treemacs-single-click-expand-action ; allow click to expand/collapse node.
+   "s-b" 'treemacs)
+
   :config
   (pcase (cons (not (null (executable-find "git")))
                (not (null treemacs-python-executable)))
@@ -1464,9 +1525,7 @@ or
      (treemacs-git-mode 'deferred))
     (`(t . _)
      (treemacs-git-mode 'simple)))
-  (general-define-key
-   :keymaps '(treemacs-mode-map evil-treemacs-state-map)
-   [mouse-1] #'treemacs-single-click-expand-action) ; allow click to expand/collapse node.
+
   (use-package treemacs-all-the-icons
     :config
     (treemacs-load-theme "all-the-icons"))
@@ -1475,23 +1534,81 @@ or
     :after projectile)
 
   (use-package treemacs-magit
-    :after magit))
+    :after magit)
 
+  ;; this uses imagemagick.
+  ;; (use-package treemacs-icons-dired
+  ;;   :after (treemacs dired)
+  ;;   :config (treemacs-icons-dired-mode))
 
-;; this uses imagemagick.
-;; (use-package treemacs-icons-dired
-;;   :after (treemacs dired)
-;;   :config (treemacs-icons-dired-mode))
+  (use-package treemacs-evil
+    :after evil)
 
-(use-package treemacs-evil
-  :after (treemacs evil))
+  (use-package treemacs-persp
+    :after persp-mode
+    :config (treemacs-set-scope-type 'Perspectives))
+  ;; (use-package treemacs-perspective
+  ;;   :after (treemacs perspective)
+  ;;   :config (treemacs-set-scope-type 'Perspectives))
+  :config/el-patch
+  (defun treemacs-finish-edit ()
+    "Finish editing your workspaces and apply the change."
+    (interactive)
+    (treemacs-block
+     (treemacs-error-return-if (not (equal (buffer-name) treemacs--org-edit-buffer-name))
+       "This is not a valid treemacs workspace edit buffer")
+     (treemacs--org-edit-remove-validation-msg)
+     (widen)
+     (whitespace-cleanup)
+     (-let [lines (treemacs--read-persist-lines (buffer-string))]
+       (treemacs-error-return-if (null (buffer-string))
+         "The buffer is empty, there is nothing here to save.")
+       (pcase (treemacs--validate-persist-lines lines)
+         (`(error ,err-line ,err-msg)
+          (treemacs--org-edit-display-validation-msg err-msg err-line))
+         ('success
+          (treemacs--invalidate-buffer-project-cache)
+          (write-region
+           (apply #'concat (--map (concat it "\n") lines))
+           nil
+           treemacs-persist-file
+           nil :silent)
+          (treemacs--restore)
+          (-if-let (ws (treemacs--select-workspace-by-name
+                        (treemacs-workspace->name (treemacs-current-workspace))))
+              (setf (treemacs-current-workspace) ws)
+            (treemacs--find-workspace))
+          (treemacs--consolidate-projects)
+          (if (and (treemacs-get-local-window) (= 2 (length (window-list))))
+              (kill-buffer)
+            (quit-window)
+            (el-patch-remove (kill-buffer-and-window)))
+          (run-hooks 'treemacs-workspace-edit-hook)
+          (when treemacs-hide-gitignored-files-mode
+            (treemacs--prefetch-gitignore-cache 'all))
+          (treemacs-log "Edit completed successfully."))))))
 
-(use-package treemacs-persp
-  :after (treemacs persp-mode)
-  :config (treemacs-set-scope-type 'Perspectives))
-;; (use-package treemacs-perspective
-;;   :after (treemacs perspective)
-;;   :config (treemacs-set-scope-type 'Perspectives))
+  (defun treemacs-edit-workspaces ()
+    "Edit your treemacs workspaces and projects as an `org-mode' file."
+    (interactive)
+    (require 'org)
+    (require 'outline)
+    (treemacs--persist)
+    (switch-to-buffer (get-buffer-create treemacs--org-edit-buffer-name))
+    (erase-buffer)
+    (org-mode)
+    (use-local-map (copy-keymap (with-no-warnings org-mode-map)))
+    (local-set-key (el-patch-swap (kbd "C-c C-c") (kbd "s-s")) #'treemacs-finish-edit)
+    (insert "#+TITLE: Edit Treemacs Workspaces & Projects\n")
+    (when treemacs-show-edit-workspace-help
+      (insert (el-patch-concat "# Call ~treemacs-finish-edit~ or press " (el-patch-swap "~C-c C-c~" "~s-s~") " when done.\n"))
+      (insert "# [[https://github.com/Alexander-Miller/treemacs#conveniently-editing-your-projects-and-workspaces][Click here for detailed documentation.]]\n")
+      (insert "# To cancel you can simply kill this buffer.\n\n"))
+    (insert-file-contents treemacs-persist-file)
+    (with-no-warnings
+      (outline-show-all))
+    (goto-char 0)))
+
 
 ;; ---------------------------
 ;; etc
@@ -1542,8 +1659,9 @@ or
 
 (use-package restart-emacs)
 
+;; https://github.com/emacsorphanage/osx-trash/
 (use-package osx-trash
-  :if (memq window-system '(mac))
+  :if (eq system-type 'darwin)
   :custom
   (delete-by-moving-to-trash t)
   :config
@@ -1725,6 +1843,26 @@ or
   (git-gutter:added-sign "+")
   (git-gutter:deleted-sign "-"))
 
+;; TODO: diff-hl-mode
+;; https://github.com/dgutov/diff-hl
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 (defun dw/switch-project-action ()
   "Switch to a workspace with the project name and start `magit-status'."
   (persp-switch (projectile-project-name))
@@ -1758,6 +1896,11 @@ or
 (use-package yasnippet-snippets
   :after company)
 
+;; TODO: Auto-YASnippet macro+snippet
+;; like lambda snippet!
+;; https://github.com/abo-abo/auto-yasnippet
+
+
 ;; ---------------------------
 ;; Programming configure
 ;; ---------------------------
@@ -1766,7 +1909,19 @@ or
 ;; https://github.com/Fanael/highlight-defined
 ;; highlights defined Emacs Lisp symbols in source code
 (use-package highlight-defined
-  :hook (emacs-lisp-mode . highlight-defined-mode))
+  :hook ((emacs-lisp-mode
+          lisp-interaction-mode) . highlight-defined-mode)
+  ;; :custom
+  ;; (highlight-defined-face-use-itself t)
+  :custom-face
+  (highlight-defined-builtin-function-name-face
+   ((t (:foreground ,(doom-color 'red)
+        :slant italic))))
+  (highlight-defined-function-name-face
+   ((t (:inherit font-lock-keyword-face
+        :foreground ,(doom-color 'cyan))))))
+
+
 
  ;; https://github.com/cpitclaudel/easy-escape
 ;; make ELisp regular expressions more readable
@@ -2125,31 +2280,13 @@ or
   (company-show-quick-access t) ;; "Customized with use-package company"
   (company-echo-delay 0)
   :config
-  ;; (unless clangd-p (delete 'company-clang company-backends))
-
-
-
-
-        ;;  company-org-block
-     ;; company-bbdb
-     ;; company-semantic
-     ;; company-cmake
-     ;; company-capf
-     ;; company-clang
-     ;; company-files
-     ;; (company-dabbrev-code
-     ;;  company-gtags
-     ;;  company-etags
-     ;;  company-keywords)
-     ;; company-oddmuse
-     ;; company-dabbrev
- (setq company-backends
-       '(company-capf
-         company-keywords
-         company-semantic
-         company-files
-         company-etags
-         company-yasnippet))
+  (setq company-backends
+        '(company-capf
+          company-keywords
+          company-semantic
+          company-files
+          company-etags
+          company-yasnippet))
 
   (defun company-mode-minibuffer-setup ()
     "Setup company-mode in minibuffer."
@@ -2158,7 +2295,7 @@ or
     (setq-local company-tooltip-minimum 1))
   (add-hook 'eval-expression-minibuffer-setup-hook 'company-mode-minibuffer-setup)
 
-  (global-company-mode))
+  (global-company-mode t))
 
 
 
@@ -3020,6 +3157,11 @@ or
     )
 
 
+  ;; TODO: math-preview
+  ;; latex preview with node backend.
+  ;; https://gitlab.com/matsievskiysv/math-preview
+
+
   ;; https://github.com/io12/org-fragtog
   ;; automatically toggle preview while cursor in/leave. perfect LaTeX fragment preview.
   (use-package org-fragtog
@@ -3659,6 +3801,7 @@ or go back to just one window (by deleting all but the selected window)."
   (insert (last-message num)))
 
 ;; https://emacs.stackexchange.com/a/2198
+;; TODO: ace-window와 통합하기
 (defun toggle-window-dedicated ()
   "Control whether or not Emacs is allowed to display another buffer in current window."
   (interactive)
@@ -3668,7 +3811,6 @@ or go back to just one window (by deleting all but the selected window)."
        "%s: Can't touch this!"
      "%s is up for grabs.")
    (current-buffer)))
-;; TODO: ace-window와 통합하기
 
 
 ;; (defun un-indent-by-removing-4-spaces ()
@@ -3750,7 +3892,8 @@ or go back to just one window (by deleting all but the selected window)."
   "s-g"
   "M-s-h"
   "M-s-f"
-  "M-<down-mouse-1>")
+  "M-<down-mouse-1>"
+  )
 
 
 
@@ -3768,7 +3911,7 @@ or go back to just one window (by deleting all but the selected window)."
  ;; "s-/" 'evilnc-comment-or-uncomment-lines
  "<f17>" 'toggle-input-method
  "M-y" 'insert-last-message
- "s-b" 'treemacs
+ "s-b" 'treemacs-select-window
  ;; "C-SPC" 'completion-at-point
  "C-SPC" 'company-complete-common
  ;; "C-SPC" 'corfu-complete
@@ -4139,8 +4282,6 @@ or go back to just one window (by deleting all but the selected window)."
 
 
 ;; apply theme
-;; ns-system-appearance
-;; => dark
 (defun my/apply-theme (appearance)
   "Load theme, taking current system APPEARANCE into consideration."
   (mapc #'disable-theme custom-enabled-themes)
@@ -4148,39 +4289,15 @@ or go back to just one window (by deleting all but the selected window)."
     ;; ('light (load-theme 'doom-gruvbox-light t))
     ;; ('dark (load-theme 'doom-gruvbox t))
     ('light (load-theme 'gruvbox-light-soft t))
-    ('dark (load-theme 'gruvbox-dark-soft t))
-    )
-  ;; (when (facep 'git-gutter:modified)
-  ;;   (pcase appearance
-  ;;     ('light (face-remap-add-relative 'git-gutter:modified nil '(:foreground "Black")))
-  ;;     ;; ('dark (face-remap-add-relative 'git-gutter:modified nil '(:foreground "LightGoldenrod")))
-  ;;     ))
-  ;; (when (facep 'git-gutter:added)
-  ;;   (pcase appearance
-  ;;     ('light (face-remap-add-relative 'git-gutter:added nil '(:foreground "DarkGreen")))
-  ;;     ;; ('dark (face-remap-add-relative 'git-gutter:added nil '(:foreground "LightGreen")))
-  ;;     ))
+    ('dark (load-theme 'gruvbox-dark-soft t)))
   (if (featurep 'powerline) (powerline-reset)))
 
 (add-hook 'ns-system-appearance-change-functions #'my/apply-theme)
 (my/apply-theme ns-system-appearance)
 
-;; (defun my/git-gutter-theme (appearance)
-;;   "This is theme setting for git-guttter, for MacOS's light and dark theme."
-;;   (let ((appearance ns-system-appearance))
-;;     (when (facep 'git-gutter:modified)
-;;       (pcase appearance
-;;         ('light (face-remap-add-relative 'git-gutter:modified nil '(:foreground "Black")))
-;;         ('dark (face-remap-add-relative 'git-gutter:modified nil '(:foreground "LightGoldenrod")))))
-;;     (when (facep 'git-gutter:added)
-;;       (pcase appearance
-;;         ('light (face-remap-add-relative 'git-gutter:added nil '(:foreground "DarkGreen")))
-;;         ('dark (face-remap-add-relative 'git-gutter:added nil '(:foreground "LightGreen")))))))
-
-
 ;; don't know why this not work at once.
-;; (setq frame-title-format "\n") ; hide frame size info that will be second line and not visible.
-
+;; (setq-default frame-title-format "\n") ; hide frame size info that will be second line and not visible.
+;; (setq-default frame-title-format " ") ; hide frame size info that will be second line and not visible.
 
 (use-package gcmh
   :init

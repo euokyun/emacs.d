@@ -98,6 +98,7 @@
 (push '(ns-transparent-titlebar . t) default-frame-alist)   ; hide titlebar
 (push '(scroll-bar-mode -1) default-frame-alist)
 
+(setq frame-title-format nil)
 
 (setq frame-inhibit-implied-resize t)
 
