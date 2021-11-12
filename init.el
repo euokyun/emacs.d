@@ -1,3 +1,4 @@
+
 ;;; init.el -*- lexical-binding: t; -*-
 ;;; Commentary: euokyun's emacs init file.
 ;;; Code:
@@ -26,6 +27,8 @@
 (set-fontset-font "fontset-default" 'unicode (font-spec :family "github-octicons") nil 'prepend)
 (set-fontset-font "fontset-default" 'unicode (font-spec :family "FontAwesome") nil 'prepend)
 (set-fontset-font "fontset-default" 'unicode (font-spec :family "all-the-icons") nil 'prepend)
+(set-fontset-font "fontset-default" 'unicode (font-spec :family "Weather Icons") nil 'append)
+(set-fontset-font "fontset-default" 'unicode (font-spec :family "file-icons") nil 'append)
 
 (set-fontset-font t 'hangul "D2Coding" nil 'prepend)
 
@@ -48,7 +51,7 @@
 
 
 (setq-default
- frame-title-format "\n" ; hide frame size info that will be second line and not visible.
+ ;; frame-title-format "\n" ; hide frame size info that will be second line and not visible.
  ad-redefinition-action 'accept         ; silent warning for redifinition.
  auto-save-default nil ; do not make temporary auto-save files. now i use `super-save' instead.
  byte-compile-warnings '(cl-functions)  ; silent old cl-functions warning.
@@ -96,7 +99,7 @@
  version-control t               ;
  ;; scroll-bar-mode 0               ;
  ;; tool-bar-mode 0                 ;
- frame-title-format nil          ; empty titlebar
+ frame-title-format " "          ; empty titlebar
  ns-use-proxy-icon nil           ; do not use icon in titlebar
  x-underline-at-descent-line t   ; Underline looks a bit better when drawn lower
  inhibit-compacting-font-caches t       ; for fix all-the-icons slow rendering
@@ -368,11 +371,23 @@
 (use-package prescient
   :straight (prescient.el
              :repo "raxod502/prescient.el")
+  :config
+  (prescient-persist-mode 1))
+
+(use-package ivy-prescient
+  :straight nil
+  :ensure nil
   :after counsel
   :config
-  (prescient-persist-mode 1)
-  (company-prescient-mode 1)
   (ivy-prescient-mode 1))
+
+(use-package company-prescient
+  :straight nil
+  :ensure nil
+  :after company
+  :config
+  (company-prescient-mode 1))
+
 
 ;; ---------------------------
 ;; Evils
@@ -1656,6 +1671,16 @@ or
          ("Docs"    ? (:foreground "#3F681C" :height 1.2))))
   (pretty-magit-setup))
 
+(use-package ghub
+  :custom
+  (epg-pinentry-mode 'loopback))
+
+;; https://github.com/vermiculus/magithub
+(use-package magithub
+  :after magit
+  :config
+  (magithub-feature-autoinject t)
+  (setq magithub-clone-default-directory "~/git"))
 
 
 
@@ -1687,14 +1712,13 @@ or
   :diminish
   :hook ((text-mode . git-gutter-mode)
          (prog-mode . git-gutter-mode)
-        ;; (git-gutter-mode . (my/git-gutter-theme))
         )
   ;; :hook (text-mode prog-mode)
   ;; These characters are used in terminal mode
-  :custom-face
-  (git-gutter:added ((t (:background nil))))
-  (git-gutter:modified ((t (:background nil))))
-  (git-gutter:deleted ((t (:foreground "LightCoral" :background nil))))
+  ;; :custom-face
+  ;; (git-gutter:added ((t (:background nil))))
+  ;; (git-gutter:modified ((t (:background nil))))
+  ;; (git-gutter:deleted ((t (:foreground "LightCoral" :background nil))))
   :custom
   ;; (git-gutter:hide-gutter t)
   (git-gutter:modified-sign "≡")
@@ -2714,7 +2738,7 @@ or
                                  ("#+AUTHOR:" . " ")
                                  ("SCHEDULED:" . "")
                                  ("DEADLINE:" . "")
-                                 ("CLOSED:" . "")
+                                 ("CLOSED:" . "")
 
                                  ("#+begin_src" . "")
                                  ("#+end_src" . "")
@@ -2803,9 +2827,9 @@ or
   (org-latex-create-formula-image-program 'dvisvgm) ; latex to svg
 
 
-  :custom-face
-  (fixed-pitch ((t (:family "JetBrains Mono"))))
-  (variable-pitch ((t (:family "D2Coding"))))
+  ;; :custom-face
+  ;; (fixed-pitch ((t (:family "JetBrains Mono"))))
+  ;; (variable-pitch ((t (:family "D2Coding"))))
 
   :config
   (defface org-checkbox-done-text '((t (:inherit 'org-done))) "")
@@ -3342,7 +3366,24 @@ prompted for."
 
 (use-package vterm
   :commands vterm
-  :defer)
+  :defer t
+  :config
+  (defun vterm-counsel-yank-pop-action (orig-fun &rest args)
+    (if (equal major-mode 'vterm-mode)
+        (let ((inhibit-read-only t)
+              (yank-undo-function (lambda (_start _end) (vterm-undo))))
+          (cl-letf (((symbol-function 'insert-for-yank)
+                     (lambda (str) (vterm-send-string str t))))
+            (apply orig-fun args)))
+      (apply orig-fun args)))
+  (advice-add 'counsel-yank-pop-action :around #'vterm-counsel-yank-pop-action)
+
+  (defun evil-collection-vterm-escape-stay ()
+    "Go back to normal state but don't move
+cursor backwards. Moving cursor backwards is the default vim behavior but it is
+not appropriate in some cases like terminals."
+    (setq-local evil-move-cursor-back nil))
+  (add-hook 'vterm-mode-hook #'evil-collection-vterm-escape-stay))
 
 (use-package comint
   :straight nil
@@ -4109,16 +4150,16 @@ or go back to just one window (by deleting all but the selected window)."
     ('light (load-theme 'gruvbox-light-soft t))
     ('dark (load-theme 'gruvbox-dark-soft t))
     )
-  (when (facep 'git-gutter:modified)
-    (pcase appearance
-      ('light (face-remap-add-relative 'git-gutter:modified nil '(:foreground "Black")))
-      ;; ('dark (face-remap-add-relative 'git-gutter:modified nil '(:foreground "LightGoldenrod")))
-      ))
-  (when (facep 'git-gutter:added)
-    (pcase appearance
-      ('light (face-remap-add-relative 'git-gutter:added nil '(:foreground "DarkGreen")))
-      ;; ('dark (face-remap-add-relative 'git-gutter:added nil '(:foreground "LightGreen")))
-      ))
+  ;; (when (facep 'git-gutter:modified)
+  ;;   (pcase appearance
+  ;;     ('light (face-remap-add-relative 'git-gutter:modified nil '(:foreground "Black")))
+  ;;     ;; ('dark (face-remap-add-relative 'git-gutter:modified nil '(:foreground "LightGoldenrod")))
+  ;;     ))
+  ;; (when (facep 'git-gutter:added)
+  ;;   (pcase appearance
+  ;;     ('light (face-remap-add-relative 'git-gutter:added nil '(:foreground "DarkGreen")))
+  ;;     ;; ('dark (face-remap-add-relative 'git-gutter:added nil '(:foreground "LightGreen")))
+  ;;     ))
   (if (featurep 'powerline) (powerline-reset)))
 
 (add-hook 'ns-system-appearance-change-functions #'my/apply-theme)
@@ -4138,7 +4179,7 @@ or go back to just one window (by deleting all but the selected window)."
 
 
 ;; don't know why this not work at once.
-(setq frame-title-format "\n") ; hide frame size info that will be second line and not visible.
+;; (setq frame-title-format "\n") ; hide frame size info that will be second line and not visible.
 
 
 (use-package gcmh
