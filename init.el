@@ -50,9 +50,9 @@
 
 
 (setq-default
- frame-title-format "\n"                ; hide frame size info that will be second line and not visible.
+ ;; frame-title-format "\n"                ; hide frame size info that will be second line and not visible.
  ad-redefinition-action 'accept         ; silent warning for redifinition.
- auto-save-default nil                  ; do not make temporary auto-save files. now i use `super-save' instead.
+ auto-save-default nil ; do not make temporary auto-save files. now i use `super-save' instead.
  byte-compile-warnings '(cl-functions)  ; silent old cl-functions warning.
  comp-async-report-warnings-errors nil  ; silent gccemacs native comp warning.
  cursor-in-non-selected-windows nil     ; only shows the cursor of focus buffer.
@@ -60,29 +60,29 @@
  default-input-method "korean-hangul"   ; input method for korean
  delete-by-moving-to-trash t            ; delete = trash
  delete-selection-mode t                ; override selection
- desktop-save-mode 1                    ; save last frame -- can break perspective.
- frame-resize-pixelwise t               ; fix frame margin/padding
- mouse-wheel-flip-direction t           ; for OSX -- reverse horizontal scroll.
- mouse-wheel-tilt-scroll t              ; horizontal scroll
- help-window-select t                   ; focus on help window when activated.
- indent-tabs-mode nil                   ; tab=space!
- tab-width 4                            ; space=4!
- inhibit-startup-screen t               ;
- initial-scratch-message nil            ; empty *scratch* buffer.
- keyboard-coding-system 'utf-8-unix     ; utf-8
- large-file-warning-threshold nil       ; do not warn file size.
- make-backup-files nil                  ; do not make temporal backup files.
- mouse-wheel-follow-mouse t             ; scroll buffer under the mouse cursor.
- mouse-wheel-progressive-speed nil      ; scroll speed = wheel speed
+ desktop-save-mode 1                 ; save last frame -- can break perspective.
+ frame-resize-pixelwise t            ; fix frame margin/padding
+ mouse-wheel-flip-direction t        ; for OSX -- reverse horizontal scroll.
+ mouse-wheel-tilt-scroll t           ; horizontal scroll
+ help-window-select t                ; focus on help window when activated.
+ indent-tabs-mode nil                ; tab=space!
+ tab-width 4                         ; space=4!
+ inhibit-startup-screen t            ;
+ initial-scratch-message nil         ; empty *scratch* buffer.
+ keyboard-coding-system 'utf-8-unix  ; utf-8
+ large-file-warning-threshold nil    ; do not warn file size.
+ make-backup-files nil               ; do not make temporal backup files.
+ mouse-wheel-follow-mouse t          ; scroll buffer under the mouse cursor.
+ mouse-wheel-progressive-speed nil   ; scroll speed = wheel speed
  mouse-wheel-scroll-amount '(1 ((shift) . 1))
  scroll-step 1                          ; scroll step
  show-help-function nil                 ; t
  straight-use-package-by-default t      ; use use-package
  straight-check-for-modifications '(check-on-save find-when-checking) ; don't catch modification unless `save buffer' command.
- tramp-default-method "ssh"      ; remote connection default.
- use-dialog-box nil              ;
- vc-follow-symlinks t            ; silent warning for symlink.
- warning-minimum-level :error    ;
+ tramp-default-method "ssh"             ; remote connection default.
+ use-dialog-box nil                     ;
+ vc-follow-symlinks t                   ; silent warning for symlink.
+ warning-minimum-level :error           ;
  warning-suppress-log-types '((comp))   ; silent warning for native-comp.
  warning-suppress-types '((use-package) (use-package))
  fill-column 80                         ; default is `70'. force line breaker.
@@ -92,15 +92,12 @@
  truncate-lines t                       ; do not wrap code.
  backup-by-copying t                    ; make backup.
  ;; global-auto-revert-non-file-buffers t  ; revert dired and other buffers.
- auto-revert-verbose nil         ; do not message this
- auto-revert-avoid-polling t     ; do not use pooling.
- delete-old-versions t           ; delete old versions.
- version-control t               ;
- ;; scroll-bar-mode 0               ;
- ;; tool-bar-mode 0                 ;
- ;; frame-title-format " "          ; empty titlebar
- ns-use-proxy-icon nil           ; do not use icon in titlebar
- x-underline-at-descent-line t   ; Underline looks a bit better when drawn lower
+ auto-revert-verbose nil                ; do not message this
+ auto-revert-avoid-polling t            ; do not use pooling.
+ delete-old-versions t                  ; delete old versions.
+ version-control t                      ;
+ ns-use-proxy-icon nil                  ; do not use icon in titlebar
+ x-underline-at-descent-line t          ; Underline looks a bit better when drawn lower
  inhibit-compacting-font-caches t       ; for fix all-the-icons slow rendering
  even-window-sizes nil                  ; perspective - fix window layout.
  display-buffer-base-action '((display-buffer-reuse-window display-buffer-same-window)
@@ -109,9 +106,11 @@
  ;; tab-bar-mode t                         ; http://ruzkuku.com/texts/emacs-global.html
  ;; tab-line-mode t
  use-default-font-for-symbols nil
- require-final-newline t                ; according to POSIX, every text file should end with newline.
+ require-final-newline t ; according to POSIX, every text file should end with newline.
  ;; completion-styles '(basic partial-completion initials flex)
  ;; completion-category-overrides '((file (styles . (partial-completion))))
+ imenu-auto-rescan t
+
  )
 
 
@@ -135,7 +134,9 @@
   (setq auto-package-update-hide-results t)
   (auto-package-update-maybe))
 
-
+;; integration with system-package, like brew.
+;; add keyword `:ensure-system-package', car is binary name and cdr is package name.
+(use-package use-package-ensure-system-package)
 
 
 (fset 'yes-or-no-p 'y-or-n-p)           ; Replace yes/no prompts with y/n
@@ -170,20 +171,20 @@
 ;; 커서 라인 강조
 ;; (global-hl-line-mode 1)
 
-(dolist (mode '(text-mode-hook
-                prog-mode-hook
-                conf-mode-hook))
-  (add-hook mode
-            (lambda ()
-              (display-line-numbers-mode 1)
-              (setq-default
-                display-line-numbers-type 'relative
-              ;;  ;;  display-line-numbers-type t
-              ;;  display-line-numbers-grow-only t
-              ;;  display-line-numbers-width-start t
-               )
-              ;; (hl-line-mode)
-              )))
+;; (dolist (mode '(text-mode-hook
+;;                 prog-mode-hook
+;;                 conf-mode-hook))
+;;   (add-hook mode
+;;             (lambda ()
+;;               (display-line-numbers-mode 1)
+;;               (setq-default
+;;                 display-line-numbers-type 'relative
+;;               ;;  ;;  display-line-numbers-type t
+;;               ;;  display-line-numbers-grow-only t
+;;               ;;  display-line-numbers-width-start t
+;;                )
+;;               ;; (hl-line-mode)
+;;               )))
 
 
 ;; 배터리 인디케이터
@@ -231,15 +232,25 @@
         '(insert emacs hybrid normal visual motion operator replace))
   :config
   (general-auto-unbind-keys)
-  (general-override-mode)
+  ;; (general-override-mode)
   (general-evil-setup t)
 
-  (general-create-definer spc-leader
+  (general-create-definer spc
     :keymaps 'override
     ;; :keymaps '(normal insert visual emacs motion)
     ;; :global-prefix "C-SPC"
     :global-prefix "M-SPC"
-    :prefix "SPC"))
+    :prefix "SPC"
+    ;; :non-normal-prefix "M-SPC"
+    :prefix-command 'spc-prefix-command
+    :prefix-map 'spc-prefix-map)
+
+  (general-create-definer spc-e
+    :prefix "SPC e"
+    :global-prefix "M-SPC e"
+    ;; :prefix-command 'spc-e-prefix-command
+    ;; :prefix-map 'spc-e-prefix-map
+    ))
 
 ;; https://github.com/mickeynp/ligature.el
 (use-package ligature
@@ -288,6 +299,9 @@
 (use-package ivy
   :custom
   (ivy-initial-inputs-alist nil)        ; remove M-x "^"
+  :general
+  ("s-o" 'ivy-switch-buffer
+   "s-O" 'find-file)
   :diminish)
 
 ;; https://github.com/abo-abo/swiper
@@ -300,6 +314,9 @@
   (ivy-use-virtual-buffers t)
   (ivy-count-format "(%d/%d) ")
   (enable-recursive-minibuffers t)
+  :general
+  ("s-f" 'counsel-grep-or-swiper
+   "s-S-f" 'counsel-grep-or-swiper-backward)
   :config
   (ivy-mode 1)
   (counsel-mode))
@@ -315,7 +332,7 @@
    "C-n" 'ctrlf-forward-default
    "C-p" 'ctrlf-backward-default)
   (:keymaps 'ctrlf-minibuffer-mode-map
-   :states normal
+   :states 'normal
    "j" 'ctrlf-forward-default
    "k" 'ctrlf-backward-default))
 
@@ -328,18 +345,36 @@
   ;; :diminish projectile-mode
   :config (projectile-mode)
   :demand t
-  :bind-keymap
-  ("C-c p" . projectile-command-map)
-  :init
+  ;; :bind-keymap
+  ;; ("C-c p" . projectile-command-map)
+  ;; :init
   ;; (when (file-directory-p "~/Projects/Code")
   ;;   (setq projectile-project-search-path '("~/Projects/Code")))
-  (setq projectile-switch-project-action #'dw/switch-project-action))
+  :config
+  (setq projectile-switch-project-action #'dw/switch-project-action)
+  :general
+  (spc
+    :states '(normal insert visual emacs motion)
+   "p" '(:ignore t :which-key "projectile/perspective")
+  "pc" 'projectile-compile-project
+  "pd" 'projectile-dired))
 
 (use-package counsel-projectile
   :after projectile
   ;; :bind (("C-M-p" . counsel-projectile-find-file))
   :config
-  (counsel-projectile-mode))
+  (counsel-projectile-mode)
+  :general
+  (spc
+   :states '(normal insert visual emacs motion)
+   "p" '(:ignore t :which-key "projectile/perspective")
+   "pf" 'counsel-projectile-find-file
+   "ps" 'counsel-projectile-switch-project
+   ;; "p s-f" 'counsel-projectile-rg
+   "pF" 'counsel-projectile-rg
+   ;; "pF"  'consult-ripgrep
+   "po" 'counsel-projectile)
+  )
 
 ;; https://github.com/seagle0128/all-the-icons-ivy-rich
 ;; for better performance, enable `all-the-icons-ivy-rich' before `ivy-rich'.
@@ -414,6 +449,12 @@
   :custom
   (undo-tree-auto-save-history t)
   (undo-tree-enable-undo-in-region t)
+  :general
+  (spc
+    :states '(normal insert visual emacs motion)
+    "u" '(undo-tree-visualize :which-key "undo-tree"))
+  ("s-z" 'undo-tree-undo
+   "s-Z" 'undo-tree-redo)
   :config
   (global-undo-tree-mode t)
   ;; (defadvice undo-tree-make-history-save-file-name
@@ -438,16 +479,39 @@
   (evil-ex-search-vim-style-regexp t)
   (evil-undo-system 'undo-tree)
   (evil-respect-visual-line-mode t)
-  (evil-shift-width tab-width)            ; tab option for evil
-  (evil-want-C-u-scroll t)         ; set `C-u' to scroll up. not for insert mode.
-  (evil-want-C-i-jump nil)         ; set `C-i' to insert `TAB' key.
+  (evil-shift-width tab-width)    ; tab option for evil
+  (evil-want-C-u-scroll t)        ; set `C-u' to scroll up. not for insert mode.
+  (evil-want-C-i-jump nil)        ; set `C-i' to insert `TAB' key.
+  :general
+  ("C-M-u" 'universal-argument)
   :config
-  (evil-mode 1))
+  (evil-mode 1)
+  (setq-default display-line-numbers 'visual
+                display-line-numbers-widen t
+                ;; this is the default
+                display-line-numbers-current-absolute t)
+
+  (defun noct:relative ()
+    (setq-local display-line-numbers 'visual))
+
+  (defun noct:absolute ()
+    (setq-local display-line-numbers t))
+
+  (add-hook 'evil-insert-state-entry-hook #'noct:absolute)
+  (add-hook 'evil-insert-state-exit-hook #'noct:relative)
+
+  ;; example of customizing colors
+  (custom-set-faces '(line-number-current-line ((t :weight bold
+                                                   :foreground "goldenrod"
+                                                   :background "slate gray")))))
 
 ;; evil-surround, expend-region and embrace
 ;; https://github.com/magnars/expand-region.el
 (use-package expand-region
-  :commands er/expand-region)
+  :commands er/expand-region
+  :general
+  (:states 'visual
+   "v" 'er/expand-region))
 
 ;; https://github.com/emacs-evil/evil-surround
 (use-package evil-surround
@@ -471,7 +535,6 @@
   :hook ((LaTeX-mode . embrace-Latex-mode-hook)
          (org-mode . embrace-org-mode-hook)))
 
-
 ;; https://github.com/cute-jumper/evil-embrace.el
 (use-package evil-embrace
   :hook ((LaTeX-mode . (lambda () (add-to-list 'evil-embrace-evil-surround-keys ?o))))
@@ -490,6 +553,7 @@
 
 ;; https://github.com/gabesoft/evil-mc
 (use-package evil-mc
+  ;; :disabled
   :diminish
   :config/el-patch
   (evil-define-command evil-mc-make-cursor-here ()
@@ -497,12 +561,39 @@
     :repeat ignore
     :evil-mc t
     (evil-mc-run-cursors-before)
-    (el-patch-wrap 1 1
-      (if (equal evil-state 'visual) (evil-mc-make-cursor-at-pos (- (point) 1))
+    (el-patch-wrap 3 0
+      (if (evil-visual-state-p) (evil-mc-make-cursor-at-pos (- (point) 1))
         (evil-mc-make-cursor-at-pos (point)))))
+  :general
+  ("s-d" 'evil-mc-make-and-goto-next-match
+   "s-D" 'evil-mc-make-and-goto-prev-match
+   "M-<mouse-1>" 'evil-mc-toggle-cursor-on-click
+   "M-s-j" '(evil-mc-make-cursor-move-next-line :which-key "make cursor & go down")
+   "M-s-k" '(evil-mc-make-cursor-move-prev-line :which-key "make cursor & go up")
+   "M-s-i" '(evil-mc-toggle-cursor-here :which-key "toggle cursor here")
+   "M-s-n" '(evil-mc-skip-and-goto-next-match :which-key "next match")
+   "M-s-p" '(evil-mc-skip-and-goto-prev-match :which-key "prev match")
+   "M-s-q" '(evil-mc-undo-all-cursors :which-key "quit multicursor")
+   "M-s-h" '(evil-mc-skip-and-goto-prev-cursor :which-key "prev cursor")
+   "M-s-l" '(evil-mc-skip-and-goto-next-cursor :which-key "next cursor")
+   "M-s-u" '(evil-mc-undo-last-added-cursor :which-key "undo cursor")
+   "M-s-m" '(evil-mc-toggle-frozen :which-key "pause/resume cursor"))
 
+  ;; (:states 'normal
+  ;;  :predicate '(evil-mc-has-cursors-p)
+  ;;  "<escape>" 'evil-mc-undo-all-cursors)
+
+  (:states 'normal
+   "<escape>" (general-predicate-dispatch 'evil-force-normal-state
+                (and evil-mc-mode (evil-mc-has-cursors-p)) 'evil-mc-undo-all-cursors))
 
   :config
+  ;; fix change's wrong cursor position
+  ;; (add-hook 'evil-mc-before-cursors-created
+  ;;           (lambda () (setq-default evil-move-cursor-back t)))
+  ;; (add-hook 'evil-mc-after-cursors-deleted
+  ;;           (lambda () (setq-default evil-move-cursor-back nil)))
+
   (defun evil-mc-toggle-cursor-here ()
     "Toggle Fake Cursor."
     (interactive)
@@ -515,67 +606,130 @@
     (if evil-mc-frozen
         (evil-mc-resume-cursors)
       (evil-mc-pause-cursors)))
-  (defun evil--mc-make-cursor-at-col (_startcol endcol orig-line)
-    (move-to-column endcol)
-    (unless (= (line-number-at-pos) orig-line)
-      (evil-mc-make-cursor-here)))
-  ;; During visual selection point has +1 value
-  (defun my-evil-mc-make-vertical-cursors (beg end)
-    (interactive (list (region-beginning) (- (region-end) 1)))
-    (evil-exit-visual-state)
-    (evil-mc-pause-cursors)
-    ;; Because `evil-mc-resume-cursors` produces a cursor,
-    ;; we have to skip a current line here to avoid having +1 cursor
-    (apply-on-rectangle #'evil--mc-make-cursor-at-col
-                        beg end (line-number-at-pos))
-    (evil-mc-resume-cursors)
-    ;; Because `evil-mc-resume-cursors` produces a cursor, we need to place it on on the
-    ;; same column as the others
-    (move-to-column (evil-mc-column-number end)))
+  ;; (defun evil--mc-make-cursor-at-col (_startcol endcol orig-line)
+  ;;   (move-to-column endcol)
+  ;;   (unless (= (line-number-at-pos) orig-line)
+  ;;     (evil-mc-make-cursor-here)))
+  ;; ;; During visual selection point has +1 value
+  ;; (defun my-evil-mc-make-vertical-cursors (beg end)
+  ;;   (interactive (list (region-beginning) (- (region-end) 1)))
+  ;;   (evil-exit-visual-state)
+  ;;   (evil-mc-pause-cursors)
+  ;;   ;; Because `evil-mc-resume-cursors` produces a cursor,
+  ;;   ;; we have to skip a current line here to avoid having +1 cursor
+  ;;   (apply-on-rectangle #'evil--mc-make-cursor-at-col
+  ;;                       beg end (line-number-at-pos))
+  ;;   (evil-mc-resume-cursors)
+  ;;   ;; Because `evil-mc-resume-cursors` produces a cursor, we need to place it on on the
+  ;;   ;; same column as the others
+  ;;   (move-to-column (evil-mc-column-number end)))
+
+  ;; https://github.com/gabesoft/evil-mc/issues/22#issuecomment-273352904
+  ;; (defun col-at-point (point)
+  ;;   (save-excursion (goto-char point) (current-column)))
+
+  ;; (defun evil--mc-make-cursor-at-col-append (_startcol endcol orig-line)
+  ;;   (end-of-line)
+  ;;   (when (> endcol (current-column))
+  ;;     (insert-char ?\s (- endcol (current-column))))
+  ;;   (move-to-column (- endcol 1))
+  ;;   (unless (= (line-number-at-pos) orig-line)
+  ;;     (evil-mc-make-cursor-here)))
+
+  ;; (defun evil--mc-make-cursor-at-col-insert (startcol _endcol orig-line)
+  ;;   (end-of-line)
+  ;;   (move-to-column startcol)
+  ;;   (unless (or (= (line-number-at-pos) orig-line) (> startcol (current-column)))
+  ;;     (evil-mc-make-cursor-here)))
+
+  ;; (defun evil--mc-make-vertical-cursors (beg end func)
+  ;;   (evil-mc-pause-cursors)
+  ;;   (apply-on-rectangle func
+  ;;                       beg end (line-number-at-pos (point)))
+  ;;   (evil-mc-resume-cursors)
+  ;;   (evil-normal-state))
+
+  ;; (defun evil-mc-insert-vertical-cursors (beg end)
+  ;;   (interactive (list (region-beginning) (region-end)))
+  ;;   (evil--mc-make-vertical-cursors beg end 'evil--mc-make-cursor-at-col-insert)
+  ;;   (move-to-column (min (col-at-point beg) (col-at-point end))))
+
+  ;; (defun evil-mc-append-vertical-cursors (beg end)
+  ;;   (interactive (list (region-beginning) (region-end)))
+  ;;   (evil--mc-make-vertical-cursors beg end 'evil--mc-make-cursor-at-col-append)
+  ;;   (move-to-column (- (max (col-at-point beg) (col-at-point end)) 1)))
+
+  ;; (evil-define-key 'visual global-map "gI" 'evil-mc-insert-vertical-cursors)
+  ;; (evil-define-key 'visual global-map "gA" 'evil-mc-append-vertical-cursors)
+
 
   ;; (setq evil-mc-incompatible-minor-modes
   ;;       (append '(lispy-mode) evil-mc-incompatible-minor-modes))
 
 
-  ;;add support for buffer-list
-  (add-to-list 'evil-mc-known-commands '(Buffer-menu-mark . ((:default . evil-mc-execute-default-call))))
-  (add-to-list 'evil-mc-known-commands '(Buffer-menu-unmark . ((:default . evil-mc-execute-default-call))))
-  ;; and magit
-  (add-to-list 'evil-mc-known-commands '(magit-stage . ((:default . evil-mc-execute-default-call))))
-  (add-to-list 'evil-mc-known-commands '(magit-unstage . ((:default . evil-mc-execute-default-call))))
-  ;; add `M-i' tab key.
-  (add-to-list 'evil-mc-known-commands '(tab-to-tab-stop . ((:default . evil-mc-execute-default-call))))
-
-
-  (add-to-list 'evil-mc-known-commands '(tab-to-tab-stop . ((:default . evil-mc-execute-default-call))))
+  (dolist (elem ;;add support for buffer-list
+           '((Buffer-menu-mark . ((:default . evil-mc-execute-default-call)))
+            (Buffer-menu-unmark . ((:default . evil-mc-execute-default-call)))
+            ;; and magit
+            (magit-stage . ((:default . evil-mc-execute-default-call)))
+            (magit-unstage . ((:default . evil-mc-execute-default-call)))
+            ;; add `M-i' tab key.
+            (tab-to-tab-stop . ((:default . evil-mc-execute-default-call)))))
+    (add-to-list 'evil-mc-known-commands elem))
 
   ;; for dired
   ;; (add-to-list 'evil-mc-known-commands '(dired-flag-file-deletion . ((:default . evil-mc-execute-default-call))))
   ;; (add-to-list 'evil-mc-known-commands '(quoted-insert . ((:default . evil-mc-execute-default-evil-repeat))))
-  ;; fix change's wrong cursor position
-  (add-hook 'evil-mc-before-cursors-created (lambda () (setq-default evil-move-cursor-back t)))
-  (add-hook 'evil-mc-after-cursors-deleted (lambda () (setq-default evil-move-cursor-back nil)))
 
   ;; (delete '(lispyville-substitute        ; s
   ;;          (:default . evil-mc-execute-default-evil-substitute))
   ;;        evil-mc-known-commands)
   ;; (add-to-list 'evil-mc-known-commands '(lispyville-substitute        ; s
   ;;          (:default . evil-mc-execute-default-evil-)))
-
+  (use-package kak
+    :straight (kak
+               :type git
+               :host github
+               :repo "aome510/kak.el"
+               :fork (:repo "euokyun/kak.el"))
+    :commands (kak-select kak-filter)
+    :preface
+    (defun kak-select-bind (beg end)
+      (interactive "r")
+      (kak-select beg end nil))
+    (defun kak-select-invert-bind (beg end)
+      (interactive "r")
+      (kak-select beg end t))
+    (defun kak-filter-bind () (interactive) (kak-filter t))
+    (defun kak-filter-exclude-bind () (interactive) (kak-filter nil))
+    :general
+    ("M-s-0" 'kak-insert-index)
+    (:states 'visual
+     "s-f"      '(kak-select-bind :which-key "kak-select")
+     "s-F"      '(kak-select-invert-bind :which-key "kak-select-invert")
+     "M-s-t"    'kak-split-lines
+     "M-s-f"    '(kak-filter-bind :which-key "kak-filter")
+     "M-s-F"    '(kak-filter-exclude-bind :which-key "kak-filter-exclude")
+     ))
   (global-evil-mc-mode))
 
 ;; https://github.com/gabesoft/evil-mc-extras
 (use-package evil-mc-extras
-  :disabled
+  :config/el-patch
+  (define-minor-mode evil-mc-extras-mode
+    "Toggle evil multiple cursors extras in a single buffer."
+    :group 'evil-mc-extras
+    :init-value nil
+    (el-patch-remove :keymap evil-mc-extras-key-map)
+    (evil-normalize-keymaps))
+  ;; :disabled
   :after evil-mc
-  :hook (evil-mc-mode . evil-mc-extras-mode))
+  :hook (evil-mc-mode . evil-mc-extras-mode)
+  :general
+  (:keymaps 'evil-mc-cursors-map
+   "+" 'evil-mc-inc-num-at-each-cursor
+   "-" 'evil-mc-dec-num-at-each-cursor))
 
-(use-package kak
-  :straight (kak
-             :type git
-             :host github
-             :repo "aome510/kak.el"
-             :fork (:repo "euokyun/kak.el")))
 
 ;; https://www.emacswiki.org/emacs/zones.el
 ;; well, hard to use.
@@ -586,7 +740,17 @@
   :custom
   (mc/edit-lines-empty-lines 'ignore)
   (mc/insert-numbers-default 1)
+  (mc/unpause-jump-back nil)
+  ;; :load-path (expand-file-name "./lisp/mc-pause.el" user-emacs-directory)
+  :general
+  ("s-1" 'mc/pause
+   "s-2" 'mc/unpause
+   "s-3" 'mc/toggle-pause
+   )
   :config
+  (push 'evil-state mc/cursor-specific-vars) ; evil-mode-cursor-back
+  (load-file (expand-file-name "./lisp/mc-pause.el" user-emacs-directory))
+  (require 'mc-pause)
 
   (defun mc/toggle-cursor-at-point ()
     "Create a fake cursor at point."
@@ -597,7 +761,7 @@
         (save-excursion
           (goto-char (point))
           (mc/create-fake-cursor-at-point))))
-    (mc/maybe-multiple-cursors-mode))
+    (unless mc/paused-mode (mc/maybe-multiple-cursors-mode)))
 
   ;; ./var/mc-list.el
   (defun mc/toggle-cmds-to-run-for-all ()
@@ -646,6 +810,11 @@ REGEXP defaults to \"[ \\t\\n\\r]+\"."
   ;; :config
   ;; (set-face-italic 'avy-goto-char-timer-face nil)
   ;; (set-face-italic 'avy-lead-face nil)
+  :general
+  (spc
+    :states '(normal insert visual emacs motion)
+    ";" 'evil-avy-line-saving-column
+    "f" 'evil-avy-goto-char-timer)
   :custom
   (avy-background t)
   (avy-style 'at-full)
@@ -666,6 +835,55 @@ REGEXP defaults to \"[ \\t\\n\\r]+\"."
 
 ;; https://github.com/abo-abo/ace-link
 (use-package ace-link
+  :commands 'ace-link
+  :config/el-patch
+  (defun counsel-ace-link ()
+    "Use Ivy completion for `ace-link'."
+    (interactive)
+    (let (collection action)
+      (cond ((eq major-mode 'Info-mode)
+             (setq collection 'ace-link--info-collect)
+             (setq action 'ace-link--info-action))
+            ((el-patch-swap
+               (eq major-mode 'helpful-mode)
+               (member major-mode '(help-mode
+                                    package-menu-mode geiser-doc-mode elbank-report-mode
+                                    elbank-overview-mode slime-trace-dialog-mode helpful-mode)))
+             (setq collection 'ace-link--help-collect)
+             (setq action 'ace-link--help-action))
+            ((eq major-mode 'woman-mode)
+             (setq collection 'ace-link--woman-collect)
+             (setq action 'ace-link--woman-action))
+            ((eq major-mode 'eww-mode)
+             (setq collection 'ace-link--eww-collect)
+             (setq action 'ace-link--eww-action))
+            ((el-patch-swap
+               (eq major-mode 'compilation-mode)
+               (or (member major-mode '(compilation-mode grep-mode))
+                   (bound-and-true-p compilation-shell-minor-mode)))
+             (setq collection 'ace-link--eww-collect)
+             (setq action 'ace-link--compilation-action))
+            ((el-patch-swap (eq major-mode 'org-mode)
+                            (memq major-mode '(org-mode
+                                               erc-mode elfeed-show-mode
+                                               term-mode vterm-mode
+                                               eshell-mode
+                                               telega-chat-mode)))
+             (setq collection 'ace-link--org-collect)
+             (setq action 'ace-link--org-action)))
+      (el-patch-add
+        ((eq major-mode 'org-agenda-mode)
+         (setq collection 'ace-link--org-agenda-collect)
+         (setq action 'ace-link--org-agenda-action))
+        ((eq major-mode 'Custom-mode)
+         (setq collection 'ace-link--custom-collect)
+         (setq action 'ace-link--custom-action)))
+      (if (null collection)
+          (error "%S is not supported" major-mode)
+        (ivy-read "Ace-Link: " (funcall collection)
+                  :action (lambda (x) (funcall action (cdr x)))
+                  :require-match t
+                  :caller 'counsel-ace-link))))
   :config
   (ace-link-setup-default))
 
@@ -683,6 +901,7 @@ REGEXP defaults to \"[ \\t\\n\\r]+\"."
   :general
   (:states 'normal
    "gc" 'evilnc-comment-operator
+   "s-/" 'evilnc-comment-or-uncomment-lines
    "gy" 'evilnc-copy-and-comment-operator))
 
 
@@ -699,11 +918,13 @@ REGEXP defaults to \"[ \\t\\n\\r]+\"."
 ;; https://github.com/cofi/evil-numbers
 (use-package evil-numbers)
 
+;; https://github.com/lukhas/buffer-move
 ;; (use-package buffer-move
 ;;   :config
 ;;   (setq buffer-move-stay-after-swap t)
 ;;   (setq buffer-move-behavior 'move))
 
+;; https://github.com/emacs-evil/evil-collection
 (use-package evil-collection
   ;; :after evil
   :init
@@ -727,11 +948,12 @@ REGEXP defaults to \"[ \\t\\n\\r]+\"."
 
 ;; https://github.com/muffinmad/emacs-mini-frame
 (use-package mini-frame
-  :disabled
+  ;; :disabled
   :custom
   ;; (mini-frame-show-parameters '((top . 50) (width . 0.7) (left . 0.5) (min-height . 10)))
   (mini-frame-show-parameters '(;; (top . 0.1)
-                                (top . 10)
+                                ;; (top . 10)
+                                (top . 0)
                                 (width . 0.7)
                                 (left . 0.5)
                                 ;; (height . 1) ; min-height for fix blinking.
@@ -752,19 +974,6 @@ REGEXP defaults to \"[ \\t\\n\\r]+\"."
 (use-package solaire-mode
   :config
   (solaire-global-mode t))
-
-;; ((default .                        solaire-default-face)
-;;  (hl-line .                        solaire-hl-line-face)
-;;  (region .                         solaire-region-face)
-;;  (org-hide .                       solaire-org-hide-face)
-;;  (org-indent .                     solaire-org-hide-face)
-;;  (linum .                          solaire-line-number-face)
-;;  (line-number .                    solaire-line-number-face)
-;;  (header-line .                    solaire-header-line-face)
-;;  (mode-line .                      solaire-mode-line-face)
-;;  (mode-line-inactive .             solaire-mode-line-inactive-face)
-;;  (highlight-indentation-face .     solaire-hl-line-face)
-;;  (fringe .                         solaire-fringe-face))
 
 
 (use-package whitespace
@@ -1052,138 +1261,61 @@ REGEXP defaults to \"[ \\t\\n\\r]+\"."
 ;; ---------------------------
 ;; window & buffer
 ;; ---------------------------
-
 (use-package transpose-frame)
 
 (use-package ace-window
- :init
- (defun my/aw-vterm ()
-   "open terminal here"
-   (interactive)
-   (vterm))
- :init/el-patch
- (defvar aw-dispatch-alist
-   '(((el-patch-swap ?x ?k) aw-delete-window "delete Window")
-     (?m aw-swap-window "Swap Windows")
-     (?M aw-move-window "Move Window")
-     (?c aw-copy-window "Copy Window")
-     ((el-patch-swap ?j ?o) aw-switch-buffer-in-window "Select Buffer")
-     ((el-patch-swap ?n ?`) aw-flip-window)
-     ((el-patch-swap ?u ?O) aw-switch-buffer-other-window "Switch Buffer Other Window")
-     (?e aw-execute-command-other-window "Execute Command Other Window")
-     ((el-patch-swap ?F ?f) aw-split-window-fair "Split Fair Window")
-     ((el-patch-swap ?v ?j) aw-split-window-vert "Split Vert Window")
-     ((el-patch-swap ?b ?l) aw-split-window-horz "Split Horz Window")
-     ((el-patch-swap ?o ?K) delete-other-windows "Delete Other Windows")
-     ((el-patch-swap ?T ?t) aw-transpose-frame "Transpose Frame")
-     ;; (el-patch-add (?r my/aw-winner-redo))
-     ;; (el-patch-add (?u my/aw-winner-undo))
-     (el-patch-add (?! my/aw-vterm))
-     ;; (el-patch-add (27 aw--done "exit"))
-     (el-patch-add (27 aw--done))
-     ;; ?i ?r ?t are used by hyperbole.el
-     (?? aw-show-dispatch-help))
-   "List of actions for `aw-dispatch-default'.
+  :init/el-patch
+  (defvar aw-dispatch-alist
+    '(((el-patch-swap ?x ?k) aw-delete-window "delete Window")
+      (?m aw-swap-window "Swap Windows")
+      (?M aw-move-window "Move Window")
+      (?c aw-copy-window "Copy Window")
+      ((el-patch-swap ?j ?o) aw-switch-buffer-in-window "Select Buffer")
+      ((el-patch-swap ?n ?`) aw-flip-window)
+      ((el-patch-swap ?u ?O) aw-switch-buffer-other-window "Switch Buffer Other Window")
+      (?e aw-execute-command-other-window "Execute Command Other Window")
+      ((el-patch-swap ?F ?f) aw-split-window-fair "Split Fair Window")
+      ((el-patch-swap ?v ?j) aw-split-window-vert "Split Vert Window")
+      ((el-patch-swap ?b ?l) aw-split-window-horz "Split Horz Window")
+      ((el-patch-swap ?o ?K) delete-other-windows "Delete Other Windows")
+      ((el-patch-swap ?T ?t) aw-transpose-frame "Transpose Frame")
+      ;; (el-patch-add (?r my/aw-winner-redo))
+      ;; (el-patch-add (?u my/aw-winner-undo))
+      (el-patch-add (?! my/aw-vterm))
+      ;; (el-patch-add (27 aw--done "exit"))
+      (el-patch-add (27 aw--done))
+      ;; ?i ?r ?t are used by hyperbole.el
+      (?? aw-show-dispatch-help))
+    "List of actions for `aw-dispatch-default'.
 each action is a list of either:
   (char function description) where function takes a single window argument
 or
   (char function) where function takes no argument and the description is omitted.")
+  ;; :custom-face
+  ;; (aw-leading-char-face ((t (:height 400 :background "darkorange1" :foreground gruvbox-dark1 :weight bold))))
+  ;; (aw-mode-line-face ((t (:background "darkorange1" :foreground "#3c3836" :weight bold))))
 
- ;; this not works.
- ;; (define-minor-mode ace-window-display-mode
- ;;   "Minor mode for showing the ace window key in the mode line."
- ;;   :global t
- ;;   (if ace-window-display-mode
- ;;       (progn
- ;;         (aw-update)
- ;;         (set-default
- ;;          'mode-line-format
- ;;          `((ace-window-display-mode
- ;;             (:eval (el-patch-swap (window-parameter (selected-window) 'ace-window-path)
- ;;                                   (format " %s " (window-parameter (selected-window) 'ace-window-path)))))
- ;;            ,@(assq-delete-all
- ;;               'ace-window-display-mode
- ;;               (default-value 'mode-line-format))))
- ;;         (force-mode-line-update t)
- ;;         (add-hook 'window-configuration-change-hook 'aw-update)
- ;;         ;; Add at the end so does not precede select-frame call.
- ;;         (add-hook 'after-make-frame-functions #'aw--after-make-frame t))
- ;;     (set-default
- ;;      'mode-line-format
- ;;      (assq-delete-all
- ;;       'ace-window-display-mode
- ;;       (default-value 'mode-line-format)))
- ;;     (remove-hook 'window-configuration-change-hook 'aw-update)
- ;;     (remove-hook 'after-make-frame-functions 'aw--after-make-frame)))
+  :general
+  (spc
+    :states '(normal insert visual emacs motion)
+    "w" '(ace-window :which-key "ace-window"))
 
+  :config
 
- ;; (defvar aw-dispatch-alist
- ;;     '((?c aw-copy-window "copy window")
- ;;       (?e aw-execute-command-other-window "execute command other window")
- ;;       (?f aw-split-window-fair "split fair window")
- ;;       (?j aw-split-window-vert "split vert window")
- ;;       (?k aw-delete-window "delete window")
- ;;       (?K delete-other-windows "delete other windows")
- ;;       (?l aw-split-window-horz "split horz window")
- ;;       (?m aw-swap-window "swap windows")
- ;;       (?m aw-move-window "move window")
- ;;       (?o aw-switch-buffer-in-window "select buffer")
- ;;       (?o aw-switch-buffer-other-window "switch buffer other window")
- ;;       (?r my/aw-winner-redo)
- ;;       (?t aw-transpose-frame "transpose frame")
- ;;       (?u my/aw-winner-undo)
+  (defun my/aw-vterm ()
+    "open terminal here"
+    (interactive)
+    (vterm))
 
- ;;       (?! my/aw-vterm)
- ;;       (27 aw--done)
-
- ;;       ;; ?i ?r ?t are used by hyperbole.el
- ;;       (?? aw-show-dispatch-help))
- ;;     "list of actions for `aw-dispatch-default'.
- ;; each action is a list of either:
- ;;   (char function description) where function takes a single window argument
- ;; or
- ;;   (char function) where function takes no argument and the description is omitted.")
-
- ;; :custom-face
- ;; (aw-leading-char-face ((t (:height 400 :background "darkorange1" :foreground gruvbox-dark1 :weight bold))))
- ;; (aw-mode-line-face ((t (:background "darkorange1" :foreground "#3c3836" :weight bold))))
- :config
-
- ;; (define-minor-mode ace-window-display-mode
- ;;   "Minor mode for showing the ace window key in the mode line."
- ;;   :global t
- ;;   (if ace-window-display-mode
- ;;       (progn
- ;;         (aw-update)
- ;;         (set-default
- ;;          'mode-line-format
- ;;          `((ace-window-display-mode
- ;;             (:eval (propertize (format " %s " (upcase (window-parameter (selected-window) 'ace-window-path)))
- ;;                                'face 'aw-mode-line-face)))
- ;;            ,@(assq-delete-all
- ;;               'ace-window-display-mode
- ;;               (default-value 'mode-line-format))))
- ;;         (force-mode-line-update t)
- ;;         (add-hook 'window-configuration-change-hook 'aw-update)
- ;;         ;; Add at the end so does not precede select-frame call.
- ;;         (add-hook 'after-make-frame-functions #'aw--after-make-frame t))
- ;;     (set-default
- ;;      'mode-line-format
- ;;      (assq-delete-all
- ;;       'ace-window-display-mode
- ;;       (default-value 'mode-line-format)))
- ;;     (remove-hook 'window-configuration-change-hook 'aw-update)
- ;;     (remove-hook 'after-make-frame-functions 'aw--after-make-frame)))
-
- (setq aw-keys '(?a ?s ?d ?g ?h ?i ?n ?p ?v ?w ?x ?y ?z ?b ?v ?q))
- ;; (setq aw-ignore-current t) ; 이러면 split이 현재 윈도우에서 작동하지 않는다.
- (ace-window-display-mode)             ; showing window identifier on modeline.
- (setq aw-minibuffer-flag t)
- (setq aw-dispatch-always t)
- )
+  (setq aw-keys '(?a ?s ?d ?g ?h ?i ?n ?p ?v ?w ?x ?y ?z ?b ?v ?q))
+  ;; (setq aw-ignore-current t) ; 이러면 split이 현재 윈도우에서 작동하지 않는다.
+  (ace-window-display-mode)             ; showing window identifier on modeline.
+  (setq aw-minibuffer-flag t)
+  (setq aw-dispatch-always t))
 
 ;; https://github.com/Fanael/edit-indirect
 ;; (use-package edit-indirect)
+
 
 ;; https://www.emacswiki.org/emacs/NarrowIndirect
 ;; (use-package narrow-indirect)           ; for me, it doesn't have difference with edit-indirect.
@@ -1338,9 +1470,18 @@ or
                               (dired-omit-mode 1)
                               (dired-hide-details-mode 1)
                               (all-the-icons-dired-mode 1)
-                              (hl-line-mode 1)
-                              ))
+                              (hl-line-mode 1)))
          (dired-mode-hook . auto-revert-mode))
+  :general
+  (:keymaps 'dired-mode-map
+   :states 'normal
+   "SPC" nil
+   "h" 'dired-single-up-directory
+   "H" 'dired-omit-mode
+   "l" 'dired-single-buffer
+   "y" 'dired-ranger-copy
+   "X" 'dired-ranger-move
+   "p" 'dired-ranger-paste)
   :config
   (when (string= system-type "darwin")
     (setq dired-use-ls-dired t
@@ -1405,6 +1546,15 @@ or
              :type git
              :host github
              :repo "alphapapa/dogears.el")
+  :general
+  (spc
+    :states '(normal insert visual emacs motion)
+   "`" (general-key-dispatch 'dogears-go
+         :which-key "dogears"
+         :timeout 0.5
+         "n" 'dogears-forward
+         "p" 'dogears-back
+         "`" 'dogears-sidebar))
   :config
   (defun toggle-dogears (orig-fun &rest args)
     (unless (ignore-errors (kill-buffer "*Dogears List*"))
@@ -1412,7 +1562,62 @@ or
   (advice-add 'dogears-sidebar :around #'toggle-dogears)
   (dogears-mode))
 
+;; https://github.com/joodland/bm
+;; Visible bookmarks in buffer
+(use-package bm
+  :demand t
+  :init
+  ;; restore on load (even before you require bm)
+  (setq bm-restore-repository-on-load t)
+  :general
+  ;; (:global-prefix "M-SPC"
+  ;;  :prefix "SPC"
+  ;;  :states '(normal insert visual emacs motion)
+  ;;  "m" 'Visible-Bookmark
+  ;;  "mn" 'bm-next
+  ;;  "mp" 'bm-previous)
+  (:states 'normal
+   "m" (general-key-dispatch 'evil-set-marker
+         ;; :timeout 0.2
+         "m" 'bm-toggle))
 
+  :custom
+  ;; where to store persistant files
+  (bm-repository-file (expand-file-name "bm-repository" no-littering-var-directory))
+  ;; Allow cross-buffer 'next'
+  ;; (bm-cycle-all-buffers t)
+  ;; save bookmarks
+  (bm-buffer-persistence t)
+
+  :config
+  ;; Loading the repository from file when on start up.
+  (add-hook 'after-init-hook 'bm-repository-load)
+  ;; Saving bookmarks
+  (add-hook 'kill-buffer-hook #'bm-buffer-save)
+  ;; Saving the repository to file when on exit.
+  ;; kill-buffer-hook is not called when Emacs is killed, so we
+  ;; must save all bookmarks first.
+  (add-hook 'kill-emacs-hook #'(lambda nil
+                                 (bm-buffer-save-all)
+                                 (bm-repository-save)))
+  ;; The `after-save-hook' is not necessary to use to achieve persistence,
+  ;; but it makes the bookmark data in repository more in sync with the file
+  ;; state.
+  (add-hook 'after-save-hook #'bm-buffer-save)
+
+  ;; Restoring bookmarks
+  (add-hook 'find-file-hooks #'bm-buffer-restore)
+  (add-hook 'after-revert-hook #'bm-buffer-restore)
+
+  ;; The `after-revert-hook' is not necessary to use to achieve persistence,
+  ;; but it makes the bookmark data in repository more in sync with the file
+  ;; state. This hook might cause trouble when using packages
+  ;; that automatically reverts the buffer (like vc after a check-in).
+  ;; This can easily be avoided if the package provides a hook that is
+  ;; called before the buffer is reverted (like `vc-before-checkin-hook').
+  ;; Then new bookmarks can be saved before the buffer is reverted.
+  ;; Make sure bookmarks is saved before check-in (and revert-buffer)
+  (add-hook 'vc-before-checkin-hook #'bm-buffer-save))
 
 
 ;; https://github.com/Bad-ptr/persp-mode.el
@@ -1420,6 +1625,29 @@ or
   :custom
   (persp-autokill-buffer-on-remove 'kill-weak)
   (persp-hook-up-emacs-buffer-completion t) ; try to restrict buffer list.
+  :general
+  (spc
+    :states '(normal insert visual emacs motion)
+   "p" '(:ignore t :which-key "projectile/perspective")
+   "pn" 'persp-next
+   "pp" 'persp-prev
+   "p TAB" 'persp-switch
+   "px" '(:ignore t :which-key "perspective")
+   ;; "pxA" 'persp-set-buffer
+   "pxa" 'persp-add-buffer
+   ;; "pxd" 'persp-kill
+   "pxr" 'persp-rename
+   "pxy" 'persp-copy
+   "pxd" 'persp-kill
+   "pxs" 'persp-state-save
+   "pxS" 'persp-save-to-file-by-names
+   "pxl" 'persp-load-state-from-file
+   "pxL" 'persp-load-from-file-by-names
+   "pxk" 'persp-remove-buffer
+   "pxK" 'persp-kill-buffer
+   "pxi" 'persp-import-buffers
+   "pxI" 'persp-import-win-conf
+   "pxt" 'persp-temporarily-display-buffer)
   :config
   (persp-mode)
   (add-to-list 'window-persistent-parameters '(winner-ring . t))
@@ -1508,12 +1736,13 @@ or
 
 
 (use-package treemacs
+  :defer t
   :custom
-  (imenu-auto-rescan t) ; seems like it's global setting. it will search definitions by name in file.
   (treemacs-tag-follow-mode)
   (treemacs-indent-guide-style 'line)
   ;; (treemacs-fringe-indicator-mode 'always)
   :general
+  ("s-b" 'treemacs-select-window)
   (:keymaps '(treemacs-mode-map evil-treemacs-state-map)
    [mouse-1] #'treemacs-single-click-expand-action ; allow click to expand/collapse node.
    "s-b" 'treemacs)
@@ -1529,10 +1758,8 @@ or
   (use-package treemacs-all-the-icons
     :config
     (treemacs-load-theme "all-the-icons"))
-
   (use-package treemacs-projectile
     :after projectile)
-
   (use-package treemacs-magit
     :after magit)
 
@@ -1543,13 +1770,13 @@ or
 
   (use-package treemacs-evil
     :after evil)
-
   (use-package treemacs-persp
     :after persp-mode
     :config (treemacs-set-scope-type 'Perspectives))
   ;; (use-package treemacs-perspective
   ;;   :after (treemacs perspective)
   ;;   :config (treemacs-set-scope-type 'Perspectives))
+
   :config/el-patch
   (defun treemacs-finish-edit ()
     "Finish editing your workspaces and apply the change."
@@ -1763,7 +1990,24 @@ or
   ;; :bind ("C-M-;" . magit-status)
   :commands (magit-status magit-get-current-branch)
   :custom
-  (magit-display-buffer-function #'magit-display-buffer-same-window-except-diff-v1))
+  (magit-display-buffer-function #'magit-display-buffer-same-window-except-diff-v1)
+  :general
+  (spc
+    :states '(normal insert visual emacs motion)
+    "g" '(:ignore t :which-key "magit")
+    "gs" 'magit-status
+    "gd" 'magit-diff-unstaged
+    "gc" 'magit-branch-or-checkout
+    "gl" '(:ignore t :which-key "log")
+    "glc" 'magit-log-current
+    "glf" 'magit-log-buffer-file
+    "gb" 'magit-branch
+    "gP" 'magit-push-current
+    "gp" 'magit-pull-branch
+    "gf" 'magit-fetch
+    "gF" 'magit-fetch-all
+    "gr" 'magit-rebase)
+  )
 
 ;; https://github.com/magit/git-modes
 ;; Major modes for git files.
@@ -1829,8 +2073,14 @@ or
   :straight t
   :diminish
   :hook ((text-mode . git-gutter-mode)
-         (prog-mode . git-gutter-mode)
-        )
+         (prog-mode . git-gutter-mode))
+  :general
+  (spc
+    :states '(normal insert visual emacs motion)
+    :repeat t
+    :jump t
+    "gj" 'git-gutter:next-hunk
+    "gk" 'git-gutter:previous-hunk)
   ;; :hook (text-mode prog-mode)
   ;; These characters are used in terminal mode
   ;; :custom-face
@@ -1914,32 +2164,36 @@ or
   ;; :custom
   ;; (highlight-defined-face-use-itself t)
   :custom-face
-  (highlight-defined-builtin-function-name-face
-   ((t (:foreground ,(doom-color 'red)
-        :slant italic))))
-  (highlight-defined-function-name-face
-   ((t (:inherit font-lock-keyword-face
-        :foreground ,(doom-color 'cyan))))))
+  ;; (highlight-defined-builtin-function-name-face
+  ;;  ((t (:foreground ,(doom-color 'red)
+  ;;       :slant italic))))
+  ;; (highlight-defined-function-name-face
+  ;;  ((t (:inherit font-lock-keyword-face
+  ;;       :foreground ,(doom-color 'cyan)))))
+  )
 
 
 
  ;; https://github.com/cpitclaudel/easy-escape
 ;; make ELisp regular expressions more readable
 (use-package easy-escape
-  :config
-  ;; Replace 'lisp-mode-hook with 'prog-mode-hook to enable everywhere
-  (add-hook 'lisp-mode-hook 'easy-escape-minor-mode)
-  (add-hook 'emacs-lisp-mode-hook 'easy-escape-minor-mode))
+  :hook ((lisp-mode emacs-lisp-mode) . easy-escape-minor-mode))
 
 
-
+(use-package rg
+  :ensure-system-package rg)
+(use-package ag
+  :ensure-system-package (ag . the_silver_searcher))
 ;; https://github.com/jacktasia/dumb-jump
 ;; this package requires `silver_searcher' and `ripgrep'
 ;; https://github.com/ggreer/the_silver_searcher#installing
 ;; https://github.com/BurntSushi/ripgrep#installation
 (use-package dumb-jump
+  :after (rg ag)
+  ;; :hook (xref-back-functions . dumb-jump-xref-activate)
   :config
-  (add-hook 'xref-backend-functions #'dumb-jump-xref-activate))
+  (add-hook 'xref-backend-functions #'dumb-jump-xref-activate)
+  )
 
 
 ;; https://github.com/flycheck/flycheck
@@ -1964,9 +2218,25 @@ or
           js2-mode
           web-mode
           racket-mode) . lsp-deferred)
-  :bind (:map lsp-mode-map
-              ;; ("TAB" . completion-at-point)
-              ("C-c C-f" . lsp-format-buffer))
+  ;; :bind (:map lsp-mode-map
+  ;;             ;; ("TAB" . completion-at-point)
+  ;;             ("C-c C-f" . lsp-format-buffer))
+  :general
+  (spc
+    :keymaps 'lsp-mode-map
+    :states '(normal insert visual emacs motion)
+    "l" '(:ignore t :which-key "lsp")
+    ;; "ld" 'xref-find-definitions
+    ;; "lr" 'xref-find-references
+    "ld" 'lsp-ui-peek-find-definitions
+    "lr" 'lsp-ui-peek-find-references
+    "ln" 'lsp-ui-find-next-reference
+    "lp" 'lsp-ui-find-prev-reference
+    "ls" 'counsel-imenu
+    "le" 'lsp-ui-flycheck-list
+    "lS" 'lsp-ui-sideline-mode
+    "lX" 'lsp-execute-code-action
+    "lf" 'lsp-format-buffer)
   :custom
   (lsp-keymap-prefix "C-x l")
   (lsp-auto-guess-root nil)
@@ -2043,19 +2313,36 @@ or
 ;; https://github.com/noctuid/lispyville
 (use-package lispyville
   :init
-  (general-add-hook '(emacs-lisp-mode-hook lisp-mode-hook) #'lispyville-mode)
-
-  :hook ((emacs-lisp-mode racket-mode lisp-interaction-mode) . lispyville-mode)
+  (general-add-hook '(emacs-lisp-mode-hook racket-mode lisp-interaction-mode lisp-mode-hook) #'lispyville-mode)
+  ;; :hook ((emacs-lisp-mode racket-mode lisp-interaction-mode) . lispyville-mode)
   ;; :hook ((lispy-mode . lispyville-mode))
+  :general
+  (:keymaps 'lispyville-mode-map
+   :states 'normal
+   "C-M-j" 'lispyville-drag-forward
+   "C-M-k" 'lispyville-drag-backward
+   "C-M-S-j" 'lispy-join
+   "M-s" 'lispy-splice
+   "M-S-s" 'lispy-split
+   "C-M-r" 'lispy-raise-sexp            ; isearch-backward-regexp
+   "C-M-S-r" 'lispyville-raise-list     ; isearch-backward-regexp
+   "M-t" 'transpose-sexps
+   "C-M-v" 'lispy-convolute-sexp        ; scroll-other-window
+   )
+  (spc-e
+    :keymaps 'lispyville-mode-map
+    :states '(normal visual)
+    "/" '(lispy-eval-and-comment :which-key "eval and comment"))
   :config
   (lispyville-set-key-theme
-   '(operators                     ; change evil commands. y d c j .... all.
-     c-w                           ; remap evil-delete-backword-word
-     additional                    ; drag, join and splice, etc.
-     additional-movement           ; H,L []{}()
-     slurp/barf-cp                 ; <>
-     prettify                          ; indent
-     commentary                        ; gc, gy, s/
+   '(operators                         ; change evil commands. y d c j .... all.
+     c-w                               ; remap evil-delete-backword-word
+     ;; additional                        ; drag, join and splice, etc.
+     additional-movement                ; H,L []{}()
+     slurp/barf-cp                      ; <>
+     prettify                           ; indent
+     commentary                         ; gc, gy, s/
+     wrap                               ; M-([{
      ))
   (lispyville-enter-visual-when-marking))
 
@@ -2080,6 +2367,17 @@ or
              ;; smart-tab      ; C-b & C-f jump positions and smart shift with tab & S-tab.
              smart-yank))               ; Yank behavior depend on mode.
     ))
+
+;; https://gitlab.com/ideasman42/emacs-spatial-navigate
+(use-package spatial-navigate
+  :general
+  (:keymaps 'normal
+   "M-j" 'spatial-navigate-forward-vertical-box
+   "M-k" 'spatial-navigate-backward-vertical-box)
+  (:keymaps 'insert
+   "M-j" 'spatial-navigate-forward-vertical-bar
+   "M-k" 'spatial-navigate-backward-vertical-bar))
+
 
 ;; ---------------------------
 ;; languages
@@ -2118,6 +2416,21 @@ or
 
 ;; racket
 (use-package racket-mode
+  :general
+  (repl-mode
+   :states '(normal insert)
+   "C-n")
+  (spc-e
+    :keymaps 'racket-mode-map
+    :states '(normal visual)
+    "b" 'racket-run-module-at-point
+    "x" 'racket-send-last-sexp
+    "d" 'racket-send-definition)
+  (spc-e
+    :keymaps 'racket-mode-map
+    :states 'visual
+    "r" 'racket-send-region)
+
   :catch (lambda (keyword err)
            (message (error-message-string err))))
 
@@ -2261,7 +2574,7 @@ or
 
 ;; https://www.neilvandyke.org/quack/
 ;; (use-package quack)
-
+;; TODO: cycle
 (use-package company
   :diminish company-mode
   ;; :hook ((prog-mode LaTeX-mode latex-mode ess-r-mode) . company-mode)
@@ -2279,6 +2592,16 @@ or
   ;; (company-show-quick-access t nil nil "Customized with use-package company")
   (company-show-quick-access t) ;; "Customized with use-package company"
   (company-echo-delay 0)
+  :general
+  ("C-SPC" 'company-complete-common)
+  (:keymaps 'company-active-map
+   "C-SPC" 'company-abort
+   ;; "SPC" '(lambda () (interactive) (insert "-"))
+   ;; "SPC" nil
+   "SPC" (general-key-dispatch 'self-insert-command
+           :timeout 0.25
+           "SPC" '(lambda () (interactive) (insert "-"))))
+
   :config
   (setq company-backends
         '(company-capf
@@ -2917,10 +3240,44 @@ or
          ;; https://emacs.stackexchange.com/questions/16845/expand-org-mode-subtree-with-point-after-ellipsis/44568
          (org-tab-first-hook . org-end-of-line) ; expand when press TAB after ellipsis.
          )
+  :general
+  (spc
+    :keymaps 'org-mode-map
+    "o" '(:ignore t :which-key "org-mode")
+    "op" '(org-pomodoro :which-key "pomodoro")
+    "on" '(org-toggle-narrow-to-subtree :which-key "toggle narrow")
+    "of" '(dw/search-org-files :which-key "search notes")
+    ;; "os"  '(counsel-rg :which-key "search notes")
+    "os" '(org-agenda :which-key "status")
+    "ot" '(org-todo-list :which-key "todos")
+    "oc" '(org-capture t :which-key "capture")
+    "ox" '(org-export-dispatch t :which-key "export")
+    ;; insert
+    "oi" '(:ignore t :which-key "insert")
+    "oil" '(org-insert-link :which-key "insert link")
+    "oi," '(org-insert-structure-template :which-key "insert structure")
+    "oii" '(org-emphasize :which-key "emphasize")
+    ;; transclusion
+    "oit" '(org-transclusion-add)
+    ;; whitespace
+    "o SPC" '(insert-zero-width-space :which-key "zero width space"))
+  (org-mode-map
+   "C-j" 'org-next-visible-heading
+   "C-k" 'org-previous-visible-heading)
+  (org-src-mode-map
+   "s-s" 'org-edit-src-save
+   "s-k" 'org-edit-src-exit)
+  (spc-e
+    :keymaps 'org-mode-map
+    :states '(normal visual emacs motion)
+    "e" '(my/org-edit-this :which-key "edit-this")
+    "x" '(org-babel-execute-src-block :which-key "execute this block"))
 
-
-
-
+  (:keymaps 'org-mode-map
+   :states '(normal motion visual)
+   "$" (general-key-dispatch '(lambda () (interactive) (evil-org-end-of-line))
+         ;; :timeout 0.25
+         "$" 'evil-end-of-line))
 
 
   :custom
@@ -2935,8 +3292,8 @@ or
   (org-log-into-drawer t)         ; Log stuff into the LOGBOOK drawer by default
   (org-hide-emphasis-markers t)   ; hide markup indicator
   (prettify-symbols-unprettify-at-point 'right-edge)
-  (org-fontify-done-headline t)       ; apply special face to DONE
-  (org-pretty-entities t)             ; show entities as UTF-8 char.
+  (org-fontify-done-headline t)         ; apply special face to DONE
+  (org-pretty-entities t)               ; show entities as UTF-8 char.
   ;; (org-odd-levels-only t)               ; odd levels only
   ;; (org-indent-indentation-per-level 2)  ;
   ;; (org-hide-leading-stars t)            ; hide the stars.
@@ -2959,7 +3316,7 @@ or
   (org-outline-path-complete-in-steps nil)
   ;; emphasis using zero with space
   (org-emphasis-regexp-components '("   ('\"{\x200B" "-     .,:!?;'\")}\\[\x200B" " ,\"'" "." 1))
-  (org-startup-with-inline-images t)                ; start with inline images
+  (org-startup-with-inline-images t)    ; start with inline images
   ;; (org-startup-with-latex-preview t)                ; start with latex preview
   (org-latex-create-formula-image-program 'dvisvgm) ; latex to svg
 
@@ -2969,7 +3326,14 @@ or
   ;; (variable-pitch ((t (:family "D2Coding"))))
 
   :config
-  (defface org-checkbox-done-text '((t (:inherit 'org-done))) "")
+  ;; (defface org-checkbox-done-text '((t (:inherit 'org-done))) "")
+
+  ;; https://github.com/alphapapa/org-bookmark-heading
+  (use-package org-bookmark-heading
+    :custom
+    (org-bookmark-jump-indirect t))
+
+
   ;; https://github.com/alphapapa/org-ql
   ;; query for org
   ;; (use-package org-ql)
@@ -3041,8 +3405,10 @@ or
     :config/el-patch
     (defvar org-src-mode-map
       (let ((map (make-sparse-keymap)))
-        (define-key map (el-patch-swap "\C-c'" [?\s-s]) 'org-edit-src-exit)
-        (define-key map (el-patch-swap "\C-c\C-k" [?\s-k]) 'org-edit-src-abort)
+        ;; (define-key map (el-patch-swap "\C-c'" [?\s-s]) 'org-edit-src-exit)
+        (define-key map (el-patch-swap "\C-c'" "s-s") 'org-edit-src-exit)
+        ;; (define-key map (el-patch-swap "\C-c\C-k" [?\s-k]) 'org-edit-src-abort)
+        (define-key map (el-patch-swap "\C-c\C-k" "s-k") 'org-edit-src-abort)
         (define-key map (el-patch-swap "\C-x\C-s" "\C-x\C-s") 'org-edit-src-save)
         map)))
 
@@ -3072,22 +3438,22 @@ or
           (list start end collection
                 :exit-function exit-fn)))))
 
-;; ;; #+ completion
-;; ;; https://emacs.stackexchange.com/a/30691
-;; (defun org-keyword-backend (command &optional arg &rest ignored)
-;;   (interactive (list 'interactive))
-;;   (cl-case command
-;;     (interactive (company-begin-backend 'org-keyword-backend))
-;;     (prefix (and (eq major-mode 'org-mode)
-;;                  (cons (company-grab-line "^#\\+\\(\\w*\\)" 1)
-;;                        t)))
-;;     (candidates (mapcar #'upcase
-;;                         (cl-remove-if-not
-;;                          (lambda (c) (string-prefix-p arg c))
-;;                          (pcomplete-completions))))
-;;     (ignore-case t)
-;;     (duplicates t)))
-;; (add-to-list 'company-backends 'org-keyword-backend)
+  ;; ;; #+ completion
+  ;; ;; https://emacs.stackexchange.com/a/30691
+  ;; (defun org-keyword-backend (command &optional arg &rest ignored)
+  ;;   (interactive (list 'interactive))
+  ;;   (cl-case command
+  ;;     (interactive (company-begin-backend 'org-keyword-backend))
+  ;;     (prefix (and (eq major-mode 'org-mode)
+  ;;                  (cons (company-grab-line "^#\\+\\(\\w*\\)" 1)
+  ;;                        t)))
+  ;;     (candidates (mapcar #'upcase
+  ;;                         (cl-remove-if-not
+  ;;                          (lambda (c) (string-prefix-p arg c))
+  ;;                          (pcomplete-completions))))
+  ;;     (ignore-case t)
+  ;;     (duplicates t)))
+  ;; (add-to-list 'company-backends 'org-keyword-backend)
 
   ;; https://github.com/xenodium/company-org-block
   ;; https://xenodium.com/emacs-org-block-company-completion/
@@ -3172,7 +3538,8 @@ or
   ;; async execution of org-babel block.
   ;; simply add `:async' keyword to header.
   ;; and invoke `ob-async-org-babel-execute-src-block'
-  (use-package ob-async)
+  (use-package ob-async
+    :commands 'ob-async-org-babel-execute-src-block)
 
   ;; https://xenodium.com/emacs-chaining-org-babel-blocks/
   ;; chaining org babel blocks.
@@ -3262,23 +3629,23 @@ or
                :repo "tonyaldon/org-bars")
     ;; :if (not is-termux)
     :hook (org-mode . org-bars-mode)
-    ;; :custom
+    :custom
+    (org-bars-stars '(:empty ""
+                      :invisible ""
+                      :visible ""))
     ;; (org-bars-extra-pixels-height 7)
     ;; :custom-face
     ;; (org-bars-star-empty ((t (:weight bold))))
     ;; (org-bars-star-invisible ((t (:weight bold))))
     ;; (org-bars-star-visible ((t (:weight bold))))
-    :config
+    ;; :config
     ;; (setq org-bars-stars '(:empty ?⊙
     ;;                        :invisible ?⊕
     ;;                        :visible ?⊝))
     ;; (setq org-bars-stars '(:empty "-"
     ;;                        :invisible "+"
     ;;                        :visible "="))
-    (setq org-bars-stars '(:empty ""
-                           :invisible ""
-                           :visible "")))
-
+    )
   (defun org-no-ellipsis-in-headlines ()
     "Remove use of ellipsis in headlines.
 See `buffer-invisibility-spec'."
@@ -3346,11 +3713,13 @@ See `buffer-invisibility-spec'."
   (use-package evil-org-mode
     :hook ((org-mode . evil-org-mode)
            (org-agenda-mode . evil-org-mode)
-           (evil-org-mode . (lambda () (evil-org-set-key-theme '(navigation
-                                                                 todo
-                                                                 insert
-                                                                 textobjects
-                                                                 additional)))))
+           (evil-org-mode . (lambda ()
+                              (evil-org-set-key-theme
+                               '(navigation
+                                 todo
+                                 insert
+                                 textobjects
+                                 additional)))))
     :config
     (require 'evil-org-agenda)
     (evil-org-agenda-set-keys))
@@ -3878,101 +4247,121 @@ or go back to just one window (by deleting all but the selected window)."
 ;; Keybinding
 ;; ---------------------------
 
-(general-unbind 'global
-  "s-q"
-  "s-z"
-  "s-Z"
-  "s-f"
-  "s-F"
-  "s-p"
-  "s-h"
-  "s-t"
-  "s-l"
-  "s-j"
-  "s-g"
-  "M-s-h"
-  "M-s-f"
-  "M-<down-mouse-1>"
-  )
+;; (general-unbind 'global
+;;   "s-q"
+;;   "s-z"
+;;   "s-Z"
+;;   "s-f"
+;;   "s-F"
+;;   "s-p"
+;;   "s-h"
+;;   "s-t"
+;;   "s-l"
+;;   "s-j"
+;;   "s-g"
+;;   "M-s-h"
+;;   "M-s-f"
+;;   "M-<down-mouse-1>"
+;;   )
 
 
 
 
 (general-define-key
- ;; "C-s" 'counsel-grep-or-swiper
- "s-f" 'counsel-grep-or-swiper
- ;; "s-w" 'delete-window
- ;; "s-W" 'delete-other-window
- ;; undo, redo
- "s-z" 'undo-tree-undo
- "s-Z" 'undo-tree-redo
- "C-M-u" 'universal-argument            ; C-u is now evil-scroll-up
- ;; "s-?" 'evilnc-copy-and-comment-lines
- ;; "s-/" 'evilnc-comment-or-uncomment-lines
- "<f17>" 'toggle-input-method
- "M-y" 'insert-last-message
- "s-b" 'treemacs-select-window
- ;; "C-SPC" 'completion-at-point
- "C-SPC" 'company-complete-common
- ;; "C-SPC" 'corfu-complete
- ;; "s-o" 'find-file
- ;; "s-o" 'counsel-switch-buffer
- "s-o" 'ivy-switch-buffer
- "s-O" 'find-file
- ;; "s-f" 'evil-avy-goto-char-timer
+ ;; ;; "C-s" 'counsel-grep-or-swiper
+ ;; "s-f" 'counsel-grep-or-swiper
+ ;; ;; "s-w" 'delete-window
+ ;; ;; "s-W" 'delete-other-window
+ ;; ;; undo, redo
+ ;; "s-z" 'undo-tree-undo
+ ;; "s-Z" 'undo-tree-redo
+ ;; "C-M-u" 'universal-argument            ; C-u is now evil-scroll-up
+ ;; ;; "s-?" 'evilnc-copy-and-comment-lines
+ ;; ;; "s-/" 'evilnc-comment-or-uncomment-lines
+ ;; "<f17>" 'toggle-input-method
+ ;; "M-y" 'insert-last-message
+ ;; "s-b" 'treemacs-select-window
+ ;; ;; "C-SPC" 'completion-at-point
+ ;; "C-SPC" 'company-complete-common
+ ;; ;; "C-SPC" 'corfu-complete
+ ;; ;; "s-o" 'find-file
+ ;; ;; "s-o" 'counsel-switch-buffer
+ ;; "s-o" 'ivy-switch-buffer
+ ;; "s-O" 'find-file
+ ;; ;; "s-f" 'evil-avy-goto-char-timer
  "s-n" '(nil :which-key "new buffer & frame")
  "s-n f" 'make-frame
  "s-n b" '(clone-indirect-buffer-other-window :which-key "clone indirect buffer - other window")
  "s-n B" '(make-indirect-buffer :which-key "make indirect buffer")
- "s-," help-map                         ; change c-h map.
- ;; [remap indent-for-tab-command] 'smart-tab-jump-out-or-indent
  )
+
+;; spatial-navigate
+;; (general-define-key
+;;  :keymaps 'normal
+;;  "M-j" 'spatial-navigate-forward-vertical-box
+;;  "M-k" 'spatial-navigate-backward-vertical-box)
+;; (general-define-key
+;;  :keymaps 'insert
+;;  "M-j" 'spatial-navigate-forward-vertical-bar
+;;  "M-k" 'spatial-navigate-backward-vertical-bar)
+
+;; lispyville additional
+;; (general-define-key
+;;  :keymaps 'lispyville-mode-map
+;;  :states 'normal
+;;   "C-M-j" 'lispyville-drag-forward
+;;   "C-M-k" 'lispyville-drag-backward
+;;   "C-M-S-j" 'lispy-join
+;;   "M-s" 'lispy-splice
+;;   "M-S-s" 'lispy-split
+;;   "C-M-r" 'lispy-raise-sexp                ; isearch-backward-regexp
+;;   "C-M-S-r" 'lispyville-raise-list           ; isearch-backward-regexp
+;;   "M-t" 'transpose-sexps
+;;   "C-M-v" 'lispy-convolute-sexp            ; scroll-other-window
+;;   )
 
 ;; evil-mc
-(general-define-key
- ;; "s-g" evil-mc-cursors-map
- "M-<mouse-1>"      'evil-mc-toggle-cursor-on-click
- "M-s-j"            '(evil-mc-make-cursor-move-next-line :which-key "make cursor & go down")
- "M-s-k"            '(evil-mc-make-cursor-move-prev-line :which-key "make cursor & go up")
- "M-s-i"            '(evil-mc-toggle-cursor-here :which-key "toggle cursor here")
- "M-s-n"            '(evil-mc-skip-and-goto-next-match :which-key "next match")
- "M-s-p"            '(evil-mc-skip-and-goto-prev-match :which-key "prev match")
- "M-s-q"            '(evil-mc-undo-all-cursors :which-key "quit multicursor")
- "M-s-h"            '(evil-mc-skip-and-goto-prev-cursor :which-key "prev cursor")
- "M-s-l"            '(evil-mc-skip-and-goto-next-cursor :which-key "next cursor")
- "M-s-0"            'kak-insert-index
- "M-s-u"            '(evil-mc-undo-last-added-cursor :which-key "undo cursor")
- "M-s-m"            '(evil-mc-toggle-frozen :which-key "pause/resume cursor")
- )
+;; (general-define-key
+;;  "M-<mouse-1>" 'evil-mc-toggle-cursor-on-click
+;;  "M-s-j" '(evil-mc-make-cursor-move-next-line :which-key "make cursor & go down")
+;;  "M-s-k" '(evil-mc-make-cursor-move-prev-line :which-key "make cursor & go up")
+;;  "M-s-i" '(evil-mc-toggle-cursor-here :which-key "toggle cursor here")
+;;  "M-s-n" '(evil-mc-skip-and-goto-next-match :which-key "next match")
+;;  "M-s-p" '(evil-mc-skip-and-goto-prev-match :which-key "prev match")
+;;  "M-s-q" '(evil-mc-undo-all-cursors :which-key "quit multicursor")
+;;  "M-s-h" '(evil-mc-skip-and-goto-prev-cursor :which-key "prev cursor")
+;;  "M-s-l" '(evil-mc-skip-and-goto-next-cursor :which-key "next cursor")
+;;  "M-s-0" 'kak-insert-index
+;;  "M-s-u" '(evil-mc-undo-last-added-cursor :which-key "undo cursor")
+;;  "M-s-m" '(evil-mc-toggle-frozen :which-key "pause/resume cursor"))
 
-(general-define-key
- :states 'visual
-  "u" nil
- ;; :keymaps 'evil-mc-key-map
- "s-f" '(lambda (beg end) (interactive "r") (kak-select beg end nil))
- "s-F" '(lambda (beg end) (interactive "r") (kak-select beg end t))
- "M-s-t" 'kak-split-lines
- "M-s-f" '(lambda () (interactive) (kak-filter t))
- "M-s-F" '(lambda () (interactive) (kak-filter nil))
- )
 
-(general-define-key
- :states '(normal insert)
- :keymaps 'repl-mode
- "C-n")
+;; (general-define-key
+;;  :states 'visual
+;;   "u" nil
+;;  "s-f" '(lambda (beg end) (interactive "r") (kak-select beg end nil))
+;;  "s-F" '(lambda (beg end) (interactive "r") (kak-select beg end t))
+;;  "M-s-t" 'kak-split-lines
+;;  "M-s-f" '(lambda () (interactive) (kak-filter t))
+;;  "M-s-F" '(lambda () (interactive) (kak-filter nil)))
 
-(general-define-key
- :states '(visual)
-  "v" 'er/expand-region)
+;; (general-define-key
+;;  :states '(normal insert)
+;;  :keymaps 'repl-mode
+;;  "C-n")
 
-(general-define-key
- :keymaps 'company-active-map
-  "C-SPC" 'company-abort
-  ;; "SPC" '(lambda () (interactive) (insert "-"))
-  ;; "SPC" nil
-  "SPC" (general-key-dispatch 'self-insert-command
-          :timeout 0.25
-          "SPC" '(lambda () (interactive) (insert "-"))))
+;; (general-define-key
+;;  :states '(visual)
+;;   "v" 'er/expand-region)
+
+;; (general-define-key
+;;  :keymaps 'company-active-map
+;;   "C-SPC" 'company-abort
+;;   ;; "SPC" '(lambda () (interactive) (insert "-"))
+;;   ;; "SPC" nil
+;;   "SPC" (general-key-dispatch 'self-insert-command
+;;           :timeout 0.25
+;;           "SPC" '(lambda () (interactive) (insert "-"))))
 
 
 
@@ -3997,14 +4386,14 @@ or go back to just one window (by deleting all but the selected window)."
 ;;  "R" 'evil-multiedit-match-all
 ;;  "C-M-d" 'evil-multiedit-restore)
 
-(general-define-key
- :states '(normal visual)
-  ;; "gl" '(browse-url :which-key "browse-url") ; use `gf' instead.
-  ;; "s-d" 'evil-multiedit-match-and-next
-  ;; "s-D" 'evil-multiedit-match-and-prev
- "s-d" 'evil-mc-make-and-goto-next-match
- "s-D" 'evil-mc-make-and-goto-prev-match
- )
+;; (general-define-key
+;;  :states '(normal visual)
+;;   ;; "gl" '(browse-url :which-key "browse-url") ; use `gf' instead.
+;;   ;; "s-d" 'evil-multiedit-match-and-next
+;;   ;; "s-D" 'evil-multiedit-match-and-prev
+;;  "s-d" 'evil-mc-make-and-goto-next-match
+;;  "s-D" 'evil-mc-make-and-goto-prev-match
+;;  )
 
 ;; (push '((multiedit-insert . evil-multiedit-insert-state-map)
 ;;         (multiedit . evil-multiedit-state-map)) general-keymap-aliases)
@@ -4046,7 +4435,7 @@ or go back to just one window (by deleting all but the selected window)."
 ;;   :keymaps 'override
 ;;  "SPC" nil)
 
-;; (general-create-definer spc-leader
+;; (general-create-definer spc
 ;;   :keymaps 'override
 ;;   ;; :keymaps '(normal insert visual emacs motion)
 ;;   ;; :global-prefix "C-SPC"
@@ -4054,226 +4443,217 @@ or go back to just one window (by deleting all but the selected window)."
 ;;   :prefix "SPC")
 
 
-(spc-leader
-  :states '(normal insert visual emacs motion)
-  "" nil
-  "u" '(undo-tree-visualize :which-key "undo-tree")
-  "w" '(ace-window :which-key "ace-window")
-
-  ;; magit settings
-  "g" '(:ignore t :which-key "magit")
-  "gs" 'magit-status
-  "gd" 'magit-diff-unstaged
-  "gc" 'magit-branch-or-checkout
-  "gl" '(:ignore t :which-key "log")
-  "glc" 'magit-log-current
-  "glf" 'magit-log-buffer-file
-  "gb" 'magit-branch
-  "gP" 'magit-push-current
-  "gp" 'magit-pull-branch
-  "gf" 'magit-fetch
-  "gF" 'magit-fetch-all
-  "gr" 'magit-rebase
-
-  ;; avy
-  "j" 'evil-avy-line-saving-column
-  "t" 'evil-avy-goto-char-timer
-)
+;; (spc
+;;   :states '(normal insert visual emacs motion)
+;;   "" nil
+;;   "u" '(undo-tree-visualize :which-key "undo-tree")
+;;   "w" '(ace-window :which-key "ace-window")
+;;   ;; avy
+;;   "j" 'evil-avy-line-saving-column
+;;   "t" 'evil-avy-goto-char-timer
+;; )
 
 
-(spc-leader
-  :states '(normal insert visual emacs motion)
-  ;; projectile
-  "p" '(:ignore t :which-key "projectile/perspective")
-  "pf" 'counsel-projectile-find-file
-  "ps" 'counsel-projectile-switch-project
-  ;; "p s-f" 'counsel-projectile-rg
-  "pF" 'counsel-projectile-rg
-  ;; "pF"  'consult-ripgrep
-  "po" 'counsel-projectile
-  "pc" 'projectile-compile-project
-  "pd" 'projectile-dired)
+;; (spc
+;;   :states '(normal insert visual emacs motion)
+;;   ;; projectile
+;;   "p" '(:ignore t :which-key "projectile/perspective")
+;;   "pf" 'counsel-projectile-find-file
+;;   "ps" 'counsel-projectile-switch-project
+;;   ;; "p s-f" 'counsel-projectile-rg
+;;   "pF" 'counsel-projectile-rg
+;;   ;; "pF"  'consult-ripgrep
+;;   "po" 'counsel-projectile
+;;   "pc" 'projectile-compile-project
+;;   "pd" 'projectile-dired
+;;   )
 
-(with-eval-after-load "persp-mode"
-  (spc-leader
-    :states '(normal insert visual emacs motion)
-    ;; :keymaps 'persp-key-map
-    ;; perspective
-    "pn" 'persp-next
-    "pp" 'persp-prev
-    "p TAB" 'persp-switch
-
-    "px" '(:ignore t :which-key "perspective")
-    ;; "pxA" 'persp-set-buffer
-    "pxa" 'persp-add-buffer
-    ;; "pxd" 'persp-kill
-    "pxr" 'persp-rename
-    "pxy" 'persp-copy
-    "pxd" 'persp-kill
-    "pxs" 'persp-state-save
-    "pxS" 'persp-save-to-file-by-names
-    "pxl" 'persp-load-state-from-file
-    "pxL" 'persp-load-from-file-by-names
-    "pxk" 'persp-remove-buffer
-    "pxK" 'persp-kill-buffer
-    "pxi" 'persp-import-buffers
-    "pxI" 'persp-import-win-conf
-    "pxt" 'persp-temporarily-display-buffer
-
-
-    ;; "p;" 'persp-switch-last
-    ;; "p`" 'persp-switch-by-number
-    ;; "p1" '((lambda () (interactive) "Switch to perspective." (persp-switch-by-number 1)) :which-key "switch: 1")
-    ;; "p2" '((lambda () (interactive) "Switch to perspective." (persp-switch-by-number 2)) :which-key "switch: 2")
-    ;; "p3" '((lambda () (interactive) "Switch to perspective." (persp-switch-by-number 3)) :which-key "switch: 3")
-    ;; "p4" '((lambda () (interactive) "Switch to perspective." (persp-switch-by-number 4)) :which-key "switch: 4")
-    ;; "p5" '((lambda () (interactive) "Switch to perspective." (persp-switch-by-number 5)) :which-key "switch: 5")
-    ;; "p6" '((lambda () (interactive) "Switch to perspective." (persp-switch-by-number 6)) :which-key "switch: 6")
-    ;; "p7" '((lambda () (interactive) "Switch to perspective." (persp-switch-by-number 7)) :which-key "switch: 7")
-    ;; "p8" '((lambda () (interactive) "Switch to perspective." (persp-switch-by-number 8)) :which-key "switch: 8")
-    ;; "p9" '((lambda () (interactive) "Switch to perspective." (persp-switch-by-number 9)) :which-key "switch: 9")
-    ;; "p0" '((lambda () (interactive) "Switch to perspective." (persp-switch-by-number 10)) :which-key "switch: 10")
-    ))
+;; (with-eval-after-load "persp-mode"
+;;   (spc
+;;     :states '(normal insert visual emacs motion)
+;;     ;; :keymaps 'persp-key-map
+;;     ;; perspective
+;;     "pn" 'persp-next
+;;     "pp" 'persp-prev
+;;     "p TAB" 'persp-switch
+;;     "px" '(:ignore t :which-key "perspective")
+;;     ;; "pxA" 'persp-set-buffer
+;;     "pxa" 'persp-add-buffer
+;;     ;; "pxd" 'persp-kill
+;;     "pxr" 'persp-rename
+;;     "pxy" 'persp-copy
+;;     "pxd" 'persp-kill
+;;     "pxs" 'persp-state-save
+;;     "pxS" 'persp-save-to-file-by-names
+;;     "pxl" 'persp-load-state-from-file
+;;     "pxL" 'persp-load-from-file-by-names
+;;     "pxk" 'persp-remove-buffer
+;;     "pxK" 'persp-kill-buffer
+;;     "pxi" 'persp-import-buffers
+;;     "pxI" 'persp-import-win-conf
+;;     "pxt" 'persp-temporarily-display-buffer
 
 
-(general-define-key
- :states 'normal
- :keymaps 'dired-mode-map
- "SPC" nil
- "h" 'dired-single-up-directory
- "H" 'dired-omit-mode
- "l" 'dired-single-buffer
- "y" 'dired-ranger-copy
- "X" 'dired-ranger-move
- "p" 'dired-ranger-paste)
+;;     ;; "p;" 'persp-switch-last
+;;     ;; "p`" 'persp-switch-by-number
+;;     ;; "p1" '((lambda () (interactive) "Switch to perspective." (persp-switch-by-number 1)) :which-key "switch: 1")
+;;     ;; "p2" '((lambda () (interactive) "Switch to perspective." (persp-switch-by-number 2)) :which-key "switch: 2")
+;;     ;; "p3" '((lambda () (interactive) "Switch to perspective." (persp-switch-by-number 3)) :which-key "switch: 3")
+;;     ;; "p4" '((lambda () (interactive) "Switch to perspective." (persp-switch-by-number 4)) :which-key "switch: 4")
+;;     ;; "p5" '((lambda () (interactive) "Switch to perspective." (persp-switch-by-number 5)) :which-key "switch: 5")
+;;     ;; "p6" '((lambda () (interactive) "Switch to perspective." (persp-switch-by-number 6)) :which-key "switch: 6")
+;;     ;; "p7" '((lambda () (interactive) "Switch to perspective." (persp-switch-by-number 7)) :which-key "switch: 7")
+;;     ;; "p8" '((lambda () (interactive) "Switch to perspective." (persp-switch-by-number 8)) :which-key "switch: 8")
+;;     ;; "p9" '((lambda () (interactive) "Switch to perspective." (persp-switch-by-number 9)) :which-key "switch: 9")
+;;     ;; "p0" '((lambda () (interactive) "Switch to perspective." (persp-switch-by-number 10)) :which-key "switch: 10")
+;;     ))
+
+
+;; (general-define-key
+;;  :states 'normal
+;;  :keymaps 'dired-mode-map
+;;  "SPC" nil
+;;  "h" 'dired-single-up-directory
+;;  "H" 'dired-omit-mode
+;;  "l" 'dired-single-buffer
+;;  "y" 'dired-ranger-copy
+;;  "X" 'dired-ranger-move
+;;  "p" 'dired-ranger-paste)
 
 
 
 ;; lsp-mode
-(spc-leader
-  :states '(normal insert visual emacs motion)
-  :keymaps 'lsp-mode-map
-  "l" '(:ignore t :which-key "lsp")
-  ;; "ld" 'xref-find-definitions
-  ;; "lr" 'xref-find-references
-  "ld" 'lsp-ui-peek-find-definitions
-  "lr" 'lsp-ui-peek-find-references
-  "ln" 'lsp-ui-find-next-reference
-  "lp" 'lsp-ui-find-prev-reference
-  "ls" 'counsel-imenu
-  "le" 'lsp-ui-flycheck-list
-  "lS" 'lsp-ui-sideline-mode
-  "lX" 'lsp-execute-code-action)
+;; (spc
+;;   :states '(normal insert visual emacs motion)
+;;   :keymaps 'lsp-mode-map
+;;   "l" '(:ignore t :which-key "lsp")
+;;   ;; "ld" 'xref-find-definitions
+;;   ;; "lr" 'xref-find-references
+;;   "ld" 'lsp-ui-peek-find-definitions
+;;   "lr" 'lsp-ui-peek-find-references
+;;   "ln" 'lsp-ui-find-next-reference
+;;   "lp" 'lsp-ui-find-prev-reference
+;;   "ls" 'counsel-imenu
+;;   "le" 'lsp-ui-flycheck-list
+;;   "lS" 'lsp-ui-sideline-mode
+;;   "lX" 'lsp-execute-code-action)
 
 
-(spc-leader
- :states '(normal visual)
- "`" (general-key-dispatch 'dogears-go
-       :timeout 0.5
-       "n" 'dogears-forward
-       "p" 'dogears-back
-       "`" 'dogears-sidebar))
+;; (spc
+;;  :states '(normal visual)
+;;  "`" (general-key-dispatch 'dogears-go
+;;        :timeout 0.5
+;;        "n" 'dogears-forward
+;;        "p" 'dogears-back
+;;        "`" 'dogears-sidebar))
 
+;; (spc
+;;   :states 'normal
+;;    "mn" 'bm-next
+;;    "mp" 'bm-previous)
 
+;; (general-define-key
+;;  :states 'normal
+;;   "m" (general-key-dispatch 'evil-set-marker
+;;         :timeout 0.2
+;;         "m" 'bm-toggle))
 
-;; org-mode
-(spc-leader
-  :states '(normal insert visual emacs motion)
-  :keymaps 'org-mode-map
-  "o" '(:ignore t :which-key "org-mode")
-  "op" '(org-pomodoro :which-key "pomodoro")
-  "on" '(org-toggle-narrow-to-subtree :which-key "toggle narrow")
-  "of" '(dw/search-org-files :which-key "search notes")
-  ;; "os"  '(counsel-rg :which-key "search notes")
-  "os" '(org-agenda :which-key "status")
-  "ot" '(org-todo-list :which-key "todos")
-  "oc" '(org-capture t :which-key "capture")
-  "ox" '(org-export-dispatch t :which-key "export")
-  ;; insert
-  "oi" '(:ignore t :which-key "insert")
-  "oil" '(org-insert-link :which-key "insert link")
-  "oi," '(org-insert-structure-template :which-key "insert structure")
-  "oii" '(org-emphasize :which-key "emphasize")
-  ;; transclusion
-  "oit" '(org-transclusion-add)
-  "o SPC" '(insert-zero-width-space :which-key "zero width space"))
 
 
 
 ;; org-mode
-(general-define-key
- :states '(normal insert visual)
- :keymaps 'org-mode-map
- "C-j" 'org-next-visible-heading
- "C-k" 'org-previous-visible-heading)
+;; (spc
+;;   :states '(normal insert visual emacs motion)
+;;   :keymaps 'org-mode-map
+;;   "o" '(:ignore t :which-key "org-mode")
+;;   "op" '(org-pomodoro :which-key "pomodoro")
+;;   "on" '(org-toggle-narrow-to-subtree :which-key "toggle narrow")
+;;   "of" '(dw/search-org-files :which-key "search notes")
+;;   ;; "os"  '(counsel-rg :which-key "search notes")
+;;   "os" '(org-agenda :which-key "status")
+;;   "ot" '(org-todo-list :which-key "todos")
+;;   "oc" '(org-capture t :which-key "capture")
+;;   "ox" '(org-export-dispatch t :which-key "export")
+;;   ;; insert
+;;   "oi" '(:ignore t :which-key "insert")
+;;   "oil" '(org-insert-link :which-key "insert link")
+;;   "oi," '(org-insert-structure-template :which-key "insert structure")
+;;   "oii" '(org-emphasize :which-key "emphasize")
+;;   ;; transclusion
+;;   "oit" '(org-transclusion-add)
+;;   "o SPC" '(insert-zero-width-space :which-key "zero width space"))
+
+
+
+;; org-mode
+;; (general-define-key
+;;  :states '(normal insert visual)
+;;  :keymaps 'org-mode-map
+;;  "C-j" 'org-next-visible-heading
+;;  "C-k" 'org-previous-visible-heading)
 
 ;; org-mode src block keybinds.
-(general-define-key
- :keymaps '(org-src-mode-map)
- "s-k" nil
- "s-s" 'org-edit-src-save
- "s-k" 'org-edit-src-exit)
+;; (general-define-key
+;;  :keymaps '(org-src-mode-map)
+;;  "s-k" nil
+;;  "s-s" 'org-edit-src-save
+;;  "s-k" 'org-edit-src-exit)
 
 ;; override org-mode's `$' keybind.
 ;; press once will go visual end of line
 ;; and press twice will end of line.
-(general-define-key
- :states '(normal motion visual)
- :keymaps 'org-mode-map
- "$" (general-key-dispatch '(lambda () (interactive) (evil-org-end-of-line))
-       :timeout 0.25
-       ;; "$" '(lambda () (interactive) (evil-end-of-line))
-       "$" 'evil-end-of-line))
+;; (general-define-key
+;;  :states '(normal motion visual)
+;;  :keymaps 'org-mode-map
+;;  "$" (general-key-dispatch '(lambda () (interactive) (evil-org-end-of-line))
+;;        ;; :timeout 0.25
+;;        ;; "$" '(lambda () (interactive) (evil-end-of-line))
+;;        "$" 'evil-end-of-line))
 
 
 
 
 
 
-(general-create-definer spc-e
-  :prefix "SPC e"
-  :global-prefix "M-SPC e")
+;; (general-create-definer spc-e
+;;   :prefix "SPC e"
+;;   :global-prefix "M-SPC e")
 
 (spc-e
   :states '(normal visual)
-  ;; :which-key "eval"
-  ;; :keymaps
   "" '(nil :which-key "eval")
   "b" '(eval-buffer :which-key "eval buffer")
-  "/" '(lispy-eval-and-comment :which-key "eval and comment")
+  ;; "/" '(lispy-eval-and-comment :which-key "eval and comment")
   "x" '(eval-last-sexp :which-key "eval sexp"))
-
 (spc-e
   :keymaps '(visual)
-  ;; :which-key "eval"
-  "r" '(eval-region :which-key "eval region")
-  "e" 'edit-indirect-region)
+  "r" '(eval-region :which-key "eval region"))
 
-(spc-e
-  ;; :keymaps '(scheme-mode-map inferior-scheme-mode-map)
-  :keymaps '(racket-mode-map)
-  :states '(normal visual)
-  ;; "p" 'racket-repl
-  "b" 'racket-run-module-at-point
-  ;; "x" 'racket-send-last-sexp-evil-fix
-  ;; "/" 'lispy-eval-and-comment-evil-fix
-  ;; "d" 'racket-send-definition-evil-fix
-  "x" 'racket-send-last-sexp
-  ;; "/" 'lispy-eval-and-comment
-  "d" 'racket-send-definition)
+;; (spc-e
+;;   ;; :keymaps '(scheme-mode-map inferior-scheme-mode-map)
+;;   :keymaps '(racket-mode-map)
+;;   :states '(normal visual)
+;;   ;; "p" 'racket-repl
+;;   "b" 'racket-run-module-at-point
+;;   ;; "x" 'racket-send-last-sexp-evil-fix
+;;   ;; "/" 'lispy-eval-and-comment-evil-fix
+;;   ;; "d" 'racket-send-definition-evil-fix
+;;   "x" 'racket-send-last-sexp
+;;   ;; "/" 'lispy-eval-and-comment
+;;   "d" 'racket-send-definition)
 
-(spc-e
-  ;; :keymaps '(scheme-mode-map inferior-scheme-mode-map)
-  :keymaps '(racket-mode-map)
-  :states 'visual
-  "r" 'racket-send-region)
+;; (spc-e
+;;   ;; :keymaps '(scheme-mode-map inferior-scheme-mode-map)
+;;   :keymaps '(racket-mode-map)
+;;   :states 'visual
+;;   "r" 'racket-send-region)
 
 
-(spc-e
-  :states '(normal visual emacs motion)
-  :keymaps 'org-mode-map
-  "e" '(my/org-edit-this :which-key "edit-this")
-  "x" '(org-babel-execute-src-block :which-key "execute this block"))
+;; (spc-e
+;;   :states '(normal visual emacs motion)
+;;   :keymaps 'org-mode-map
+;;   "e" '(my/org-edit-this :which-key "edit-this")
+;;   "x" '(org-babel-execute-src-block :which-key "execute this block"))
 
 ;; (general-define-key
 ;;  :keymap 'lispyville-mode-map
@@ -4299,9 +4679,13 @@ or go back to just one window (by deleting all but the selected window)."
 ;; (setq-default frame-title-format "\n") ; hide frame size info that will be second line and not visible.
 ;; (setq-default frame-title-format " ") ; hide frame size info that will be second line and not visible.
 
+;; https://github.com/emacsmirror/gcmh
 (use-package gcmh
   :init
-  (gcmh-mode 1))
+  (gcmh-mode 1)
+  ;; :custom
+  ;; (gcmh-vervose t)
+  )
 
 (provide 'init)
 ;;; init.el ends here

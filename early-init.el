@@ -19,8 +19,8 @@
 (setq package-enable-at-startup nil)
 
 
-(setq default-file-name-handler-alist file-name-handler-alist
-      file-name-handler-alist nil)
+;; (setq default-file-name-handler-alist file-name-handler-alist
+;;       file-name-handler-alist nil)
 
 ;; ----------------------------------------------------------------
 ;; use straight.el as package manager.
@@ -106,10 +106,10 @@
 (set-default-coding-systems 'utf-8)
 (set-language-environment "UTF-8")
 (setq buffer-file-coding-system 'utf-8)
-(add-hook 'emacs-startup-hook
-          (lambda (&rest _)
-            (setq file-name-handler-alist default-file-name-handler-alist)
-            ;; delete no longer necessary startup variable
-            (makunbound 'default-file-name-handler-alist)))
+;; (add-hook 'emacs-startup-hook
+;;           (lambda (&rest _)
+;;             (setq file-name-handler-alist default-file-name-handler-alist)
+;;             ;; delete no longer necessary startup variable
+;;             (makunbound 'default-file-name-handler-alist)))
 
 ;;; early-init.el ends here
