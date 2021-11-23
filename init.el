@@ -2,30 +2,37 @@
 ;;; Commentary: euokyun's emacs init file.
 ;;; Code:
 
-;; (setq debug-on-error t)               ; if you need to debug your init.el
+(setq debug-on-error t)               ; if you need to debug your init.el
 
 (setq custom-file (expand-file-name "custom.el" user-emacs-directory))
 (load custom-file 'noerror)
 
 
-;; 가나다라마  1520
-;; abcdefghij  1820
+;; 가나다라마가나다라마가나다라마가나다라마가나다라마  1520
+;; abcdefghijabcdefghijabcdefghijabcdefghijabcdefghij  1820
 
+;; 1000
+;; 900
 
 ;; font settings.
 ;; (set-face-attribute 'default nil :family "JetBrains Mono")
-(set-face-attribute 'default nil :font "JetBrains Mono" :height 170)
-(set-frame-font "JetBrains Mono" nil t)
+;; (set-face-attribute 'default nil :font "JetBrains Mono" :height 170)
+;; (set-frame-font "JetBrains Mono" nil t)
+(set-face-attribute 'default nil :font "Iosevka SS08" :height 170)
+;; (set-frame-font "Iosevka SS08" nil t)
+(set-frame-font "Iosevka SS08" t t)
 
 
 ;; Use 'prepend for the NS and Mac ports or Emacs will crash.
 ;; (set-fontset-font "fontset-default" 'unicode (font-spec :family "Weather Icons") nil)
 ;; (set-fontset-font "fontset-default" 'unicode (font-spec :family "Material Icons") nil)
 ;; (set-fontset-font "fontset-default" 'unicode (font-spec :family "file-icons") nil)
+;; (set-fontset-font "fontset-default" 'unicode (font-spec :family "Material Icons") nil)
 (set-fontset-font "fontset-default" 'unicode (font-spec :family "Material Icons") nil)
 (set-fontset-font "fontset-default" 'unicode (font-spec :family "github-octicons") nil 'prepend)
 (set-fontset-font "fontset-default" 'unicode (font-spec :family "FontAwesome") nil 'prepend)
 (set-fontset-font "fontset-default" 'unicode (font-spec :family "all-the-icons") nil 'prepend)
+(set-fontset-font "fontset-default" 'unicode (font-spec :family "MesloLGS") nil 'append)
 (set-fontset-font "fontset-default" 'unicode (font-spec :family "Weather Icons") nil 'append)
 (set-fontset-font "fontset-default" 'unicode (font-spec :family "file-icons") nil 'append)
 
@@ -43,11 +50,10 @@
 ;;         (set-fontset-font "fontset-default" charset "Material Icons" nil 'append))
 
 ;; adjust font scale
-(setq-default face-font-rescale-alist '((".*JetBrains Mono.*" . 1.0)
-                                        (".*Hack Nerd Font.*" . 1.0)
-                                        ;; (".*Iosevka SS08 .*" . 1.2917385677308024)
-                                        (".*D2Coding.*" . 1.1973684210526316)))
-
+;; (setq-default face-font-rescale-alist '((".*JetBrains Mono.*" .     1.0)
+;;                                         (".*Hack Nerd Font.*" .     1.0)
+;;                                         (".*D2Coding.*" .           1.1973684210526316)
+;;                                         ))
 
 (setq-default
  ;; frame-title-format "\n"                ; hide frame size info that will be second line and not visible.
@@ -92,12 +98,12 @@
  truncate-lines t                       ; do not wrap code.
  backup-by-copying t                    ; make backup.
  ;; global-auto-revert-non-file-buffers t  ; revert dired and other buffers.
- auto-revert-verbose nil                ; do not message this
- auto-revert-avoid-polling t            ; do not use pooling.
- delete-old-versions t                  ; delete old versions.
- version-control t                      ;
- ns-use-proxy-icon nil                  ; do not use icon in titlebar
- x-underline-at-descent-line t          ; Underline looks a bit better when drawn lower
+ auto-revert-verbose nil         ; do not message this
+ auto-revert-avoid-polling t     ; do not use pooling.
+ delete-old-versions t           ; delete old versions.
+ version-control t               ;
+ ns-use-proxy-icon nil           ; do not use icon in titlebar
+ x-underline-at-descent-line t   ; Underline looks a bit better when drawn lower
  inhibit-compacting-font-caches t       ; for fix all-the-icons slow rendering
  even-window-sizes nil                  ; perspective - fix window layout.
  display-buffer-base-action '((display-buffer-reuse-window display-buffer-same-window)
@@ -111,6 +117,19 @@
  ;; completion-category-overrides '((file (styles . (partial-completion))))
  imenu-auto-rescan t
 
+ mouse-wheel-scroll-amount '(1 ((shift) . 1)) ;; one line at a time
+ mouse-wheel-progressive-speed nil            ; don't accelerate scrolling
+ mouse-wheel-follow-mouse 't                  ; scroll window under mouse
+ scroll-step 1      ; keyboard scroll one line at a time
+ use-dialog-box nil ; Disable dialog boxes since they weren't working in Mac OSX
+ world-clock-list '(("Asia/Seoul" "Seoul")
+                    ("America/Los_Angeles" "Seattle")
+                    ("America/New_York" "New York")
+                    ("Etc/UTC" "UTC"))
+ world-clock-time-format "%a, %e %b %T %Z"
+ display-time-format "%R"
+ display-time-default-load-average nil
+ ns-pop-up-frames nil                   ; macos specific
  )
 
 
@@ -122,16 +141,11 @@
 (put 'narrow-to-page 'disabled nil)
 
 
-(when (eq system-type 'darwin)          ; MacOS specific config
-  (setq-default
-   ;; ns-use-mwheel-momentum nil
-   ns-pop-up-frames nil))
-
-
 (use-package auto-package-update
+  :custom
+  (auto-package-update-delete-old-versions t)
+  ;; (setq auto-package-update-hide-results t)
   :config
-  (setq auto-package-update-delete-old-versions t)
-  (setq auto-package-update-hide-results t)
   (auto-package-update-maybe))
 
 ;; integration with system-package, like brew.
@@ -145,25 +159,27 @@
 (put 'plist-put 'lisp-indent-function 2)
 ;; (mouse-avoidance-mode 'animate)         ; Move the mouse away if the cursor gets close
 (winner-mode t)                         ; save window state.
+
 ;; Termux 관련 세팅
-(setq is-termux
-      nil) ; i think i'll not using this on remote
+;; (setq is-termux
+;;       nil)
+                                        ; i think i'll not using this on remote
 ;;       ;; (or (string-suffix-p "Android" (string-trim (shell-command-to-string "uname -a")))))
 
 ;; (when is-termux
 ;;   (setq gnutls-algorithm-priority "NORMAL:-VERS-TLS1.3"))
 
-(unless is-termux
-  ;; (scroll-bar-mode -1)                     ; Disable visible scrollbar
-  ;; (tool-bar-mode -1)                       ; Disable the toolbar
-  ;; (tooltip-mode -1)                        ; Disable tooltips
-  ;; (set-fringe-mode 10)                     ; Give some breathing room
-  (setq mouse-wheel-scroll-amount '(1 ((shift) . 1))) ;; one line at a time
-  (setq mouse-wheel-progressive-speed nil) ; don't accelerate scrolling
-  (setq mouse-wheel-follow-mouse 't)       ; scroll window under mouse
-  (setq scroll-step 1)                     ; keyboard scroll one line at a time
-  (setq use-dialog-box nil)                ; Disable dialog boxes since they weren't working in Mac OSX
-  )
+;; (unless is-termux
+;;   ;; (scroll-bar-mode -1)                     ; Disable visible scrollbar
+;;   ;; (tool-bar-mode -1)                       ; Disable the toolbar
+;;   ;; (tooltip-mode -1)                        ; Disable tooltips
+;;   ;; (set-fringe-mode 10)                     ; Give some breathing room
+;;   (setq mouse-wheel-scroll-amount '(1 ((shift) . 1))) ;; one line at a time
+;;   (setq mouse-wheel-progressive-speed nil) ; don't accelerate scrolling
+;;   (setq mouse-wheel-follow-mouse 't)       ; scroll window under mouse
+;;   (setq scroll-step 1)                     ; keyboard scroll one line at a time
+;;   (setq use-dialog-box nil)                ; Disable dialog boxes since they weren't working in Mac OSX
+;;   )
 
 ;; 모드라인에 컬럼 위치 표시
 (column-number-mode)
@@ -190,18 +206,6 @@
 ;; 배터리 인디케이터
 ;; (display-battery-mode)
 
-;; 시계 관련 설정
-(setq display-time-world-list
-      '(("Asia/Seoul" "Seoul")
-        ("America/Los_Angeles" "Seattle")
-        ("America/New_York" "New York")
-        ("Etc/UTC" "UTC")))
-(setq display-time-world-time-format "%a, %d %b %I:%M %p %Z")
-(setq
- ;; display-time-format "%l:%M %p %b %y"
- display-time-format "%H:%M"
- display-time-default-load-average nil)
-
 
 
 
@@ -211,6 +215,7 @@
 ;;;                               Packages                                   ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(use-package restart-emacs)
 
 ;; https://github.com/raxod502/el-patch
 ;; for override emacs functions
@@ -232,25 +237,43 @@
         '(insert emacs hybrid normal visual motion operator replace))
   :config
   (general-auto-unbind-keys)
-  ;; (general-override-mode)
+  (general-override-mode)
   (general-evil-setup t)
+
+
+  (general-unbind 'global
+    "s-q"
+    "s-z"
+    "s-Z"
+    "s-f"
+    "s-F"
+    "s-p"
+    "s-h"
+    "s-t"
+    "s-l"
+    "s-j"
+    "s-g"
+    "M-u"                               ; upcase-word
+    "M-l"                               ; downcase-word
+    "M-s-h"
+    "M-s-f"
+    "M-<down-mouse-1>")
 
   (general-create-definer spc
     :keymaps 'override
-    ;; :keymaps '(normal insert visual emacs motion)
-    ;; :global-prefix "C-SPC"
     :global-prefix "M-SPC"
     :prefix "SPC"
-    ;; :non-normal-prefix "M-SPC"
     :prefix-command 'spc-prefix-command
     :prefix-map 'spc-prefix-map)
 
   (general-create-definer spc-e
     :prefix "SPC e"
-    :global-prefix "M-SPC e"
-    ;; :prefix-command 'spc-e-prefix-command
-    ;; :prefix-map 'spc-e-prefix-map
-    ))
+    :global-prefix "M-SPC e"))
+
+
+(use-package transient
+  :config
+  (transient-bind-q-to-quit))
 
 ;; https://github.com/mickeynp/ligature.el
 (use-package ligature
@@ -286,7 +309,9 @@
 
 (use-package diminish)
 
+(use-package all-the-icons)
 
+;; (use-package icons-in-terminal)
 
 
 
@@ -303,6 +328,13 @@
   ("s-o" 'ivy-switch-buffer
    "s-O" 'find-file)
   :diminish)
+
+;; https://github.com/seagle0128/all-the-icons-ivy-rich
+;; for better performance, enable `all-the-icons-ivy-rich' before `ivy-rich'.
+;; and enable other package like `counsel-projectile' before this.
+(use-package all-the-icons-ivy-rich
+  :ensure t
+  :init (all-the-icons-ivy-rich-mode 1))
 
 ;; https://github.com/abo-abo/swiper
 (use-package counsel
@@ -351,13 +383,17 @@
   ;; (when (file-directory-p "~/Projects/Code")
   ;;   (setq projectile-project-search-path '("~/Projects/Code")))
   :config
+  (defun dw/switch-project-action ()
+    "Switch to a workspace with the project name and start `magit-status'."
+    (persp-switch (projectile-project-name))
+    (magit-status))
   (setq projectile-switch-project-action #'dw/switch-project-action)
   :general
   (spc
     :states '(normal insert visual emacs motion)
-   "p" '(:ignore t :which-key "projectile/perspective")
-  "pc" 'projectile-compile-project
-  "pd" 'projectile-dired))
+    "p" '(:ignore t :which-key "projectile/perspective")
+    "pc" 'projectile-compile-project
+    "pd" 'projectile-dired))
 
 (use-package counsel-projectile
   :after projectile
@@ -373,21 +409,14 @@
    ;; "p s-f" 'counsel-projectile-rg
    "pF" 'counsel-projectile-rg
    ;; "pF"  'consult-ripgrep
-   "po" 'counsel-projectile)
-  )
+   "po" 'counsel-projectile))
 
-;; https://github.com/seagle0128/all-the-icons-ivy-rich
-;; for better performance, enable `all-the-icons-ivy-rich' before `ivy-rich'.
-;; and enable other package like `counsel-projectile' before this.
-(use-package all-the-icons-ivy-rich
-  :ensure t
-  :init (all-the-icons-ivy-rich-mode 1))
 
 ;; https://github.com/Yevgnen/ivy-rich
 (use-package ivy-rich
   :init
   (ivy-rich-mode 1)
-  :after counsel
+  :after counsel all-the-icons-ivy-rich
   :config
   (setq ivy-format-function #'ivy-format-function-line)
   (setq ivy-rich-display-transformers-list
@@ -446,6 +475,7 @@
 ;; https://www.dr-qubit.org/Lost_undo-tree_history.html
 (use-package undo-tree
   :diminish
+  :demand t
   :custom
   (undo-tree-auto-save-history t)
   (undo-tree-enable-undo-in-region t)
@@ -455,15 +485,21 @@
     "u" '(undo-tree-visualize :which-key "undo-tree"))
   ("s-z" 'undo-tree-undo
    "s-Z" 'undo-tree-redo)
+  (:states '(visual)
+   "u" 'undo-tree-undo)
+  (undo-tree-visualizer-mode-map
+   :override t
+   :states '(normal motion)
+   "t" 'undo-tree-visualizer-toggle-timestamps)
   :config
-  (global-undo-tree-mode t)
   ;; (defadvice undo-tree-make-history-save-file-name
   ;;     (after undo-tree activate)
   ;;   (setq ad-return-value (concat ad-return-value ".gz")))
-  )
+  (global-undo-tree-mode t))
 
 
 (use-package paren
+  :defer t
   :custom
   (show-paren-style 'parenthesis)
   (show-paren-delay 0)
@@ -477,14 +513,21 @@
   (setq evil-want-keybinding nil)
   :custom
   (evil-ex-search-vim-style-regexp t)
+  (evil-search-module 'evil-search)
   (evil-undo-system 'undo-tree)
   (evil-respect-visual-line-mode t)
   (evil-shift-width tab-width)    ; tab option for evil
   (evil-want-C-u-scroll t)        ; set `C-u' to scroll up. not for insert mode.
   (evil-want-C-i-jump nil)        ; set `C-i' to insert `TAB' key.
   :general
-  ("C-M-u" 'universal-argument)
+  ("M-u" 'universal-argument)
   :config
+  ;; fix non-compatiable command for evil.
+  (defun my/move-forward-char ()
+    "Fix evil's last character selection problem."
+    (interactive)
+    (if (equal evil-state 'normal) (forward-char 1)))
+
   (evil-mode 1)
   (setq-default display-line-numbers 'visual
                 display-line-numbers-widen t
@@ -499,11 +542,7 @@
 
   (add-hook 'evil-insert-state-entry-hook #'noct:absolute)
   (add-hook 'evil-insert-state-exit-hook #'noct:relative)
-
-  ;; example of customizing colors
-  (custom-set-faces '(line-number-current-line ((t :weight bold
-                                                   :foreground "goldenrod"
-                                                   :background "slate gray")))))
+)
 
 ;; evil-surround, expend-region and embrace
 ;; https://github.com/magnars/expand-region.el
@@ -537,7 +576,9 @@
 
 ;; https://github.com/cute-jumper/evil-embrace.el
 (use-package evil-embrace
-  :hook ((LaTeX-mode . (lambda () (add-to-list 'evil-embrace-evil-surround-keys ?o))))
+  :hook ((LaTeX-mode .
+                     (lambda ()
+                       (add-to-list 'evil-embrace-evil-surround-keys ?o))))
   :config
   (evil-embrace-enable-evil-surround-integration))
 
@@ -555,6 +596,9 @@
 (use-package evil-mc
   ;; :disabled
   :diminish
+  ;; :defines evil-mc-mode
+  :functions evil-mc-has-cursors-p
+  ;; :defines evil-mc-has-cursors-p
   :config/el-patch
   (evil-define-command evil-mc-make-cursor-here ()
     "Create a cursor at point."
@@ -585,7 +629,9 @@
 
   (:states 'normal
    "<escape>" (general-predicate-dispatch 'evil-force-normal-state
-                (and evil-mc-mode (evil-mc-has-cursors-p)) 'evil-mc-undo-all-cursors))
+                ;; (and (bound-and-true-p evil-mc-mode) (evil-mc-has-cursors-p)) 'evil-mc-undo-all-cursors
+                '(evil-mc-has-cursors-p) 'evil-mc-undo-all-cursors))
+
 
   :config
   ;; fix change's wrong cursor position
@@ -669,13 +715,18 @@
 
   (dolist (elem ;;add support for buffer-list
            '((Buffer-menu-mark . ((:default . evil-mc-execute-default-call)))
-            (Buffer-menu-unmark . ((:default . evil-mc-execute-default-call)))
-            ;; and magit
-            (magit-stage . ((:default . evil-mc-execute-default-call)))
-            (magit-unstage . ((:default . evil-mc-execute-default-call)))
-            ;; add `M-i' tab key.
-            (tab-to-tab-stop . ((:default . evil-mc-execute-default-call)))))
+             (Buffer-menu-unmark . ((:default . evil-mc-execute-default-call)))
+             ;; and magit
+             (magit-stage . ((:default . evil-mc-execute-default-call)))
+             (magit-unstage . ((:default . evil-mc-execute-default-call)))
+             ;; add `M-i' tab key.
+             (tab-to-tab-stop . ((:default . evil-mc-execute-default-call)))
+             ;; (wdired--self-insert . ((:default . evil-mc-execute-default-call-with-count)))
+             (wdired--self-insert . ((:default . evil-mc-execute-default-call)))
+             ))
     (add-to-list 'evil-mc-known-commands elem))
+
+  (setq evil-mc-known-commands (cdr evil-mc-known-commands))
 
   ;; for dired
   ;; (add-to-list 'evil-mc-known-commands '(dired-flag-file-deletion . ((:default . evil-mc-execute-default-call))))
@@ -705,12 +756,11 @@
     :general
     ("M-s-0" 'kak-insert-index)
     (:states 'visual
-     "s-f"      '(kak-select-bind :which-key "kak-select")
-     "s-F"      '(kak-select-invert-bind :which-key "kak-select-invert")
-     "M-s-t"    'kak-split-lines
-     "M-s-f"    '(kak-filter-bind :which-key "kak-filter")
-     "M-s-F"    '(kak-filter-exclude-bind :which-key "kak-filter-exclude")
-     ))
+     "s-f" '(kak-select-bind :which-key "kak-select")
+     "s-F" '(kak-select-invert-bind :which-key "kak-select-invert")
+     "M-s-t" 'kak-split-lines
+     "M-s-f" '(kak-filter-bind :which-key "kak-filter")
+     "M-s-F" '(kak-filter-exclude-bind :which-key "kak-filter-exclude")))
   (global-evil-mc-mode))
 
 ;; https://github.com/gabesoft/evil-mc-extras
@@ -726,7 +776,8 @@
   :after evil-mc
   :hook (evil-mc-mode . evil-mc-extras-mode)
   :general
-  (:keymaps 'evil-mc-cursors-map
+  (evil-mc-cursors-map
+   :states 'visual
    "+" 'evil-mc-inc-num-at-each-cursor
    "-" 'evil-mc-dec-num-at-each-cursor))
 
@@ -742,11 +793,11 @@
   (mc/insert-numbers-default 1)
   (mc/unpause-jump-back nil)
   ;; :load-path (expand-file-name "./lisp/mc-pause.el" user-emacs-directory)
-  :general
-  ("s-1" 'mc/pause
-   "s-2" 'mc/unpause
-   "s-3" 'mc/toggle-pause
-   )
+  ;; :general
+  ;; ("s-1" 'mc/pause
+  ;;  "s-2" 'mc/unpause
+  ;;  "s-3" 'mc/toggle-pause
+  ;;  )
   :config
   (push 'evil-state mc/cursor-specific-vars) ; evil-mode-cursor-back
   (load-file (expand-file-name "./lisp/mc-pause.el" user-emacs-directory))
@@ -813,8 +864,8 @@ REGEXP defaults to \"[ \\t\\n\\r]+\"."
   :general
   (spc
     :states '(normal insert visual emacs motion)
-    ";" 'evil-avy-line-saving-column
-    "f" 'evil-avy-goto-char-timer)
+    ";" '(evil-avy-line-saving-column :which-key "avy-line")
+    "f" '(evil-avy-goto-char-timer :which-key "avy-timer"))
   :custom
   (avy-background t)
   (avy-style 'at-full)
@@ -887,12 +938,17 @@ REGEXP defaults to \"[ \\t\\n\\r]+\"."
   :config
   (ace-link-setup-default))
 
+;; https://github.com/benma/visual-regexp.el
+;; (use-package visual-regexp
+;;   :config
+;;   ;; https://github.com/benma/visual-regexp-steroids.el/
+;;   (use-package visual-regexp-steroids))
+
 
 
 ;; https://github.com/emacsorphanage/anzu
 ;; search and replace feature.
 (use-package anzu
-  ;; :disabled
   :bind
   ([remap query-replace] . anzu-query-replace-regexp))
 
@@ -902,7 +958,13 @@ REGEXP defaults to \"[ \\t\\n\\r]+\"."
   (:states 'normal
    "gc" 'evilnc-comment-operator
    "s-/" 'evilnc-comment-or-uncomment-lines
-   "gy" 'evilnc-copy-and-comment-operator))
+   "gy" 'evilnc-copy-and-comment-operator)
+  :config
+  (defun counsel-imenu-comments ()
+    "Imenu display comments."
+    (interactive)
+    (let* ((imenu-create-index-function 'evilnc-imenu-create-index-function))
+      (counsel-imenu))))
 
 
 
@@ -938,9 +1000,9 @@ REGEXP defaults to \"[ \\t\\n\\r]+\"."
   (evil-collection-init))
 
 ;; https://github.com/syl20bnr/evil-escape
-(use-package evil-escape
-  :config
-  (evil-escape-mode))
+;; (use-package evil-escape
+;;   :config
+;;   (evil-escape-mode))
 
 ;; ---------------------------
 ;; Themes Settings
@@ -1011,12 +1073,13 @@ REGEXP defaults to \"[ \\t\\n\\r]+\"."
   :custom
   (dashboard-projects-switch-function 'counsel-projectile-switch-project-by-name)
   (dashboard-set-init-info t)
-  (dashboard-banner-logo-title "Welcome to Emacs Dashboard")
+  ;; (dashboard-banner-logo-title "Welcome to Emacs Dashboard")
+  (dashboard-banner-logo-title nil)
   (dashboard-startup-banner 2)
   (dashboard-set-heading-icons t)
   (dashboard-set-file-icons t)
   (dashboard-set-navigator t)
-  (dashboard-projects-switch-function 'counsel-projectile-switch-project-by-name)
+  (dashboard-set-footer nil)
   :config
   (dashboard-setup-startup-hook))
 
@@ -1034,7 +1097,6 @@ REGEXP defaults to \"[ \\t\\n\\r]+\"."
 ;; (use-package fontawesome
 ;;   :commands counsel-fontawesome)
 
-(use-package all-the-icons)
 
 ;; https://github.com/iqbalansari/emacs-emojify
 (use-package emojify
@@ -1071,10 +1133,11 @@ REGEXP defaults to \"[ \\t\\n\\r]+\"."
 
 (use-package volatile-highlights
   :config
-  (vhl/define-extension 'undo-tree 'undo-tree-yank 'undo-tree-move)
+  (vhl/define-extension 'undo-tree
+                        'undo-tree-yank 'undo-tree-move)
   (vhl/install-extension 'undo-tree)
-  (vhl/define-extension 'evil 'evil-paste-after 'evil-paste-before
-                        'evil-paste-pop 'evil-move)
+  (vhl/define-extension 'evil
+                        'evil-paste-after 'evil-paste-before 'evil-paste-pop 'evil-move)
   (vhl/install-extension 'evil)
   (volatile-highlights-mode t))
 
@@ -1281,7 +1344,8 @@ REGEXP defaults to \"[ \\t\\n\\r]+\"."
       ((el-patch-swap ?T ?t) aw-transpose-frame "Transpose Frame")
       ;; (el-patch-add (?r my/aw-winner-redo))
       ;; (el-patch-add (?u my/aw-winner-undo))
-      (el-patch-add (?! my/aw-vterm))
+      ;; (el-patch-add (?! my/aw-vterm))
+      (el-patch-add (?! my/aw-vterm "open vTerm"))
       ;; (el-patch-add (27 aw--done "exit"))
       (el-patch-add (27 aw--done))
       ;; ?i ?r ?t are used by hyperbole.el
@@ -1302,9 +1366,8 @@ or
 
   :config
 
-  (defun my/aw-vterm ()
-    "open terminal here"
-    (interactive)
+  (defun my/aw-vterm (window)
+    (select-window window)
     (vterm))
 
   (setq aw-keys '(?a ?s ?d ?g ?h ?i ?n ?p ?v ?w ?x ?y ?z ?b ?v ?q))
@@ -1353,14 +1416,45 @@ or
 
 ;; https://github.com/fgeller/highlight-thing.el
 (use-package highlight-thing
-  ;; :disabled
+  :disabled
   :diminish
   :commands (highlight-thing-mode hilight-thing-do)
   :custom
   (highlight-thing-exclude-thing-under-point t)
-  ;; :hook (prog-mode . highlight-thing-mode)
-  ;; :config
-  )
+  :custom-face
+  (highlight-thing ((t (:box (:line-width -1
+                              ;; :color
+                              )
+                        :background "orange"
+                        :distance-foreground "white"))))
+  :hook (prog-mode . highlight-thing-mode))
+
+;; https://github.com/alvarogonzalezsotillo/region-occurrences-highlighter
+(use-package region-occurrences-highlighter
+  :hook ((prog-mode org-mode text-mode) . #'region-occurrences-highlighter-mode)
+  :config/el-patch
+  ;; evil compatible
+  (defun region-occurrences-highlighter--change-hook ()
+  "Called each time the region is changed."
+
+  ;;; REMOVE PREVIOUS HIGHLIGHTED REGION
+  (when region-occurrences-highlighter--previous-region
+    (unhighlight-regexp region-occurrences-highlighter--previous-region)
+    (setq region-occurrences-highlighter--previous-region nil)
+    (region-occurrences-highlighter-nav-mode -1))
+
+  (when region-occurrences-highlighter-mode
+
+    ;;; HIGHLIGHT THE CURRENT REGION
+    (when (and (region-active-p)
+               (not deactivate-mark))
+      (let ((begin (region-beginning))
+            (end (el-patch-wrap 2 0 (+ 1 (region-end)))))
+        (when (region-occurrences-highlighter--accept begin end)
+          (let ((str (regexp-quote (buffer-substring-no-properties begin end))))
+            (setq region-occurrences-highlighter--previous-region str)
+            (highlight-regexp str 'region-occurrences-highlighter-face)
+            (region-occurrences-highlighter-nav-mode 1))))))))
 
 ;; https://gitlab.com/ideasman42/emacs-hl-block-mode
 ;; this may cause "face t" problem. when color-tint.
@@ -1380,10 +1474,25 @@ or
 ;; https://github.com/joostkremers/visual-fill-column
 ;; simillar to `visual-line-mode' but not window edge, it uses fill-column to break line.
 (use-package visual-fill-column
+  ;; :disabled
   :config
   ;; (add-hook 'visual-fill-column-mode-hook #'visual-line-mode)
-  (add-hook 'visual-line-mode-hook #'visual-fill-column-mode))
+  (add-hook 'visual-line-mode-hook #'visual-fill-column-mode)
+  (advice-add 'text-scale-adjust :after #'visual-fill-column-adjust)
+  ;; (setq visual-fill-column-width 80)
+  ;; (setq visual-fill-column-extra-text-width '(10 . 10))
+  )
 
+
+
+;; https://github.com/jcs-elpa/atl-markup
+;; truncate lines for markup languages.
+;; (use-package atl-markup
+;;   :hook (web-mode . (lambda () (atl-markup-mode 1))))
+
+
+;; https://elpa.gnu.org/packages/adaptive-wrap.html
+;; (use-package adaptive-wrap)
 
 ;; https://github.com/darthfennec/highlight-indent-guides
 (use-package highlight-indent-guides
@@ -1473,15 +1582,41 @@ or
                               (hl-line-mode 1)))
          (dired-mode-hook . auto-revert-mode))
   :general
-  (:keymaps 'dired-mode-map
+  (dired-mode-map
    :states 'normal
    "SPC" nil
-   "h" 'dired-single-up-directory
-   "H" 'dired-omit-mode
-   "l" 'dired-single-buffer
+   "SPC d" '(nil :which-key "dired")
+   "SPC dh" '(dired-omit-mode :which-key "omit mode(hide)")
+   ;; "h" 'dired-single-up-directory
+   "h" 'evil-backward-char
+   "H" 'dired-single-up-directory
+   ;; "H" 'dired-omit-mode
+   ;; "l" 'dired-single-buffer
+   "l" 'evil-forward-char
+   "L" 'dired-single-buffer
    "y" 'dired-ranger-copy
    "X" 'dired-ranger-move
    "p" 'dired-ranger-paste)
+  ;; (wdired-mode-map)
+;;                          wdired-upcase-word
+;; <down>                   wdired-next-line
+;; <normal-state> <escape>  wdired-exit
+;; <normal-state> Z Q       wdired-abort-changes
+;; <normal-state> Z Z       wdired-finish-edit
+;; <up>                     wdired-previous-line
+;; C-c C-c                  wdired-finish-edit
+;; C-c C-k                  wdired-abort-changes
+;; C-c ESC                  wdired-abort-changes
+;; C-j                      undefined
+;; C-n                      wdired-next-line
+;; C-o                      undefined
+;; C-p                      wdired-previous-line
+;; C-x C-q                  wdired-exit
+;; C-x C-s                  wdired-finish-edit
+;; M-c                      wdired-capitalize-word
+;; RET                      undefined
+;; SPC..~                   wdired--self-insert
+
   :config
   (when (string= system-type "darwin")
     (setq dired-use-ls-dired t
@@ -1496,29 +1631,29 @@ or
 
   (autoload 'dired-omit-mode "dired-x")
 
-  (use-package dired-rainbow
-    :defer 2
-    :config
-    (dired-rainbow-define-chmod directory "#6cb2eb" "d.*")
-    (dired-rainbow-define html "#eb5286" ("css" "less" "sass" "scss" "htm" "html" "jhtm" "mht" "eml" "mustache" "xhtml"))
-    (dired-rainbow-define xml "#f2d024" ("xml" "xsd" "xsl" "xslt" "wsdl" "bib" "json" "msg" "pgn" "rss" "yaml" "yml" "rdata"))
-    (dired-rainbow-define document "#9561e2" ("docm" "doc" "docx" "odb" "odt" "pdb" "pdf" "ps" "rtf" "djvu" "epub" "odp" "ppt" "pptx"))
-    (dired-rainbow-define markdown "#ffed4a" ("org" "etx" "info" "markdown" "md" "mkd" "nfo" "pod" "rst" "tex" "textfile" "txt"))
-    (dired-rainbow-define database "#6574cd" ("xlsx" "xls" "csv" "accdb" "db" "mdb" "sqlite" "nc"))
-    (dired-rainbow-define media "#de751f" ("mp3" "mp4" "mkv" "MP3" "MP4" "avi" "mpeg" "mpg" "flv" "ogg" "mov" "mid" "midi" "wav" "aiff" "flac"))
-    (dired-rainbow-define image "#f66d9b" ("tiff" "tif" "cdr" "gif" "ico" "jpeg" "jpg" "png" "psd" "eps" "svg"))
-    (dired-rainbow-define log "#c17d11" ("log"))
-    (dired-rainbow-define shell "#f6993f" ("awk" "bash" "bat" "sed" "sh" "zsh" "vim"))
-    (dired-rainbow-define interpreted "#38c172" ("py" "ipynb" "rb" "pl" "t" "msql" "mysql" "pgsql" "sql" "r" "clj" "cljs" "scala" "js"))
-    (dired-rainbow-define compiled "#4dc0b5" ("asm" "cl" "lisp" "el" "c" "h" "c++" "h++" "hpp" "hxx" "m" "cc" "cs" "cp" "cpp" "go" "f" "for" "ftn" "f90" "f95" "f03" "f08" "s" "rs" "hi" "hs" "pyc" ".java"))
-    (dired-rainbow-define executable "#8cc4ff" ("exe" "msi"))
-    (dired-rainbow-define compressed "#51d88a" ("7z" "zip" "bz2" "tgz" "txz" "gz" "xz" "z" "Z" "jar" "war" "ear" "rar" "sar" "xpi" "apk" "xz" "tar"))
-    (dired-rainbow-define packaged "#faad63" ("deb" "rpm" "apk" "jad" "jar" "cab" "pak" "pk3" "vdf" "vpk" "bsp"))
-    (dired-rainbow-define encrypted "#ffed4a" ("gpg" "pgp" "asc" "bfe" "enc" "signature" "sig" "p12" "pem"))
-    (dired-rainbow-define fonts "#6cb2eb" ("afm" "fon" "fnt" "pfb" "pfm" "ttf" "otf"))
-    (dired-rainbow-define partition "#e3342f" ("dmg" "iso" "bin" "nrg" "qcow" "toast" "vcd" "vmdk" "bak"))
-    (dired-rainbow-define vc "#0074d9" ("git" "gitignore" "gitattributes" "gitmodules"))
-    (dired-rainbow-define-chmod executable-unix "#38c172" "-.*x.*"))
+  ;; (use-package dired-rainbow
+  ;;   :defer 2
+  ;;   :config
+  ;;   (dired-rainbow-define-chmod directory "#6cb2eb" "d.*")
+  ;;   (dired-rainbow-define html "#eb5286" ("css" "less" "sass" "scss" "htm" "html" "jhtm" "mht" "eml" "mustache" "xhtml"))
+  ;;   (dired-rainbow-define xml "#f2d024" ("xml" "xsd" "xsl" "xslt" "wsdl" "bib" "json" "msg" "pgn" "rss" "yaml" "yml" "rdata"))
+  ;;   (dired-rainbow-define document "#9561e2" ("docm" "doc" "docx" "odb" "odt" "pdb" "pdf" "ps" "rtf" "djvu" "epub" "odp" "ppt" "pptx"))
+  ;;   (dired-rainbow-define markdown "#ffed4a" ("org" "etx" "info" "markdown" "md" "mkd" "nfo" "pod" "rst" "tex" "textfile" "txt"))
+  ;;   (dired-rainbow-define database "#6574cd" ("xlsx" "xls" "csv" "accdb" "db" "mdb" "sqlite" "nc"))
+  ;;   (dired-rainbow-define media "#de751f" ("mp3" "mp4" "mkv" "MP3" "MP4" "avi" "mpeg" "mpg" "flv" "ogg" "mov" "mid" "midi" "wav" "aiff" "flac"))
+  ;;   (dired-rainbow-define image "#f66d9b" ("tiff" "tif" "cdr" "gif" "ico" "jpeg" "jpg" "png" "psd" "eps" "svg"))
+  ;;   (dired-rainbow-define log "#c17d11" ("log"))
+  ;;   (dired-rainbow-define shell "#f6993f" ("awk" "bash" "bat" "sed" "sh" "zsh" "vim"))
+  ;;   (dired-rainbow-define interpreted "#38c172" ("py" "ipynb" "rb" "pl" "t" "msql" "mysql" "pgsql" "sql" "r" "clj" "cljs" "scala" "js"))
+  ;;   (dired-rainbow-define compiled "#4dc0b5" ("asm" "cl" "lisp" "el" "c" "h" "c++" "h++" "hpp" "hxx" "m" "cc" "cs" "cp" "cpp" "go" "f" "for" "ftn" "f90" "f95" "f03" "f08" "s" "rs" "hi" "hs" "pyc" ".java"))
+  ;;   (dired-rainbow-define executable "#8cc4ff" ("exe" "msi"))
+  ;;   (dired-rainbow-define compressed "#51d88a" ("7z" "zip" "bz2" "tgz" "txz" "gz" "xz" "z" "Z" "jar" "war" "ear" "rar" "sar" "xpi" "apk" "xz" "tar"))
+  ;;   (dired-rainbow-define packaged "#faad63" ("deb" "rpm" "apk" "jad" "jar" "cab" "pak" "pk3" "vdf" "vpk" "bsp"))
+  ;;   (dired-rainbow-define encrypted "#ffed4a" ("gpg" "pgp" "asc" "bfe" "enc" "signature" "sig" "p12" "pem"))
+  ;;   (dired-rainbow-define fonts "#6cb2eb" ("afm" "fon" "fnt" "pfb" "pfm" "ttf" "otf"))
+  ;;   (dired-rainbow-define partition "#e3342f" ("dmg" "iso" "bin" "nrg" "qcow" "toast" "vcd" "vmdk" "bak"))
+  ;;   (dired-rainbow-define vc "#0074d9" ("git" "gitignore" "gitattributes" "gitmodules"))
+  ;;   (dired-rainbow-define-chmod executable-unix "#38c172" "-.*x.*"))
 
   (use-package dired-single
     :defer t)
@@ -1535,10 +1670,10 @@ or
   ;;   :straight (diredfl
   ;;              :type git
   ;;              :host github
-  ;;              :repo "purcell/diredfl")
-  ;;   ;; :config
-  ;;   ;; (diredfl-global-mode)
-  ;;   )
+  ;;              :repo "purcell/diredfl"
+  ;;               )
+  ;;   :config
+  ;;   (diredfl-global-mode))
   )
 
 (use-package dogears
@@ -1628,28 +1763,33 @@ or
   :general
   (spc
     :states '(normal insert visual emacs motion)
-   "p" '(:ignore t :which-key "projectile/perspective")
-   "pn" 'persp-next
-   "pp" 'persp-prev
-   "p TAB" 'persp-switch
-   "px" '(:ignore t :which-key "perspective")
-   ;; "pxA" 'persp-set-buffer
-   "pxa" 'persp-add-buffer
-   ;; "pxd" 'persp-kill
-   "pxr" 'persp-rename
-   "pxy" 'persp-copy
-   "pxd" 'persp-kill
-   "pxs" 'persp-state-save
-   "pxS" 'persp-save-to-file-by-names
-   "pxl" 'persp-load-state-from-file
-   "pxL" 'persp-load-from-file-by-names
-   "pxk" 'persp-remove-buffer
-   "pxK" 'persp-kill-buffer
-   "pxi" 'persp-import-buffers
-   "pxI" 'persp-import-win-conf
-   "pxt" 'persp-temporarily-display-buffer)
+    "p" '(:ignore t :which-key "projectile/perspective")
+    "pn" 'persp-next
+    "pp" 'persp-prev
+    "p TAB" 'persp-switch
+    "px" '(:ignore t :which-key "perspective")
+    ;; "pxA" 'persp-set-buffer
+    "pxa" 'persp-add-buffer
+    ;; "pxd" 'persp-kill
+    "pxr" 'persp-rename
+    "pxy" 'persp-copy
+    "pxd" 'persp-kill
+    "pxs" 'persp-state-save
+    "pxS" 'persp-save-to-file-by-names
+    "pxl" 'persp-load-state-from-file
+    "pxL" 'persp-load-from-file-by-names
+    "pxk" 'persp-remove-buffer
+    "pxK" 'persp-kill-buffer
+    "pxi" 'persp-import-buffers
+    "pxI" 'persp-import-win-conf
+    "pxt" 'persp-temporarily-display-buffer)
   :config
-  (persp-mode)
+  (add-to-list 'command-switch-alist
+               (cons "persp-q"
+                     #'(lambda (p)
+                         (setq persp-auto-resume-time -1
+                               persp-auto-save-opt 0))))
+
   (add-to-list 'window-persistent-parameters '(winner-ring . t))
   (defun +workspaces-load-winner-data-h (_)
     (when (bound-and-true-p winner-mode)
@@ -1690,7 +1830,7 @@ or
                       (persp-frame-switch . nil))))))
 
   ;; (setq persp-interactive-completion-function #'ivy-completing-read)
-  )
+  (persp-mode))
 
 
 (use-package persp-mode-projectile-bridge
@@ -1745,7 +1885,10 @@ or
   ("s-b" 'treemacs-select-window)
   (:keymaps '(treemacs-mode-map evil-treemacs-state-map)
    [mouse-1] #'treemacs-single-click-expand-action ; allow click to expand/collapse node.
-   "s-b" 'treemacs)
+   "s-b" 'treemacs
+   "<escape>" 'treemacs
+   "nf" 'treemacs-create-file
+   "nd" 'treemacs-create-dir)
 
   :config
   (pcase (cons (not (null (executable-find "git")))
@@ -1841,12 +1984,22 @@ or
 ;; etc
 ;; ---------------------------
 
+;; (use-package calibredb
+;;   :config
+;;   (setq calibredb-root-dir "~/Documents/eBook/calibre")
+;;   (setq calibredb-db-dir (expand-file-name "metadata.db" calibredb-root-dir))
+;;   (setq calibredb-library-alist '(("~/Documents/eBook/calibre")))
+;;   ;; (calibredb-format-all-the-icons t)
+;;   )
+
+
+
 
 
 
 ;; https://github.com/magnars/s.el
 ;; string manipulation library
-(use-package s)
+;; (use-package s)
 
 ;; (use-package ctable)
 
@@ -1880,9 +2033,11 @@ or
 
 ;; https://github.com/Fanael/persistent-scratch
 (use-package persistent-scratch
+  ;; :hook (after-init)
   :custom
   (persistent-scratch-setup-default)
-  (persistent-scratch-autosave-mode t))
+  ;; (persistent-scratch-autosave-mode t)
+  )
 
 (use-package restart-emacs)
 
@@ -1898,15 +2053,17 @@ or
 ;; (use-package osx-dictionary)
 ;; alternative : https://github.com/abo-abo/define-word
 (use-package define-word)
+
 ;; https://github.com/bbatsov/super-save
 (use-package super-save
-  :disabled
+  ;; :disabled
   :defer 1
   :diminish super-save-mode
   :custom
   (super-save-auto-save-when-idle t)   ; save when idle.
   (auto-save-visited-mode t)
   (super-save-remote-files nil)        ; do not autosave remote files.
+  (super-save-exclude '(".gpg"))
   :config
   ;; add integration with ace-window
   (add-to-list 'super-save-triggers 'ace-window)
@@ -2016,6 +2173,10 @@ or
 ;; https://github.com/alphapapa/magit-todos
 (use-package magit-todos
   :defer t
+  :general
+  (spc
+    :states '(normal insert visual emacs motion)
+    "gt" 'magit-todos-list)
   :after magit)
 
 ;; http://www.modernemacs.com/post/pretty-magit/
@@ -2023,7 +2184,7 @@ or
   :ensure nil
   :straight nil
   :disabled
-  :load-path (expand-file-name "./lisp/pretty-magit.el" user-emacs-directory)
+  :load-path "./lisp/pretty-magit.el"
   :config
   (pretty-magit-add-leaders
        '(("Feature" ? (:foreground "slate gray" :height 1.2))
@@ -2044,7 +2205,15 @@ or
   (magithub-feature-autoinject t)
   (setq magithub-clone-default-directory "~/git"))
 
-
+;; https://github.com/jtamagnan/magit-reviewboard
+;; integrate the ReviewBoard review software into magit
+(use-package magit-reviewboard
+  :disabled
+  :commands (magit-reviewboard-mode magit-reviewboard-list)
+  :custom
+  (magit-reviewboard-base-uri
+   "https://reviews.reviewboard.org/api"
+   "Set Reviewboard api to point to official reviewboard server"))
 
 
 
@@ -2072,15 +2241,11 @@ or
 (use-package git-gutter
   :straight t
   :diminish
-  :hook ((text-mode . git-gutter-mode)
-         (prog-mode . git-gutter-mode))
+  :hook ((text-mode prog-mode) . git-gutter-mode)
   :general
   (spc
     :states '(normal insert visual emacs motion)
-    :repeat t
-    :jump t
-    "gj" 'git-gutter:next-hunk
-    "gk" 'git-gutter:previous-hunk)
+    "gg" '(my/git-gutters :which-key "git-gutter"))
   ;; :hook (text-mode prog-mode)
   ;; These characters are used in terminal mode
   ;; :custom-face
@@ -2091,32 +2256,64 @@ or
   ;; (git-gutter:hide-gutter t)
   (git-gutter:modified-sign "≡")
   (git-gutter:added-sign "+")
-  (git-gutter:deleted-sign "-"))
+  (git-gutter:deleted-sign "-")
+
+  :config
+  ;; http://blog.binchen.org/posts/enhance-emacs-git-gutter-with-ivy-mode.html
+  (defun my-reshape-git-gutter (gutter)
+    "Re-shape gutter for `ivy-read'."
+    (let* ((linenum-start (aref gutter 3))
+           (linenum-end (aref gutter 4))
+           (target-line "")
+           (target-linenum 1)
+           (tmp-line "")
+           (max-line-length 0))
+      (save-excursion
+        (while (<= linenum-start linenum-end)
+          (goto-line linenum-start)
+          (setq tmp-line (replace-regexp-in-string "^[ \t]*" ""
+                                                   (buffer-substring (line-beginning-position)
+                                                                     (line-end-position))))
+          (when (> (length tmp-line) max-line-length)
+            (setq target-linenum linenum-start)
+            (setq target-line tmp-line)
+            (setq max-line-length (length tmp-line)))
+
+          (setq linenum-start (1+ linenum-start))))
+      ;; build (key . linenum-start)
+      (cons (format "%s %d: %s"
+                    (if (eq 'deleted (aref gutter 1))
+                        (propertize "-" 'face 'git-gutter:deleted)
+                      (propertize "+" 'face 'git-gutter:added))
+                    target-linenum target-line)
+            target-linenum)))
+
+  (defun my/goto-git-gutter ()
+    (interactive)
+    (if git-gutter:diffinfos
+        (ivy-read "git-gutters:"
+                  (mapcar 'my-reshape-git-gutter git-gutter:diffinfos)
+                  :action (lambda (e)
+                            (unless (numberp e) (setq e (cdr e)))
+                            (goto-line e))
+          ;; :sort t
+                  )
+      (message "NO git-gutters!")))
+
+
+  (transient-define-prefix my/git-gutters ()
+    [:description
+     (lambda () (let ((s (git-gutter:statistic)))
+                  (format "diff:\t%d \nadd:\t%d,\tdeleted:\t%d" (length git-gutter:diffinfos) (car s) (cdr s))))
+     ("l" "list" my/goto-git-gutter)]
+    [[("j" "next-hunk" git-gutter:next-hunk :transient t)]
+     [("k" "previous-hunk" git-gutter:previous-hunk :transient t)]]))
+
 
 ;; TODO: diff-hl-mode
 ;; https://github.com/dgutov/diff-hl
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-(defun dw/switch-project-action ()
-  "Switch to a workspace with the project name and start `magit-status'."
-  (persp-switch (projectile-project-name))
-  (magit-status))
 
 ;; https://elpa.gnu.org/packages/pinentry.html
 ;; gpg auth
@@ -2124,6 +2321,14 @@ or
   :disabled
   :hook
   (after-init . pinentry-start))
+
+;; https://github.com/jcs-elpa/docstr
+;; simple solution for the insertion of documentation strings into code
+(use-package docstr
+  :disabled)
+
+
+
 
 ;; https://github.com/joaotavora/yasnippet
 (use-package yasnippet
@@ -2140,7 +2345,8 @@ or
         backend
       (append (if (consp backend) backend (list backend))
               '(:with company-yasnippet))))
-  (setq company-backends (mapcar #'company-mode/backend-with-yas company-backends)))
+  ;; (setq company-backends (mapcar #'company-mode/backend-with-yas company-backends))
+  )
 
 ;; https://github.com/AndreaCrotti/yasnippet-snippets
 (use-package yasnippet-snippets
@@ -2177,7 +2383,7 @@ or
  ;; https://github.com/cpitclaudel/easy-escape
 ;; make ELisp regular expressions more readable
 (use-package easy-escape
-  :hook ((lisp-mode emacs-lisp-mode) . easy-escape-minor-mode))
+  :hook ((lisp-mode lisp-interaction-mode emacs-lisp-mode) . easy-escape-minor-mode))
 
 
 (use-package rg
@@ -2207,6 +2413,28 @@ or
 ;; emacs lisp
 ;; (add-hook 'emacs-lisp-mode-hook #'flycheck-mode)
 
+
+;; https://github.com/redguardtoo/counsel-etags
+(use-package counsel-etags
+  :ensure-system-package (ctags . universal-ctags))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 ;; https://github.com/emacs-lsp/lsp-mode
 ;; language server protocol
 (use-package lsp-mode
@@ -2222,27 +2450,26 @@ or
   ;;             ;; ("TAB" . completion-at-point)
   ;;             ("C-c C-f" . lsp-format-buffer))
   :general
-  (spc
-    :keymaps 'lsp-mode-map
+  (lsp-mode-map
     :states '(normal insert visual emacs motion)
-    "l" '(:ignore t :which-key "lsp")
+    "SPC l" '(:ignore t :which-key "lsp")
     ;; "ld" 'xref-find-definitions
     ;; "lr" 'xref-find-references
-    "ld" 'lsp-ui-peek-find-definitions
-    "lr" 'lsp-ui-peek-find-references
-    "ln" 'lsp-ui-find-next-reference
-    "lp" 'lsp-ui-find-prev-reference
-    "ls" 'counsel-imenu
-    "le" 'lsp-ui-flycheck-list
-    "lS" 'lsp-ui-sideline-mode
-    "lX" 'lsp-execute-code-action
-    "lf" 'lsp-format-buffer)
+    "SPC ld" 'lsp-ui-peek-find-definitions
+    "SPC lr" 'lsp-ui-peek-find-references
+    "SPC ln" 'lsp-ui-find-next-reference
+    "SPC lp" 'lsp-ui-find-prev-reference
+    "SPC ls" 'counsel-imenu
+    "SPC le" 'lsp-ui-flycheck-list
+    "SPC lS" 'lsp-ui-sideline-mode
+    "SPC lX" 'lsp-execute-code-action
+    "SPC lf" 'lsp-format-buffer)
   :custom
   (lsp-keymap-prefix "C-x l")
   (lsp-auto-guess-root nil)
-  (lsp-prefer-flymake nil)           ; Use flycheck instead of flymake
+  (lsp-prefer-flymake nil)              ; Use flycheck instead of flymake
   (lsp-enable-file-watchers nil)
-  (lsp-enable-folding nil)
+  (lsp-enable-folding nil)              ; use evil-matchit instead
   (lsp-enable-semantic-highlighting t)
   (read-process-output-max (* 1024 1024))
   (lsp-keep-workspace-alive nil)
@@ -2310,29 +2537,29 @@ or
 ;;   :hook (emacs-lisp-mode . lispy-mode)
 ;;   )
 
+
 ;; https://github.com/noctuid/lispyville
 (use-package lispyville
-  :init
-  (general-add-hook '(emacs-lisp-mode-hook racket-mode lisp-interaction-mode lisp-mode-hook) #'lispyville-mode)
-  ;; :hook ((emacs-lisp-mode racket-mode lisp-interaction-mode) . lispyville-mode)
+  ;; :init
+  ;; (general-add-hook '(emacs-lisp-mode-hook racket-mode lisp-interaction-mode lisp-mode-hook) #'lispyville-mode)
+  :hook ((emacs-lisp-mode racket-mode lisp-interaction-mode lisp-mode) . lispyville-mode)
   ;; :hook ((lispy-mode . lispyville-mode))
   :general
-  (:keymaps 'lispyville-mode-map
+  (lispyville-mode-map
    :states 'normal
-   "C-M-j" 'lispyville-drag-forward
-   "C-M-k" 'lispyville-drag-backward
-   "C-M-S-j" 'lispy-join
-   "M-s" 'lispy-splice
-   "M-S-s" 'lispy-split
-   "C-M-r" 'lispy-raise-sexp            ; isearch-backward-regexp
-   "C-M-S-r" 'lispyville-raise-list     ; isearch-backward-regexp
+   "M-j" 'lispyville-drag-forward
+   "M-k" 'lispyville-drag-backward
+   "C-S-j" 'lispy-join
+   "M-u" 'lispy-splice
+   "M <return>" 'lispy-split
+   "M-r" 'lispy-raise-sexp
+   "M-S-r" 'lispyville-raise-list
    "M-t" 'transpose-sexps
-   "C-M-v" 'lispy-convolute-sexp        ; scroll-other-window
-   )
-  (spc-e
-    :keymaps 'lispyville-mode-map
-    :states '(normal visual)
-    "/" '(lispy-eval-and-comment :which-key "eval and comment"))
+   "M-v" 'lispy-convolute-sexp)
+  (lispyville-mode-map
+   :states '(normal visual)
+   "SPC e /" '(lispy-eval-and-comment :which-key "eval and comment"))
+
   :config
   (lispyville-set-key-theme
    '(operators                         ; change evil commands. y d c j .... all.
@@ -2344,6 +2571,9 @@ or
      commentary                         ; gc, gy, s/
      wrap                               ; M-([{
      ))
+
+  (advice-add 'lispy-join :before #'my/move-forward-char)
+  (advice-add 'lispy-eval-and-comment :before #'my/move-forward-char)
   (lispyville-enter-visual-when-marking))
 
 (use-package parinfer
@@ -2372,11 +2602,11 @@ or
 (use-package spatial-navigate
   :general
   (:keymaps 'normal
-   "M-j" 'spatial-navigate-forward-vertical-box
-   "M-k" 'spatial-navigate-backward-vertical-box)
+   "C-M-j" 'spatial-navigate-forward-vertical-box
+   "C-M-k" 'spatial-navigate-backward-vertical-box)
   (:keymaps 'insert
-   "M-j" 'spatial-navigate-forward-vertical-bar
-   "M-k" 'spatial-navigate-backward-vertical-bar))
+   "C-M-j" 'spatial-navigate-forward-vertical-bar
+   "C-M-k" 'spatial-navigate-backward-vertical-bar))
 
 
 ;; ---------------------------
@@ -2420,16 +2650,17 @@ or
   (repl-mode
    :states '(normal insert)
    "C-n")
-  (spc-e
-    :keymaps 'racket-mode-map
+  (racket-mode-map
     :states '(normal visual)
-    "b" 'racket-run-module-at-point
-    "x" 'racket-send-last-sexp
-    "d" 'racket-send-definition)
-  (spc-e
-    :keymaps 'racket-mode-map
+    "SPC eb" 'racket-run-module-at-point
+    "SPC ex" 'racket-send-last-sexp
+    "SPC ed" 'racket-send-definition)
+  (racket-mode-map
     :states 'visual
-    "r" 'racket-send-region)
+    "SPC er" 'racket-send-region)
+  :config
+  (advice-add 'racket-send-last-sexp :before #'my/move-forward-char)
+  (advice-add 'racket-send-definition :before #'my/move-forward-char)
 
   :catch (lambda (keyword err)
            (message (error-message-string err))))
@@ -2604,19 +2835,41 @@ or
 
   :config
   (setq company-backends
-        '(company-capf
-          company-keywords
-          company-semantic
-          company-files
-          company-etags
-          company-yasnippet))
-
+        '((company-capf                 ; complete at point function
+           company-keywords             ;
+           company-semantic
+           company-files
+           company-etags
+           company-yasnippet)
+          (company-abbrev company-dabbrev)))
   (defun company-mode-minibuffer-setup ()
     "Setup company-mode in minibuffer."
     (company-mode 1)
     (setq-local company-tooltip-limit 4)
     (setq-local company-tooltip-minimum 1))
   (add-hook 'eval-expression-minibuffer-setup-hook 'company-mode-minibuffer-setup)
+
+
+;;; company-mode support like auto-complete in web-mode
+
+;; Enable CSS completion between <style>...</style>
+;; (defadvice company-css (before web-mode-set-up-ac-sources activate)
+;;   "Set CSS completion based on current language before running `company-css'."
+;;   (if (equal major-mode 'web-mode)
+;;       (let ((web-mode-cur-language (web-mode-language-at-pos)))
+;;         (if (string= web-mode-cur-language "css")
+;;             (unless css-mode (css-mode))))))
+
+;; Enable JavaScript completion between <script>...</script> etc.
+;; (defadvice company-tern (before web-mode-set-up-ac-sources activate)
+;;   "Set `tern-mode' based on current language before running `company-tern'."
+;;   (if (equal major-mode 'web-mode)
+;;       (let ((web-mode-cur-language (web-mode-language-at-pos)))
+;;         (if (or (string= web-mode-cur-language "javascript")
+;;                (string= web-mode-cur-language "jsx"))
+;;             (unless tern-mode (tern-mode))
+;;           ;; (if tern-mode (tern-mode))
+;;           ))))
 
   (global-company-mode t))
 
@@ -2966,7 +3219,10 @@ or
                                                  :v-adjust -0.2)))
           company-box-icons-alist 'company-box-icons-all-the-icons)))
 
-
+;; https://github.com/redguardtoo/company-ctags
+(use-package company-ctags
+  :config
+  (company-ctags-auto-setup))
 
 
 ;; (use-package corfu
@@ -3052,6 +3308,17 @@ or
   )
 
 
+;; https://github.com/jdtsmith/kind-icon
+;; display icon in corfu completion using `svg-lib'
+;; (use-package kind-icon
+;;   :ensure t
+;;   :after corfu
+;;   :custom
+;;   (kind-icon-default-face 'corfu-background) ; to compute blended backgrounds correctly
+;;   :config
+;;   (add-to-list 'corfu-margin-formatters #'kind-icon-margin-formatter))
+
+
 
  ;; https://github.com/raxod502/apheleia
 ;; auto code formatter
@@ -3128,7 +3395,7 @@ or
 
 ;; https://github.com/Fanael/rainbow-delimiters
 (use-package rainbow-delimiters
-  :hook (prog-mode . rainbow-delimiters-mode))
+  :hook ((prog-mode lisp-interaction-mode) . rainbow-delimiters-mode))
 
 ;; set background color to string's color
 (use-package rainbow-mode
@@ -3228,10 +3495,11 @@ or
                                  ;; ("[-]" . "⊡")
                                  ("[ ]" . "")
                                  ("[X]" . "")
-                                 ("[-]" . ""))))
+                                 ("[-]" . "")))
+  (prettify-symbols-mode t))
 
 (use-package org
-  :defer t
+  ;; :defer t
   :hook ((org-mode . org-mode-setup)
          ;; (org-mode . prettify-symbols-mode)
          (org-mode . org-icons)
@@ -3241,42 +3509,50 @@ or
          (org-tab-first-hook . org-end-of-line) ; expand when press TAB after ellipsis.
          )
   :general
-  (spc
-    :keymaps 'org-mode-map
-    "o" '(:ignore t :which-key "org-mode")
-    "op" '(org-pomodoro :which-key "pomodoro")
-    "on" '(org-toggle-narrow-to-subtree :which-key "toggle narrow")
-    "of" '(dw/search-org-files :which-key "search notes")
-    ;; "os"  '(counsel-rg :which-key "search notes")
-    "os" '(org-agenda :which-key "status")
-    "ot" '(org-todo-list :which-key "todos")
-    "oc" '(org-capture t :which-key "capture")
-    "ox" '(org-export-dispatch t :which-key "export")
-    ;; insert
-    "oi" '(:ignore t :which-key "insert")
-    "oil" '(org-insert-link :which-key "insert link")
-    "oi," '(org-insert-structure-template :which-key "insert structure")
-    "oii" '(org-emphasize :which-key "emphasize")
-    ;; transclusion
-    "oit" '(org-transclusion-add)
-    ;; whitespace
-    "o SPC" '(insert-zero-width-space :which-key "zero width space"))
+  (org-mode-map
+   :states '(normal visual emacs motion)
+   "SPC o" '(:ignore t :which-key "org-mode")
+   "SPC op" '(org-pomodoro :which-key "pomodoro")
+   "SPC on" '(org-toggle-narrow-to-subtree :which-key "toggle narrow")
+   "SPC of" '(dw/search-org-files :which-key "search notes")
+   ;; "os"  '(counsel-rg :which-key "search notes")
+   "SPC os" '(org-agenda :which-key "status")
+   "SPC ot" '(org-todo-list :which-key "todos")
+   "SPC oc" '(org-capture t :which-key "capture")
+   "SPC ox" '(org-export-dispatch t :which-key "export")
+   ;; insert
+   "SPC oi" '(:ignore t :which-key "insert")
+   "SPC oil" '(org-insert-link :which-key "insert link")
+   "SPC oi," '(org-insert-structure-template :which-key "insert structure")
+   "SPC oii" '(org-emphasize :which-key "emphasize")
+   ;; transclusion
+   "SPC oit" '(org-transclusion-add)
+   ;; whitespace
+   "SPC oi SPC" '(insert-zero-width-space :which-key "zero width space"))
   (org-mode-map
    "C-j" 'org-next-visible-heading
-   "C-k" 'org-previous-visible-heading)
-  (org-src-mode-map
-   "s-s" 'org-edit-src-save
-   "s-k" 'org-edit-src-exit)
-  (spc-e
-    :keymaps 'org-mode-map
-    :states '(normal visual emacs motion)
-    "e" '(my/org-edit-this :which-key "edit-this")
-    "x" '(org-babel-execute-src-block :which-key "execute this block"))
+   "C-k" 'org-previous-visible-heading
+   [remap evil-backward-char] (general-predicate-dispatch 'evil-backward-char
+                                '(and (eolp) (bolp)) 'evil-backward-word-begin)
+   [remap evil-forward-char] (general-predicate-dispatch 'evil-forward-char
+                                '(and (eolp) (bolp)) 'evil-forward-word-begin))
+  ;; (org-src-mode-map
+  ;;  "s-s" 'org-edit-src-save
+  ;;  "s-k" 'org-edit-src-exit)
+  ;; (spc-e
+  ;;   :keymaps 'org-mode-map
+  ;;   ;; :states '(normal visual emacs motion)
+  ;;   "e" '(my/org-edit-this :which-key "edit-this")
+  ;;   "x" '(org-babel-execute-src-block :which-key "execute this block" :major-modes 'org))
+  (org-mode-map
+   :states '(normal visual emacs motion)
+   "SPC ee" '(my/org-edit-this :which-key "edit-this")
+   "SPC ex" '(org-babel-execute-src-block :which-key "execute this block"))
 
-  (:keymaps 'org-mode-map
+  (org-mode-map
    :states '(normal motion visual)
    "$" (general-key-dispatch '(lambda () (interactive) (evil-org-end-of-line))
-         ;; :timeout 0.25
+         :timeout 0.25
          "$" 'evil-end-of-line))
 
 
@@ -3285,12 +3561,12 @@ or
   (org-clock-in-resume t)
   (org-clock-persist-query-resume nil)
   ;; (org-clock-idle-time 15)
-  (org-id-link-to-org-use-id t)   ; create ID if need to make link.
-  (org-startup-indented t)        ; Keep the indentation
-  (org-src-tab-acts-natively t)   ; indentation setting
-  (org-log-done t)                ; Automatically log done times in todo items.
-  (org-log-into-drawer t)         ; Log stuff into the LOGBOOK drawer by default
-  (org-hide-emphasis-markers t)   ; hide markup indicator
+  (org-id-link-to-org-use-id t)    ; create ID if need to make link.
+  (org-startup-indented t)         ; Keep the indentation
+  (org-src-tab-acts-natively t)    ; indentation setting
+  (org-log-done t)                 ; Automatically log done times in todo items.
+  ;; (org-log-into-drawer t)         ; Log stuff into the LOGBOOK drawer by default
+  (org-hide-emphasis-markers t)         ; hide markup indicator
   (prettify-symbols-unprettify-at-point 'right-edge)
   (org-fontify-done-headline t)         ; apply special face to DONE
   (org-pretty-entities t)               ; show entities as UTF-8 char.
@@ -3298,6 +3574,7 @@ or
   ;; (org-indent-indentation-per-level 2)  ;
   ;; (org-hide-leading-stars t)            ; hide the stars.
   ;; (org-ellipsis "⋱")                    ; change ellipsis shape.
+  (org-ellipsis "​")                    ; change ellipsis shape.
   (org-src-fontify-natively t)
   (org-fontify-quote-and-verse-blocks t) ; fontify quote, verse too
   (org-src-tab-acts-natively t)
@@ -3326,6 +3603,18 @@ or
   ;; (variable-pitch ((t (:family "D2Coding"))))
 
   :config
+
+  (advice-add 'org-ctrl-c-ret :before #'my/move-forward-char)
+
+  (defun my/org-edit-this ()
+    "Edit element under the cursor."
+    (interactive)
+    (let ((elem (if (org-appear--current-elem)
+                    (car (org-appear--current-elem))
+                  (car (org-element-at-point)))))
+      (cond ((equal elem 'src-block) (org-edit-special))
+            ((equal elem 'link) (org-insert-link)))))
+
   ;; (defface org-checkbox-done-text '((t (:inherit 'org-done))) "")
 
   ;; https://github.com/alphapapa/org-bookmark-heading
@@ -3402,14 +3691,19 @@ or
     :custom
     (org-src-window-setup 'split-window-below) ; show edit buffer below current buffer
     ;; :init/el-patch
-    :config/el-patch
+    ;; :config/el-patch
+    ;; (defvar org-src-mode-map
+    ;;   (let ((map (make-sparse-keymap)))
+    ;;     (define-key map (el-patch-swap "\C-c'" "s-s") 'org-edit-src-exit)
+    ;;     (define-key map (el-patch-swap "\C-c\C-k" "s-k") 'org-edit-src-abort)
+    ;;     (define-key map (el-patch-swap "\C-x\C-s" "\C-x\C-s") 'org-edit-src-save)
+    ;;     map))
+    :config
     (defvar org-src-mode-map
       (let ((map (make-sparse-keymap)))
-        ;; (define-key map (el-patch-swap "\C-c'" [?\s-s]) 'org-edit-src-exit)
-        (define-key map (el-patch-swap "\C-c'" "s-s") 'org-edit-src-exit)
-        ;; (define-key map (el-patch-swap "\C-c\C-k" [?\s-k]) 'org-edit-src-abort)
-        (define-key map (el-patch-swap "\C-c\C-k" "s-k") 'org-edit-src-abort)
-        (define-key map (el-patch-swap "\C-x\C-s" "\C-x\C-s") 'org-edit-src-save)
+        (define-key map "s-s" 'org-edit-src-exit)
+        (define-key map "s-k" 'org-edit-src-abort)
+        (define-key map "\C-x\C-s" 'org-edit-src-save)
         map)))
 
   ;; https://www.reddit.com/r/emacs/comments/ouh44f/company_completion_for_org_links/
@@ -3462,8 +3756,8 @@ or
     :custom
     (company-org-block-edit-style 'auto) ;; 'auto, 'prompt, or 'inline
     :hook ((org-mode . (lambda ()
-                         (setq-local company-backends '(company-org-block))
-                         ;; (add-to-list 'company-backends 'company-org-block)
+                         ;; (setq-local company-backends '(company-org-block))
+                         (add-to-list (make-local-variable 'company-backends) 'company-org-block)
                          (company-mode 1))))
     :config
     ;; (add-to-list 'company-backends 'company-org-block)
@@ -3500,8 +3794,11 @@ or
     :straight (ob-racket
                :type git
                :host github
-               :repo "hasu/emacs-ob-racket")
-    :commands (org-babel-execute:racket))
+               :repo "hasu/emacs-ob-racket"
+               :files ("*.el" "*.rkt"))
+    :defer t
+    :commands (org-babel-execute:racket
+               org-babel-expand-body:racket))
 
   (use-package ox-latex
     :straight nil
@@ -3511,6 +3808,15 @@ or
           (plist-put org-format-latex-options
               :scale 2.0)) ;; for hidpi display.
     )
+
+  (use-package ob-shell
+    :defer t
+    :ensure nil
+    :straight nil
+    :commands (org-babel-execute:sh
+               org-babel-expand-body:sh
+               org-babel-execute:bash
+               org-babel-expand-body:bash))
 
   ;; https://github.com/dandavison/xenops
   (use-package xenops
@@ -3627,36 +3933,32 @@ or
                :type git
                :host github
                :repo "tonyaldon/org-bars")
-    ;; :if (not is-termux)
     :hook (org-mode . org-bars-mode)
-    :custom
-    (org-bars-stars '(:empty ""
-                      :invisible ""
-                      :visible ""))
     ;; (org-bars-extra-pixels-height 7)
     ;; :custom-face
     ;; (org-bars-star-empty ((t (:weight bold))))
     ;; (org-bars-star-invisible ((t (:weight bold))))
     ;; (org-bars-star-visible ((t (:weight bold))))
-    ;; :config
-    ;; (setq org-bars-stars '(:empty ?⊙
-    ;;                        :invisible ?⊕
-    ;;                        :visible ?⊝))
-    ;; (setq org-bars-stars '(:empty "-"
-    ;;                        :invisible "+"
-    ;;                        :visible "="))
-    )
-  (defun org-no-ellipsis-in-headlines ()
-    "Remove use of ellipsis in headlines.
-See `buffer-invisibility-spec'."
-    (remove-from-invisibility-spec '(outline . t))
-    (add-to-invisibility-spec 'outline))
-  (add-hook 'org-mode-hook 'org-no-ellipsis-in-headlines)
+    :config
+    (setq org-bars-stars '(:empty ""
+                           :invisible ""
+                           :visible ""))
+    ;; (setq org-bars-with-dynamic-stars-p nil)
+    (setq org-bars-color-options '(:desaturate-level-faces 30
+                                   :darken-level-faces 15)))
+
+;; this has disadvantage to make `org-cycle' not work correctly on items list.
+;;   (defun org-no-ellipsis-in-headlines ()
+;;     "Remove use of ellipsis in headlines.
+;; See `buffer-invisibility-spec'."
+;;     (remove-from-invisibility-spec '(outline . t))
+;;     (add-to-invisibility-spec 'outline))
+;;   (add-hook 'org-mode-hook 'org-no-ellipsis-in-headlines)
 
   ;; https://github.com/integral-dw/org-superstar-mode
   (use-package org-superstar
     ;; :disabled
-    :if (not is-termux)
+    ;; :if (not is-termux)
     ;; :after org
     :hook (org-mode . org-superstar-mode)
     :custom
@@ -3665,11 +3967,8 @@ See `buffer-invisibility-spec'."
                                        (?+ . ?‣)
                                        (?- . ?•)))
     (org-superstar-headline-bullets-list nil)
-    ;; (org-superstar-remove-leading-stars t)
-    ;; (org-superstar-headline-bullets-list '("◉" "○" "●" "○" "●" "○" "●")))
-    ;; (org-superstar-headline-bullets-list '("◉" "☯" "○" "☯" "✸" "☯" "✿" "☯" "✜" "☯" "◆" "☯" "▶")))
+    (org-superstar-remove-leading-stars t)
     ;; (org-superstar-headline-bullets-list '("◉" "●" "○" "◆" "▶"))
-    ;; (org-bars-mode)
     )
 
   ;; Make sure org-indent face is available
@@ -3685,15 +3984,15 @@ See `buffer-invisibility-spec'."
 
 
   ;; This is needed as of Org 9.2
-  (require 'org-tempo)                  ; snippet-like for insert src block.
-  (add-to-list 'org-structure-template-alist '("sh" . "src sh"))
-  (add-to-list 'org-structure-template-alist '("el" . "src emacs-lisp"))
-  (add-to-list 'org-structure-template-alist '("sc" . "src scheme"))
-  (add-to-list 'org-structure-template-alist '("ts" . "src typescript"))
-  (add-to-list 'org-structure-template-alist '("py" . "src python"))
-  (add-to-list 'org-structure-template-alist '("go" . "src go"))
-  (add-to-list 'org-structure-template-alist '("yaml" . "src yaml"))
-  (add-to-list 'org-structure-template-alist '("json" . "src json"))
+  ;; (require 'org-tempo)                  ; snippet-like for insert src block.
+  ;; (add-to-list 'org-structure-template-alist '("sh" . "src sh"))
+  ;; (add-to-list 'org-structure-template-alist '("el" . "src emacs-lisp"))
+  ;; (add-to-list 'org-structure-template-alist '("sc" . "src scheme"))
+  ;; (add-to-list 'org-structure-template-alist '("ts" . "src typescript"))
+  ;; (add-to-list 'org-structure-template-alist '("py" . "src python"))
+  ;; (add-to-list 'org-structure-template-alist '("go" . "src go"))
+  ;; (add-to-list 'org-structure-template-alist '("yaml" . "src yaml"))
+  ;; (add-to-list 'org-structure-template-alist '("json" . "src json"))
 
 
 
@@ -3736,89 +4035,89 @@ See `buffer-invisibility-spec'."
     :custom
     (org-appear-autolinks t))
 
-  (use-package org-roam
-    :straight t
-    ;; :hook
-    ;; (after-init . org-roam-mode)
-    :config
-    (org-roam-db-autosync-mode)
-    :custom
-    (org-roam-directory "~/Notes/Roam/")
-    (org-roam-completion-everywhere t)
-    (org-roam-completion-system 'default)
-    (org-roam-capture-templates
-     '(("d" "default" plain
-        #'org-roam-capture--get-point
-        "%?"
-        :file-name "%<%Y%m%d%H%M%S>-${slug}"
-        :head "#+title: ${title}\n"
-        :unnarrowed t)
-       ("ll" "link note" plain
-        #'org-roam-capture--get-point
-        "* %^{Link}"
-        :file-name "Inbox"
-        :olp ("Links")
-        :unnarrowed t
-        :immediate-finish)
-       ("lt" "link task" entry
-        #'org-roam-capture--get-point
-        "* TODO %^{Link}"
-        :file-name "Inbox"
-        :olp ("Tasks")
-        :unnarrowed t
-        :immediate-finish)))
-    (org-roam-dailies-directory "Journal/")
-    (org-roam-dailies-capture-templates
-     '(("d" "default" entry
-        #'org-roam-capture--get-point
-        "* %?"
-        :file-name "Journal/%<%Y-%m-%d>"
-        :head "#+title: %<%Y-%m-%d %a>\n\n[[roam:%<%Y-%B>]]\n\n")
-       ("t" "Task" entry
-        #'org-roam-capture--get-point
-        "* TODO %?\n  %U\n  %a\n  %i"
-        :file-name "Journal/%<%Y-%m-%d>"
-        :olp ("Tasks")
-        :empty-lines 1
-        :head "#+title: %<%Y-%m-%d %a>\n\n[[roam:%<%Y-%B>]]\n\n")
-       ("j" "journal" entry
-        #'org-roam-capture--get-point
-        "* %<%I:%M %p> - Journal  :journal:\n\n%?\n\n"
-        :file-name "Journal/%<%Y-%m-%d>"
-        :olp ("Log")
-        :head "#+title: %<%Y-%m-%d %a>\n\n[[roam:%<%Y-%B>]]\n\n")
-       ("l" "log entry" entry
-        #'org-roam-capture--get-point
-        "* %<%I:%M %p> - %?"
-        :file-name "Journal/%<%Y-%m-%d>"
-        :olp ("Log")
-        :head "#+title: %<%Y-%m-%d %a>\n\n[[roam:%<%Y-%B>]]\n\n")
-       ("m" "meeting" entry
-        #'org-roam-capture--get-point
-        "* %<%I:%M %p> - %^{Meeting Title}  :meetings:\n\n%?\n\n"
-        :file-name "Journal/%<%Y-%m-%d>"
-        :olp ("Log")
-        :head "#+title: %<%Y-%m-%d %a>\n\n[[roam:%<%Y-%B>]]\n\n")))
-    :bind (:map org-roam-mode-map
-           (("C-c n l" . org-roam)
-            ("C-c n f" . org-roam-find-file)
-            ("C-c n d" . org-roam-dailies-find-date)
-            ("C-c n c" . org-roam-dailies-capture-today)
-            ("C-c n C r" . org-roam-dailies-capture-tomorrow)
-            ("C-c n t" . org-roam-dailies-find-today)
-            ("C-c n y" . org-roam-dailies-find-yesterday)
-            ("C-c n r" . org-roam-dailies-find-tomorrow)
-            ("C-c n g" . org-roam-graph))
-           :map org-mode-map
-           (("C-c n i" . org-roam-insert))
-           (("C-c n I" . org-roam-insert-immediate))))
+  ;; (use-package org-roam
+  ;;   :straight t
+  ;;   ;; :hook
+  ;;   ;; (after-init . org-roam-mode)
+  ;;   :config
+  ;;   (org-roam-db-autosync-mode)
+  ;;   :custom
+  ;;   (org-roam-directory "~/Notes/Roam/")
+  ;;   (org-roam-completion-everywhere t)
+  ;;   (org-roam-completion-system 'default)
+  ;;   (org-roam-capture-templates
+  ;;    '(("d" "default" plain
+  ;;       #'org-roam-capture--get-point
+  ;;       "%?"
+  ;;       :file-name "%<%Y%m%d%H%M%S>-${slug}"
+  ;;       :head "#+title: ${title}\n"
+  ;;       :unnarrowed t)
+  ;;      ("ll" "link note" plain
+  ;;       #'org-roam-capture--get-point
+  ;;       "* %^{Link}"
+  ;;       :file-name "Inbox"
+  ;;       :olp ("Links")
+  ;;       :unnarrowed t
+  ;;       :immediate-finish)
+  ;;      ("lt" "link task" entry
+  ;;       #'org-roam-capture--get-point
+  ;;       "* TODO %^{Link}"
+  ;;       :file-name "Inbox"
+  ;;       :olp ("Tasks")
+  ;;       :unnarrowed t
+  ;;       :immediate-finish)))
+  ;;   (org-roam-dailies-directory "Journal/")
+  ;;   (org-roam-dailies-capture-templates
+  ;;    '(("d" "default" entry
+  ;;       #'org-roam-capture--get-point
+  ;;       "* %?"
+  ;;       :file-name "Journal/%<%Y-%m-%d>"
+  ;;       :head "#+title: %<%Y-%m-%d %a>\n\n[[roam:%<%Y-%B>]]\n\n")
+  ;;      ("t" "Task" entry
+  ;;       #'org-roam-capture--get-point
+  ;;       "* TODO %?\n  %U\n  %a\n  %i"
+  ;;       :file-name "Journal/%<%Y-%m-%d>"
+  ;;       :olp ("Tasks")
+  ;;       :empty-lines 1
+  ;;       :head "#+title: %<%Y-%m-%d %a>\n\n[[roam:%<%Y-%B>]]\n\n")
+  ;;      ("j" "journal" entry
+  ;;       #'org-roam-capture--get-point
+  ;;       "* %<%I:%M %p> - Journal  :journal:\n\n%?\n\n"
+  ;;       :file-name "Journal/%<%Y-%m-%d>"
+  ;;       :olp ("Log")
+  ;;       :head "#+title: %<%Y-%m-%d %a>\n\n[[roam:%<%Y-%B>]]\n\n")
+  ;;      ("l" "log entry" entry
+  ;;       #'org-roam-capture--get-point
+  ;;       "* %<%I:%M %p> - %?"
+  ;;       :file-name "Journal/%<%Y-%m-%d>"
+  ;;       :olp ("Log")
+  ;;       :head "#+title: %<%Y-%m-%d %a>\n\n[[roam:%<%Y-%B>]]\n\n")
+  ;;      ("m" "meeting" entry
+  ;;       #'org-roam-capture--get-point
+  ;;       "* %<%I:%M %p> - %^{Meeting Title}  :meetings:\n\n%?\n\n"
+  ;;       :file-name "Journal/%<%Y-%m-%d>"
+  ;;       :olp ("Log")
+  ;;       :head "#+title: %<%Y-%m-%d %a>\n\n[[roam:%<%Y-%B>]]\n\n")))
+  ;;   :bind (:map org-roam-mode-map
+  ;;          (("C-c n l" . org-roam)
+  ;;           ("C-c n f" . org-roam-find-file)
+  ;;           ("C-c n d" . org-roam-dailies-find-date)
+  ;;           ("C-c n c" . org-roam-dailies-capture-today)
+  ;;           ("C-c n C r" . org-roam-dailies-capture-tomorrow)
+  ;;           ("C-c n t" . org-roam-dailies-find-today)
+  ;;           ("C-c n y" . org-roam-dailies-find-yesterday)
+  ;;           ("C-c n r" . org-roam-dailies-find-tomorrow)
+  ;;           ("C-c n g" . org-roam-graph))
+  ;;          :map org-mode-map
+  ;;          (("C-c n i" . org-roam-insert))
+  ;;          (("C-c n I" . org-roam-insert-immediate))))
 
   ;; https://github.com/jrblevin/deft
-  (use-package deft
-    :commands (deft)
-    :config (setq deft-directory "~/Notes/Roam"
-                  deft-recursive t
-                  deft-extensions '("md" "org")))
+  ;; (use-package deft
+  ;;   :commands (deft)
+  ;;   :config (setq deft-directory "~/Notes/Roam"
+  ;;                 deft-recursive t
+  ;;                 deft-extensions '("md" "org")))
 
   ;; (defun org-at-src-block-p ()
   ;;   (eq (nth 0 (org-element-at-point)) 'src-block))
@@ -3870,11 +4169,12 @@ prompted for."
   ;; end org-mode
   )
 
+
 ;; ---------------------------
 ;; Shell
 ;; ---------------------------
 
-
+;; https://github.com/akermu/emacs-libvterm
 (use-package vterm
   :commands vterm
   :defer t
@@ -3894,7 +4194,15 @@ prompted for."
 cursor backwards. Moving cursor backwards is the default vim behavior but it is
 not appropriate in some cases like terminals."
     (setq-local evil-move-cursor-back nil))
-  (add-hook 'vterm-mode-hook #'evil-collection-vterm-escape-stay))
+  (add-hook 'vterm-mode-hook #'evil-collection-vterm-escape-stay)
+
+  ;; (add-hook 'vterm-mode-hook
+  ;;         (lambda ()
+  ;;           (set (make-local-variable 'buffer-face-mode-face) '(:fontset "MesloLGS"))
+  ;;                (buffer-face-mode t)))
+
+
+  )
 
 (use-package comint
   :straight nil
@@ -3952,40 +4260,40 @@ output instead."
 
 ;; patches for flex completion style
 ;; https://github.com/company-mode/company-mode/pull/1215#issuecomment-927857584
-(defvar x/flex-minimum-prefix-length 2)
-(advice-add #'completion-flex--make-flex-pattern :override
-  (lambda (pattern)
-    "Turn (prefix \"foo\" point) to (\"fo\" any \"o\" point)."
-    (when (and x/flex-minimum-prefix-length (equal (car pattern) 'prefix))
-      (setq pattern (cdr pattern)))
-    (let ((prefix-len 0))
-      (mapcan (lambda (elem)
-                (prog1
-                    (if (stringp elem)
-                        (mapcan
-                         (lambda (char)
-                           (when prefix-len (cl-incf prefix-len))
-                           (if (and prefix-len
-                                    (<= prefix-len x/flex-minimum-prefix-length))
-                               (list (string char))
-                             (list 'any (string char) 'any)))
-                         elem)
-                      (list elem))
-                  (setq prefix-len nil)))
-              pattern)))
-  '((name . --prefix-match)))
+;; (defvar x/flex-minimum-prefix-length 2)
+;; (advice-add #'completion-flex--make-flex-pattern :override
+;;   (lambda (pattern)
+;;     "Turn (prefix \"foo\" point) to (\"fo\" any \"o\" point)."
+;;     (when (and x/flex-minimum-prefix-length (equal (car pattern) 'prefix))
+;;       (setq pattern (cdr pattern)))
+;;     (let ((prefix-len 0))
+;;       (mapcan (lambda (elem)
+;;                 (prog1
+;;                     (if (stringp elem)
+;;                         (mapcan
+;;                          (lambda (char)
+;;                            (when prefix-len (cl-incf prefix-len))
+;;                            (if (and prefix-len
+;;                                     (<= prefix-len x/flex-minimum-prefix-length))
+;;                                (list (string char))
+;;                              (list 'any (string char) 'any)))
+;;                          elem)
+;;                       (list elem))
+;;                   (setq prefix-len nil)))
+;;               pattern)))
+;;   '((name . --prefix-match)))
 
 
 
 
 ;; https://www.reddit.com/r/emacs/comments/3n1j4x/anyway_to_tab_out_of_parentheses/
-(defun smart-tab-jump-out-or-indent (&optional arg)
-  (interactive "P")
-  (let ((closings (mapcar #'cdr electric-pair-pairs))
-        (after (char-after)))
-    (if (member after closings)
-        (forward-char 1)
-      (indent-for-tab-command arg))))
+;; (defun smart-tab-jump-out-or-indent (&optional arg)
+;;   (interactive "P")
+;;   (let ((closings (mapcar #'cdr electric-pair-pairs))
+;;         (after (char-after)))
+;;     (if (member after closings)
+;;         (forward-char 1)
+;;       (indent-for-tab-command arg))))
 
 
 
@@ -3996,14 +4304,6 @@ output instead."
   (advice-mapc (lambda (advice _props) (advice-remove sym advice)) sym))
 
 
-(defun my/org-edit-this ()
-  "Edit element under the cursor."
-  (interactive)
-  (let ((elem (if (org-appear--current-elem)
-                  (car (org-appear--current-elem))
-                (car (org-element-at-point)))))
-    (cond ((equal elem 'src-block) (org-edit-special))
-          ((equal elem 'link) (org-insert-link)))))
 
 
 
@@ -4196,16 +4496,7 @@ or go back to just one window (by deleting all but the selected window)."
 
 
 
-;; fix non-compatiable command for evil.
-(defun my/move-forward-char ()
-  "Fix evil's last character selection problem."
-  (interactive)
-  (if (equal evil-state 'normal) (forward-char 1)))
 
-(advice-add 'org-ctrl-c-ret :before #'my/move-forward-char)
-(advice-add 'lispy-eval-and-comment :before #'my/move-forward-char)
-(advice-add 'racket-send-last-sexp :before #'my/move-forward-char)
-(advice-add 'racket-send-definition :before #'my/move-forward-char)
 
 ;; (advice-add 'org-insert-link :before #'my/move-forward-char)
 
@@ -4268,32 +4559,22 @@ or go back to just one window (by deleting all but the selected window)."
 
 
 (general-define-key
- ;; ;; "C-s" 'counsel-grep-or-swiper
- ;; "s-f" 'counsel-grep-or-swiper
- ;; ;; "s-w" 'delete-window
- ;; ;; "s-W" 'delete-other-window
- ;; ;; undo, redo
- ;; "s-z" 'undo-tree-undo
- ;; "s-Z" 'undo-tree-redo
- ;; "C-M-u" 'universal-argument            ; C-u is now evil-scroll-up
- ;; ;; "s-?" 'evilnc-copy-and-comment-lines
- ;; ;; "s-/" 'evilnc-comment-or-uncomment-lines
- ;; "<f17>" 'toggle-input-method
- ;; "M-y" 'insert-last-message
- ;; "s-b" 'treemacs-select-window
- ;; ;; "C-SPC" 'completion-at-point
- ;; "C-SPC" 'company-complete-common
- ;; ;; "C-SPC" 'corfu-complete
- ;; ;; "s-o" 'find-file
- ;; ;; "s-o" 'counsel-switch-buffer
- ;; "s-o" 'ivy-switch-buffer
- ;; "s-O" 'find-file
- ;; ;; "s-f" 'evil-avy-goto-char-timer
+ "<f17>" 'toggle-input-method
  "s-n" '(nil :which-key "new buffer & frame")
  "s-n f" 'make-frame
  "s-n b" '(clone-indirect-buffer-other-window :which-key "clone indirect buffer - other window")
  "s-n B" '(make-indirect-buffer :which-key "make indirect buffer")
  )
+
+  (spc-e
+    :states '(normal visual)
+    "" '(nil :which-key "eval")
+    "b" '(eval-buffer :which-key "eval buffer")
+    "x" '(eval-last-sexp :which-key "eval sexp"))
+  (spc-e
+    :keymaps '(visual)
+    "r" '(eval-region :which-key "eval region"))
+
 
 ;; spatial-navigate
 ;; (general-define-key
@@ -4619,15 +4900,6 @@ or go back to just one window (by deleting all but the selected window)."
 ;;   :prefix "SPC e"
 ;;   :global-prefix "M-SPC e")
 
-(spc-e
-  :states '(normal visual)
-  "" '(nil :which-key "eval")
-  "b" '(eval-buffer :which-key "eval buffer")
-  ;; "/" '(lispy-eval-and-comment :which-key "eval and comment")
-  "x" '(eval-last-sexp :which-key "eval sexp"))
-(spc-e
-  :keymaps '(visual)
-  "r" '(eval-region :which-key "eval region"))
 
 ;; (spc-e
 ;;   ;; :keymaps '(scheme-mode-map inferior-scheme-mode-map)
