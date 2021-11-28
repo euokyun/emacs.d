@@ -1,0 +1,4638 @@
+#+PROPERTY: header-args:elisp :lexical t
+* euokyun's emacs init file
+:PROPERTIES:
+:ID:       9BF718E4-02C9-48A7-9FE2-953EA2D2C2DD
+:END:
+** configuration
+:PROPERTIES:
+:ID:       DD2478FC-CE8A-4BCC-9F47-97CB060ECB00
+:END:
+#+begin_src emacs-lisp :tangle no
+;;; init.el -*- lexical-binding: t; -*-
+;;; Commentary: euokyun's emacs init file.
+;;; Code:
+
+#+end_src
+*** debug setting
+init 파일 디버그 용도
+#+begin_src emacs-lisp :tangle yes
+;; (setq debug-on-error t)
+#+end_src
+*** user information
+#+begin_src emacs-lisp :tangle yes
+(setq user-full-name "Jeon Euokyun"
+      user-mail-address "euokyun@me.com")
+#+end_src
+*** emacs customize file
+이맥스에서 자동으로 생성하는 커스터마이즈 형식이 있는데 사용자가 직접 수정하는걸 권장하지 않는다. 스스로 강하게 살아가도록 파일을 분리시켜 놓는 편이 편하다.
+#+begin_src emacs-lisp :tangle yes
+(setq custom-file (expand-file-name "custom.el" user-emacs-directory))
+(load custom-file 'noerror)
+#+end_src
+*** font settings
+**** 기본 폰트 설정
+한글 폰트는 D2Coding을 사용한다.
+#+begin_src emacs-lisp :tangle yes
+(set-face-attribute 'default nil :font "Iosevka SS08" :height 170)
+(set-frame-font "Iosevka SS08" t t)
+#+end_src
+
+**** all-the-icons 설정
+#+begin_src emacs-lisp :tangle yes
+(set-fontset-font "fontset-default" 'unicode (font-spec :family "Material Icons") nil)
+(set-fontset-font "fontset-default" 'unicode (font-spec :family "github-octicons") nil 'prepend)
+(set-fontset-font "fontset-default" 'unicode (font-spec :family "FontAwesome") nil 'prepend)
+(set-fontset-font "fontset-default" 'unicode (font-spec :family "all-the-icons") nil 'prepend)
+(set-fontset-font "fontset-default" 'unicode (font-spec :family "MesloLGS") nil 'append)
+(set-fontset-font "fontset-default" 'unicode (font-spec :family "Weather Icons") nil 'append)
+(set-fontset-font "fontset-default" 'unicode (font-spec :family "file-icons") nil 'append)
+#+end_src
+
+**** 한글 폰트 설정
+#+begin_src emacs-lisp :tangle yes
+(set-fontset-font t 'hangul "D2Coding" nil 'prepend)
+#+end_src
+*** variable
+이맥스 기본 설정들의 묶음
+#+begin_src emacs-lisp :tangle yes
+(setq-default
+ ad-redefinition-action 'accept         ; silent warning for redifinition.
+ auto-save-default nil                  ; do not make temporary auto-save files. now i use `super-save' instead.
+ byte-compile-warnings '(cl-functions)  ; silent old cl-functions warning.
+ comp-async-report-warnings-errors nil  ; silent gccemacs native comp warning.
+ cursor-in-non-selected-windows nil     ; only shows the cursor of focus buffer.
+ cursor-type '(hbar . 2)                ; 2px size horizontal bar
+ default-input-method "korean-hangul"   ; input method for korean
+ delete-by-moving-to-trash t            ; delete = trash
+ delete-selection-mode t                ; override selection
+ desktop-save-mode 1                    ; save last frame -- can break perspective.
+ frame-resize-pixelwise t               ; fix frame margin/padding
+ mouse-wheel-flip-direction t           ; for OSX -- reverse horizontal scroll.
+ mouse-wheel-tilt-scroll t              ; horizontal scroll
+ help-window-select t                   ; focus on help window when activated.
+ indent-tabs-mode nil                   ; tab=space!
+ tab-width 4                            ; space=4!
+ inhibit-startup-screen t               ;
+ initial-scratch-message nil            ; empty *scratch* buffer.
+ keyboard-coding-system 'utf-8-unix     ; utf-8
+ large-file-warning-threshold nil       ; do not warn file size.
+ make-backup-files nil                  ; do not make temporal backup files.
+ mouse-wheel-follow-mouse t             ; scroll buffer under the mouse cursor.
+ mouse-wheel-progressive-speed nil      ; scroll speed = wheel speed
+ mouse-wheel-scroll-amount '(1 ((shift) . 1))
+ scroll-step 1                          ; scroll step
+ show-help-function nil                 ; t
+ straight-use-package-by-default t      ; use use-package
+ straight-check-for-modifications '(check-on-save find-when-checking) ; don't catch modification unless `save buffer' command.
+ tramp-default-method "ssh"             ; remote connection default.
+ use-dialog-box nil                     ;
+ vc-follow-symlinks t                   ; silent warning for symlink.
+ warning-minimum-level :error           ;
+ warning-suppress-log-types '((comp))   ; silent warning for native-comp.
+ warning-suppress-types '((use-package) (use-package))
+ fill-column 80                         ; default is `70'. force line breaker.
+ comment-column 60                      ; set comment column to 60
+ window-combination-resize t            ;
+ x-stretch-cursor t                     ;
+ truncate-lines t                       ; do not wrap code.
+ backup-by-copying t                    ; make backup.
+ ;; global-auto-revert-non-file-buffers t  ; revert dired and other buffers.
+ auto-revert-verbose nil                ; do not message this
+ auto-revert-avoid-polling t            ; do not use pooling.
+ delete-old-versions t                  ; delete old versions.
+ version-control t                      ;
+ ns-use-proxy-icon nil                  ; do not use icon in titlebar
+ x-underline-at-descent-line t          ; Underline looks a bit better when drawn lower
+ inhibit-compacting-font-caches t       ; for fix all-the-icons slow rendering
+ even-window-sizes nil                  ; perspective - fix window layout.
+ display-buffer-base-action '((display-buffer-reuse-window display-buffer-same-window)
+                              (reusable-frames . t)) ; perspective - fix window layout.
+ ;; tab-bar-format '(tab-bar-format-global) ; global modeline using emacs28 tab-bar
+ ;; tab-bar-mode t                         ; http://ruzkuku.com/texts/emacs-global.html
+ ;; tab-line-mode t
+ use-default-font-for-symbols nil
+ require-final-newline t ; according to POSIX, every text file should end with newline.
+ ;; completion-styles '(basic partial-completion initials flex)
+ ;; completion-category-overrides '((file (styles . (partial-completion))))
+ imenu-auto-rescan t
+
+ mouse-wheel-scroll-amount '(1 ((shift) . 1)) ;; one line at a time
+ mouse-wheel-progressive-speed nil            ; don't accelerate scrolling
+ mouse-wheel-follow-mouse 't                ; scroll window under mouse
+ scroll-step 1      ; keyboard scroll one line at a time
+ use-dialog-box nil ; Disable dialog boxes since they weren't working in Mac OSX
+ world-clock-list '(("Asia/Seoul" "Seoul")
+                    ("America/Los_Angeles" "Seattle")
+                    ("America/New_York" "New York")
+                    ("Etc/UTC" "UTC"))
+ world-clock-time-format "%a, %e %b %T %Z"
+ display-time-format "%R"
+ display-time-default-load-average nil
+ ns-pop-up-frames nil                       ; macos specific
+ )
+#+end_src
+
+사용이 어려운 기능 경고
+#+begin_src emacs-lisp :tangle yes
+(put 'narrow-to-region 'disabled nil)
+(put 'narrow-to-defun 'disabled nil)
+(put 'narrow-to-page 'disabled nil)
+#+end_src
+
+자잘한 설정들
+#+begin_src emacs-lisp :tangle yes
+(fset 'yes-or-no-p 'y-or-n-p)           ; Replace yes/no prompts with y/n
+(put 'add-function 'lisp-indent-function 2)
+(put 'advice-add 'lisp-indent-function 2)
+(put 'plist-put 'lisp-indent-function 2)
+#+end_src
+
+창 변경 undo/redo
+#+begin_src emacs-lisp :tangle yes
+(winner-mode t)
+#+end_src
+
+모드라인에 컬럼 번호 표시
+#+begin_src emacs-lisp :tangle yes
+(column-number-mode)
+#+end_src
+
+** packages
+*** core packages
+**** package manager
+​=straight-use-package=​를 사용한다. early-init.el 파일에 있음.
+
+**** COMMENT 패키지 업데이트
+straight에서는 작동하지 않는다.
+#+begin_src emacs-lisp :tangle yes
+(use-package auto-package-update
+  :custom
+  (auto-package-update-delete-old-versions t)
+  ;; (setq auto-package-update-hide-results t)
+  :config
+  (auto-package-update-maybe))
+#+end_src
+
+**** ensure-system-package
+MacOS의 Brew와 같은 시스템 패키지 관리자와 통합하는 기능.
+그냥 시스템 패키지 관리자를 불러오는 정도일 뿐이다.
+#+begin_src emacs-lisp :tangle yes
+(use-package use-package-ensure-system-package)
+#+end_src
+use-package에서 ​~:ensure-system-package~​ 키워드로 사용할 수 있다.
+
+#+begin_example emacs-lisp :tangle no
+(use-package rg
+  :ensure-system-package rg)
+(use-package ag
+  :ensure-system-package (ag . the_silver_searcher))
+#+end_example
+car는 바이너리 파일명, cdr는 패키지 관리자에서의 이름이다. 바이너리가 없을 경우 패키지 관리자를 실행하여 설치한다.
+
+**** el-patch
+https://github.com/raxod502/el-patch
+el-patch 패키지는 패키지의 elisp 소스를 변경하는 기능을 제공한다.
+emacs에서 기능을 재정의하는 방법은
+1. advice, hook
+2. 재정의, 원본 소스 파일 수정
+이 있는데, 2는 패키지 업데이트나 변경시 정의가 수정한 부분을 확인하기 어렵다. el-patch는 2의 단계에서 사용자가 재정의한 함수가 변경되었을 때 사용자 설정에 업데이트가 필요하다는 것을 알려준다.
+#+begin_src emacs-lisp :tangle yes
+(use-package el-patch
+  :custom
+  (el-patch-enable-use-package-integration t)
+  :config
+  (el-patch-deftype evil-define-command
+    :classify el-patch-classify-function
+    :locate el-patch-locate-function
+    :declare ((indent defun)
+              (doc-string 3))))
+#+end_src
+
+***** 사용법
+use-package에 통합해서 사용할 수 있고, 그것이 제일 쉬운 사용법이다.
+****** use-package
+#+begin_example emacs-lisp :tangle no
+(use-package ace-window
+  :init/el-patch
+  (defvar aw-dispatch-alist
+    '(((el-patch-swap ?x ?k) aw-delete-window "delete Window")
+      (?m aw-swap-window "Swap Windows")
+      (?M aw-move-window "Move Window")
+      (?c aw-copy-window "Copy Window")
+      ((el-patch-swap ?j ?o) aw-switch-buffer-in-window "Select Buffer")
+      ((el-patch-swap ?n ?`) aw-flip-window)
+      ((el-patch-swap ?u ?O) aw-switch-buffer-other-window "Switch Buffer Other Window")
+      (?e aw-execute-command-other-window "Execute Command Other Window")
+      ((el-patch-swap ?F ?f) aw-split-window-fair "Split Fair Window")
+      ((el-patch-swap ?v ?j) aw-split-window-vert "Split Vert Window")
+      ((el-patch-swap ?b ?l) aw-split-window-horz "Split Horz Window")
+      ((el-patch-swap ?o ?K) delete-other-windows "Delete Other Windows")
+      ((el-patch-swap ?T ?t) aw-transpose-frame "Transpose Frame")
+      ;; (el-patch-add (?r my/aw-winner-redo))
+      ;; (el-patch-add (?u my/aw-winner-undo))
+      ;; (el-patch-add (?! my/aw-vterm))
+      (el-patch-add (?! my/aw-vterm "open vTerm"))
+      ;; (el-patch-add (27 aw--done "exit"))
+      (el-patch-add (27 aw--done))
+      ;; ?i ?r ?t are used by hyperbole.el
+      (?? aw-show-dispatch-help))
+    "List of actions for `aw-dispatch-default'.
+each action is a list of either:
+  (char function description) where function takes a single window argument
+or
+  (char function) where function takes no argument and the description is omitted."))
+#+end_example
+:init나 :config에 /el-patch를 더해서 쓰면 된다.
+
+****** without use-package
+#+begin_example emacs-lisp :tangle no
+(el-patch-feature ace-window)
+(with-eval-after-load 'ace-window
+  (el-patch-defun aw--switch-buffer () ;; add persp-mode setting.
+    (cond (el-patch-add ((bound-and-true-p persp-mode)
+                         (call-interactively 'persp-switch-to-buffer)))
+          ((bound-and-true-p ivy-mode)
+           (ivy-switch-buffer))
+          ((bound-and-true-p ido-mode)
+           (ido-switch-buffer))
+          (t
+           (call-interactively 'switch-to-buffer)))))
+#+end_example
+
+el-patch-feature로 어떤 패키지를 변경할지 선언하고 el-patch-*로 코드를 수정한다.
+
+***** keyboard-escape-quit
+:PROPERTIES:
+:ID:       F71F46C1-3852-40D3-96A1-F56856FC7AC4
+:END:
+https://stackoverflow.com/questions/557282/in-emacs-whats-the-best-way-for-keyboard-escape-quit-not-destroy-other-windows
+esc가 윈도우를 지우지 않게 변경
+#+begin_src emacs-lisp :tangle yes
+(el-patch-defun keyboard-escape-quit ()
+  "Exit the current \"mode\" (in a generalized sense of the word).
+This command can exit an interactive command such as `query-replace',
+can clear out a prefix argument or a region,
+can get out of the minibuffer or other recursive edit,
+cancel the use of the current buffer (for special-purpose buffers),
+or go back to just one window (by deleting all but the selected window)."
+  (interactive)
+  (cond ((eq last-command 'mode-exited) nil)
+        ((> (minibuffer-depth) 0) (abort-recursive-edit))
+        (current-prefix-arg nil)
+        ((and transient-mark-mode mark-active) (deactivate-mark))
+        ((> (recursion-depth) 0) (exit-recursive-edit))
+        (buffer-quit-function (funcall buffer-quit-function))
+        (el-patch-remove ((not (one-window-p t)) (delete-other-windows)))
+        ((string-match "^ \\*" (buffer-name (current-buffer)))
+         (bury-buffer))))
+#+end_src
+
+**** general
+https://github.com/noctuid/general.el
+걍력한 기능의 키바인딩 패키지
+#+begin_src emacs-lisp :tangle yes
+(use-package general
+  :config
+  (general-auto-unbind-keys)
+  (general-override-mode)
+  (general-evil-setup t)
+  (general-unbind 'global
+    "s-q"
+    "s-z"
+    "s-Z"
+    "s-f"
+    "s-F"
+    "s-p"
+    "s-h"
+    "s-t"
+    "s-l"
+    "s-j"
+    "s-g"
+    "M-u"                               ; upcase-word
+    "M-l"                               ; downcase-word
+    "M-s-h"
+    "M-s-f"
+    "M-<down-mouse-1>")
+  (general-create-definer spc
+    :keymaps 'override
+    :global-prefix "M-SPC"
+    :prefix "SPC"
+    :prefix-command 'spc-prefix-command
+    :prefix-map 'spc-prefix-map)
+  (general-create-definer spc-e
+    :prefix "SPC e"
+    :global-prefix "M-SPC e"))
+#+end_src
+
+**** transient
+https://github.com/magit/transient
+대표적으로 magit에서 사용하는 일시적인 키 매핑&GUI.
+#+begin_src emacs-lisp :tangle yes
+(use-package transient
+  :config
+  (transient-bind-q-to-quit))
+#+end_src
+
+**** ligature
+https://github.com/mickeynp/ligature.el
+합자(리가추어) 지원
+#+begin_src emacs-lisp :tangle yes
+(use-package ligature
+  :straight (ligature
+             :type git
+             :host github
+             :repo "mickeynp/ligature.el")
+  :config
+  ;; Enable the "www" ligature in every possible major mode
+  (ligature-set-ligatures 't '("www"))
+  ;; Enable traditional ligature support in eww-mode, if the
+  ;; `variable-pitch' face supports it
+  (ligature-set-ligatures 'eww-mode '("ff" "fi" "ffi"))
+  ;; Enable all Cascadia Code ligatures in programming modes
+  (ligature-set-ligatures
+   '(prog-mode racket-repl-mode)
+   '("|||>" "<|||" "<==>" "<!--" "####" "~~>" "***" "||=" "||>"
+     ":::" "::=" "=:=" "===" "==>" "=!=" "=>>" "=<<" "=/=" "!=="
+     "!!." ">=>" ">>=" ">>>" ">>-" ">->" "->>" "-->" "---" "-<<"
+     "<~~" "<~>" "<*>" "<||" "<|>" "<$>" "<==" "<=>" "<=<" "<->"
+     "<--" "<-<" "<<=" "<<-" "<<<" "<+>" "</>" "###" "#_(" "..<"
+     "..." "+++" "/==" "///" "_|_" "www" "&&" "^=" "~~" "~@" "~="
+     "~>" "~-" "**" "*>" "*/" "||" "|}" "|]" "|=" "|>" "|-" "{|"
+     "[|" "]#" "::" ":=" ":>" ":<" "$>" "==" "=>" "!=" "!!" ">:"
+     ">=" ">>" ">-" "-~" "-|" "->" "--" "-<" "<~" "<*" "<|" "<:"
+     "<$" "<=" "<>" "<-" "<<" "<+" "</" "#{" "#[" "#:" "#=" "#!"
+     "##" "#(" "#?" "#_" "%%" ".=" ".-" ".." ".?" "+>" "++" "?:"
+     "?=" "?." "??" ";;" "/*" "/=" "/>" "//" "__" "~~" "(*" "*)"
+     "\\\\" "://"))
+  ;; Enables ligature checks globally in all buffers. You can also do it
+  ;; per mode with `ligature-mode'.
+  (global-ligature-mode t))
+#+end_src
+
+**** diminish
+#+begin_src emacs-lisp :tangle yes
+(use-package diminish)
+#+end_src
+
+**** TODO all-the-icons
+https://github.com/domtronn/all-the-icons.el
+fancy한 유니코드 아이콘을 추가함.
+#+begin_src emacs-lisp :tangle yes
+(use-package all-the-icons)
+#+end_src
+
+첫 패키지 설치 후엔
+#+begin_src emacs-lisp :tangle no
+(all-the-icons-install-fonts)
+#+end_src
+로 폰트를 설치해줘야 사용할 수 있다.
+
+*** completion UI
+:PROPERTIES:
+:ID:       D6139E36-A745-4F23-98BA-273117F479BB
+:END:
+설정이 쉽고 사용자가 많은 ​=ivy=​, 거대하고 복잡한 ​=Helm=​, 새로 인기를 끌어가고 있는 ​=Vertico=​ 등이 있다.
+**** ivy
+:PROPERTIES:
+:ID:       67D8A07D-D19A-44EA-9062-9B249B88A18B
+:END:
+***** ivy
+****** ivy, counsel, swiper
+https://github.com/abo-abo/swiper
+#+begin_src emacs-lisp :tangle yes
+(use-package ivy
+  :custom
+  (ivy-initial-inputs-alist nil)        ; remove M-x "^"
+  :general
+  ("s-o" 'ivy-switch-buffer
+   "s-O" 'find-file)
+  :diminish)
+#+end_src
+
+#+begin_src emacs-lisp :tangle yes
+(use-package counsel
+  :diminish
+  :custom
+  (ivy-wrap t)
+  (ivy-re-builders-alist '((t . ivy--regex-fuzzy)))
+  (ivy-use-selectable-prompt t)
+  (ivy-use-virtual-buffers t)
+  (ivy-count-format "(%d/%d) ")
+  (enable-recursive-minibuffers t)
+  :general
+  ("s-f" 'counsel-grep-or-swiper
+   "s-S-f" 'counsel-grep-or-swiper-backward)
+  :config
+  (ivy-mode t)
+  (counsel-mode t))
+#+end_src
+
+****** ivy-rich - ivy, counsel에 더 풍부한 정보를 표시
+https://github.com/seagle0128/all-the-icons-ivy-rich
+ivy-rich 전에 활성화해야 한다.
+counsel-projectile 같은 패키지는 이 패키지 이전에 활성화해야 한다.
+#+begin_src emacs-lisp :tangle yes
+(use-package all-the-icons-ivy-rich
+  :demand t
+  ;; :after counsel-projectile
+  :init (all-the-icons-ivy-rich-mode 1))
+#+end_src
+
+- 하지만 ​~:after~​ 키워드를 넣으면 제대로 로드되지 않는다.
+
+https://github.com/Yevgnen/ivy-rich
+#+begin_src emacs-lisp :tangle yes
+(use-package ivy-rich
+  :init
+  (ivy-rich-mode 1)
+  ;; :after counsel all-the-icons-ivy-rich
+  :config
+  (setq ivy-format-function #'ivy-format-function-line)
+  (setq ivy-rich-display-transformers-list
+        (plist-put ivy-rich-display-transformers-list
+            'ivy-switch-buffer
+          '(:columns
+            ((ivy-rich-candidate (:width 40))
+             (ivy-rich-switch-buffer-indicators (:width 4 :face error :align right)) ; return the buffer indicators
+             (ivy-rich-switch-buffer-major-mode (:width 12 :face warning)) ; return the major mode info
+             (ivy-rich-switch-buffer-project (:width 15 :face success)) ; return project name using `projectile'
+             (ivy-rich-switch-buffer-path (:width (lambda (x) (ivy-rich-switch-buffer-shorten-path x (ivy-rich-minibuffer-width 0.3)))))) ; return file path relative to project root or `default-directory' if project is nil
+            :predicate
+            (lambda (cand)
+              (if-let ((buffer (get-buffer cand)))
+                  ;; Don't mess with EXWM buffers
+                  (with-current-buffer buffer
+                    (not (derived-mode-p 'exwm-mode)))))))))
+
+#+end_src
+
+**** TODO vertico
+**** complete-at-point
+:PROPERTIES:
+:ID:       9E3FA906-6CFE-47EF-A6ED-D302FD2D314E
+:END:
+company를 주로 쓴다. 관련 생태계가 company를 중심으로 돌아가는 것이 대부분이다.
+***** company
+****** company
+:PROPERTIES:
+:ID:       BE78DEDD-F67B-4A48-A30C-81941E36163C
+:END:
+#+begin_src emacs-lisp :tangle yes
+(use-package company
+  :diminish company-mode
+  ;; :hook ((prog-mode LaTeX-mode latex-mode ess-r-mode) . company-mode)
+  :custom
+  (company-minimum-prefix-length 1)
+  (company-tooltip-align-annotations t)
+  (company-require-match 'never)
+  ;; Don't use company in the following modes
+  (company-global-modes '(not shell-mode eaf-mode))
+  ;; Trigger completion immediately.
+  (company-idle-delay 0) ;; company-tabnine recommand is 0
+  ;; (company-idle-delay 0.1)
+  ;; Number the candidates (use M-1, M-2 etc to select completions).
+  (company-show-numbers t)
+  ;; (company-show-quick-access t nil nil "Customized with use-package company")
+  (company-show-quick-access t) ;; "Customized with use-package company"
+  (company-echo-delay 0)
+  :general
+  ("C-SPC" 'company-complete-common)
+  (:keymaps 'company-active-map
+   "C-SPC" 'company-abort
+   ;; "SPC" '(lambda () (interactive) (insert "-"))
+   ;; "SPC" nil
+   "SPC" (general-key-dispatch 'self-insert-command
+           :timeout 0.25
+           "SPC" '(lambda () (interactive) (insert "-"))))
+
+  :config
+  (setq company-backends
+        '((company-capf                 ; complete at point function
+           company-keywords             ;
+           company-semantic
+           company-files
+           company-etags
+           company-yasnippet)
+          (company-abbrev company-dabbrev)))
+  (defun company-mode-minibuffer-setup ()
+    "Setup company-mode in minibuffer."
+    (company-mode 1)
+    (setq-local company-tooltip-limit 4)
+    (setq-local company-tooltip-minimum 1))
+  (add-hook 'eval-expression-minibuffer-setup-hook 'company-mode-minibuffer-setup)
+
+
+;;; company-mode support like auto-complete in web-mode
+
+;; Enable CSS completion between <style>...</style>
+;; (defadvice company-css (before web-mode-set-up-ac-sources activate)
+;;   "Set CSS completion based on current language before running `company-css'."
+;;   (if (equal major-mode 'web-mode)
+;;       (let ((web-mode-cur-language (web-mode-language-at-pos)))
+;;         (if (string= web-mode-cur-language "css")
+;;             (unless css-mode (css-mode))))))
+
+;; Enable JavaScript completion between <script>...</script> etc.
+;; (defadvice company-tern (before web-mode-set-up-ac-sources activate)
+;;   "Set `tern-mode' based on current language before running `company-tern'."
+;;   (if (equal major-mode 'web-mode)
+;;       (let ((web-mode-cur-language (web-mode-language-at-pos)))
+;;         (if (or (string= web-mode-cur-language "javascript")
+;;                (string= web-mode-cur-language "jsx"))
+;;             (unless tern-mode (tern-mode))
+;;           ;; (if tern-mode (tern-mode))
+;;           ))))
+
+  (global-company-mode t))
+#+end_src
+****** company-tabnine
+:PROPERTIES:
+:ID:       84CEF441-D62F-44FA-BCC5-FC7CB2F5A0DA
+:END:
+https://github.com/TommyX12/company-tabnine
+#+begin_src emacs-lisp :tangle yes
+(use-package company-tabnine
+  :defer 1
+  :custom
+  (company-tabnine-max-num-results 9)
+  :bind
+  ;; (("M-q" . company-other-backend)
+  ;;  ("C-z t" . company-tabnine))
+  :init
+  (defun company//sort-by-tabnine (candidates)
+    "Integrate company-tabnine with lsp-mode"
+    (if (or (functionp company-backend)
+            (not (and (listp company-backend) (memq 'company-tabnine company-backends))))
+        candidates
+      (let ((candidates-table (make-hash-table :test #'equal))
+            candidates-lsp
+            candidates-tabnine)
+        (dolist (candidate candidates)
+          (if (eq (get-text-property 0 'company-backend candidate)
+                  'company-tabnine)
+              (unless (gethash candidate candidates-table)
+                (push candidate candidates-tabnine))
+            (push candidate candidates-lsp)
+            (puthash candidate t candidates-table)))
+        (setq candidates-lsp (nreverse candidates-lsp))
+        (setq candidates-tabnine (nreverse candidates-tabnine))
+        (nconc (seq-take candidates-tabnine 3)
+               (seq-take candidates-lsp 6)))))
+  (defun lsp-after-open-tabnine ()
+    "Hook to attach to `lsp-after-open'."
+    (setq-local company-tabnine-max-num-results 3)
+    (add-to-list 'company-transformers 'company//sort-by-tabnine t)
+    (add-to-list 'company-backends '(company-capf :with company-tabnine :separate)))
+  (defun company-tabnine-toggle (&optional enable)
+    "Enable/Disable TabNine. If ENABLE is non-nil, definitely enable it."
+    (interactive)
+    (if (or enable (not (memq 'company-tabnine company-backends)))
+        (progn
+          (add-hook 'lsp-after-open-hook #'lsp-after-open-tabnine)
+          (add-to-list 'company-backends #'company-tabnine)
+          (when (bound-and-true-p lsp-mode) (lsp-after-open-tabnine))
+          (message "TabNine enabled."))
+      (setq company-backends (delete 'company-tabnine company-backends))
+      (setq company-backends (delete '(company-capf :with company-tabnine :separate) company-backends))
+      (remove-hook 'lsp-after-open-hook #'lsp-after-open-tabnine)
+      (company-tabnine-kill-process)
+      (message "TabNine disabled.")))
+  :hook
+  ((kill-emacs . company-tabnine-kill-process)
+   ;; (prog-mode . (lambda () (company-tabnine-toggle t)))
+   )
+  :config
+  (add-to-list 'lsp-client-packages 'lsp-racket)
+  ;; (company-tabnine-toggle t)
+  )
+#+end_src
+
+- 설치 후 ​~M-x company-tabnine-install-binary~​로 TabNine 바이너리를 설치해야 작동한다.
+****** company-box
+https://github.com/sebastiencs/company-box
+#+begin_src emacs-lisp :tangle yes
+(use-package company-box
+  :diminish
+  :if (display-graphic-p)
+  :defines company-box-icons-all-the-icons
+  :hook ((company-mode . company-box-mode)
+         (company-yasnippet . company-box-mode))
+  :custom
+  ;; (company-box-doc-enable nil)
+  ;; (company-box-backends-colors nil)
+  (company-box-doc-delay 0.2)
+  ;; (company-box-doc-delay 0)
+  ;; (company-box-doc-frame-parameters '((internal-border-width . 1)
+  ;;                                     (left-fringe . -1)
+  ;;                                     (right-fringe . -1)))
+  :config
+  ;; (with-no-warnings
+  ;;   ;; Prettify icons
+  ;;   (defun my-company-box-icons--elisp (candidate)
+  ;;     (when (or (derived-mode-p 'emacs-lisp-mode) (derived-mode-p 'lisp-mode))
+  ;;       (let ((sym (intern candidate)))
+  ;;         (cond ((fboundp sym) 'Function)
+  ;;               ((featurep sym) 'Module)
+  ;;               ((facep sym) 'Color)
+  ;;               ((boundp sym) 'Variable)
+  ;;               ((symbolp sym) 'Text)
+  ;;               (t . nil)))))
+  ;;   (advice-add #'company-box-icons--elisp :override #'my-company-box-icons--elisp)
+
+  ;;   ;; Credits to Centaur for these configurations
+  ;;   ;; Display borders and optimize performance
+  ;;   (defun my-company-box--display (string on-update)
+  ;;     "Display the completions."
+  ;;     (company-box--render-buffer string on-update)
+
+  ;;     (let ((frame (company-box--get-frame))
+  ;;           (border-color (face-foreground 'font-lock-comment-face nil t)))
+  ;;       (unless frame
+  ;;         (setq frame (company-box--make-frame))
+  ;;         (company-box--set-frame frame))
+  ;;       (company-box--compute-frame-position frame)
+  ;;       (company-box--move-selection t)
+  ;;       (company-box--update-frame-position frame)
+  ;;       (unless (frame-visible-p frame)
+  ;;         (make-frame-visible frame))
+  ;;       (company-box--update-scrollbar frame t)
+  ;;       (set-face-background 'internal-border border-color frame)
+  ;;       (when (facep 'child-frame-border)
+  ;;         (set-face-background 'child-frame-border border-color frame))
+  ;;       )
+  ;;     (with-current-buffer (company-box--get-buffer)
+  ;;       (company-box--maybe-move-number (or company-box--last-start 1))))
+  ;;   (advice-add #'company-box--display :override #'my-company-box--display)
+
+  ;;   (defun my-company-box-doc--make-buffer (object)
+  ;;     (let* ((buffer-list-update-hook nil)
+  ;;            (inhibit-modification-hooks t)
+  ;;            (string (cond ((stringp object) object)
+  ;;                          ((bufferp object) (with-current-buffer object (buffer-string))))))
+  ;;       (when (and string (> (length (string-trim string)) 0))
+  ;;         (with-current-buffer (company-box--get-buffer "doc")
+  ;;           (erase-buffer)
+  ;;           (insert (propertize "\n" 'face '(:height 0.5)))
+  ;;           (insert string)
+  ;;           (insert (propertize "\n\n" 'face '(:height 0.5)))
+
+  ;;           ;; Handle hr lines of markdown
+  ;;           ;; @see `lsp-ui-doc--handle-hr-lines'
+  ;;           (with-current-buffer (company-box--get-buffer "doc")
+  ;;             (let (bolp next before after)
+  ;;               (goto-char 1)
+  ;;               (while (setq next (next-single-property-change (or next 1) 'markdown-hr))
+  ;;                 (when (get-text-property next 'markdown-hr)
+  ;;                   (goto-char next)
+  ;;                   (setq bolp (bolp)
+  ;;                         before (char-before))
+  ;;                   (delete-region (point) (save-excursion (forward-visible-line 1) (point)))
+  ;;                   (setq after (char-after (1+ (point))))
+  ;;                   (insert
+  ;;                    (concat
+  ;;                     (and bolp (not (equal before ?\n)) (propertize "\n" 'face '(:height 0.5)))
+  ;;                     (propertize "\n" 'face '(:height 0.5))
+  ;;                     (propertize " "
+  ;;                                 'display '(space :height (1))
+  ;;                                 'company-box-doc--replace-hr t
+  ;;                                 'face `(:background ,(face-foreground 'font-lock-comment-face)))
+  ;;                     (propertize " " 'display '(space :height (1)))
+  ;;                     (and (not (equal after ?\n)) (propertize " \n" 'face '(:height 0.5)))))))))
+
+  ;;           (setq mode-line-format nil
+  ;;                 display-line-numbers nil
+  ;;                 header-line-format nil
+  ;;                 show-trailing-whitespace nil
+  ;;                 cursor-in-non-selected-windows nil)
+  ;;           (current-buffer)))))
+  ;;   (advice-add #'company-box-doc--make-buffer :override #'my-company-box-doc--make-buffer)
+
+  ;;   ;; Display the border and fix the markdown header properties
+  ;;   (defun my-company-box-doc--show (selection frame)
+  ;;     (cl-letf (((symbol-function 'completing-read) #'company-box-completing-read)
+  ;;               (window-configuration-change-hook nil)
+  ;;               (inhibit-redisplay t)
+  ;;               (display-buffer-alist nil)
+  ;;               (buffer-list-update-hook nil))
+  ;;       (-when-let* ((valid-state (and (eq (selected-frame) frame)
+  ;;                                      company-box--bottom
+  ;;                                      company-selection
+  ;;                                      (company-box--get-frame)
+  ;;                                      (frame-visible-p (company-box--get-frame))))
+  ;;                    (candidate (nth selection company-candidates))
+  ;;                    (doc (or (company-call-backend 'quickhelp-string candidate)
+  ;;                             (company-box-doc--fetch-doc-buffer candidate)))
+  ;;                    (doc (company-box-doc--make-buffer doc)))
+  ;;         (let ((frame (frame-local-getq company-box-doc-frame))
+  ;;               (border-color (face-foreground 'font-lock-comment-face nil t)))
+  ;;           (unless (frame-live-p frame)
+  ;;             (setq frame (company-box-doc--make-frame doc))
+  ;;             (frame-local-setq company-box-doc-frame frame))
+  ;;           (set-face-background 'internal-border border-color frame)
+  ;;           ;; (when (facep 'child-frame-border)
+  ;;           ;;   (set-face-background 'child-frame-border border-color frame))
+  ;;           (company-box-doc--set-frame-position frame)
+
+  ;;           ;; Fix hr props. @see `lsp-ui-doc--fix-hr-props'
+  ;;           (with-current-buffer (company-box--get-buffer "doc")
+  ;;             (let (next)
+  ;;               (while (setq next (next-single-property-change (or next 1) 'company-box-doc--replace-hr))
+  ;;                 (when (get-text-property next 'company-box-doc--replace-hr)
+  ;;                   (put-text-property next (1+ next) 'display
+  ;;                                      '(space :align-to (- right-fringe 1) :height (1)))
+  ;;                   (put-text-property (1+ next) (+ next 2) 'display
+  ;;                                      '(space :align-to right-fringe :height (1)))))))
+
+  ;;           (unless (frame-visible-p frame)
+  ;;             (make-frame-visible frame))))))
+  ;;   (advice-add #'company-box-doc--show :override #'my-company-box-doc--show)
+
+  ;;   (defun my-company-box-doc--set-frame-position (frame)
+  ;;     (-let* ((frame-resize-pixelwise t)
+
+  ;;             (box-frame (company-box--get-frame))
+  ;;             (box-position (frame-position box-frame))
+  ;;             (box-width (frame-pixel-width box-frame))
+  ;;             (box-height (frame-pixel-height box-frame))
+  ;;             (box-border-width (frame-border-width box-frame))
+
+  ;;             (window (frame-root-window frame))
+  ;;             ((text-width . text-height) (window-text-pixel-size window nil nil
+  ;;                                                                 (/ (frame-pixel-width) 2)
+  ;;                                                                 (/ (frame-pixel-height) 2)))
+  ;;             (border-width (or (alist-get 'internal-border-width company-box-doc-frame-parameters) 0))
+
+  ;;             (x (- (+ (car box-position) box-width) border-width))
+  ;;             (space-right (- (frame-pixel-width) x))
+  ;;             (space-left (car box-position))
+  ;;             (fringe-left (or (alist-get 'left-fringe company-box-doc-frame-parameters) 0))
+  ;;             (fringe-right (or (alist-get 'right-fringe company-box-doc-frame-parameters) 0))
+  ;;             (width (+ text-width border-width fringe-left fringe-right))
+  ;;             (x (if (> width space-right)
+  ;;                    (if (> space-left width)
+  ;;                        (- space-left width)
+  ;;                      space-left)
+  ;;                  x))
+  ;;             (y (cdr box-position))
+  ;;             (bottom (+ company-box--bottom (frame-border-width)))
+  ;;             (height (+ text-height (* 2 border-width)))
+  ;;             (y (cond ((= x space-left)
+  ;;                       (if (> (+ y box-height height) bottom)
+  ;;                           (+ (- y height) border-width)
+  ;;                         (- (+ y box-height) border-width)))
+  ;;                      ((> (+ y height) bottom)
+  ;;                       (- (+ y box-height) height))
+  ;;                      (t y))))
+  ;;       (set-frame-position frame (max x 0) (max y 0))
+  ;;       (set-frame-size frame text-width text-height t)))
+
+  ;;   ;; (advice-add #'company-box-doc--set-frame-position
+  ;;   ;;     :override #'my-company-box-doc--set-frame-position)
+  ;;   )
+
+  (when (require 'all-the-icons nil t)
+    (declare-function all-the-icons-faicon 'all-the-icons)
+    (declare-function all-the-icons-material 'all-the-icons)
+    (declare-function all-the-icons-octicon 'all-the-icons)
+    (setq company-box-icons-all-the-icons
+          `((Unknown . ,(all-the-icons-material "find_in_page"
+                                                :height 1.0
+                                                :v-adjust -0.2))
+            (Text . ,(all-the-icons-faicon "text-width"
+                                           :height 1.0
+                                           :v-adjust -0.02))
+            (Method . ,(all-the-icons-faicon "cube"
+                                             :height 1.0
+                                             :v-adjust -0.02
+                                             :face 'all-the-icons-purple))
+            (Function . ,(all-the-icons-faicon "cube"
+                                               :height 1.0
+                                               :v-adjust -0.02
+                                               :face 'all-the-icons-purple))
+            (Constructor . ,(all-the-icons-faicon "cube"
+                                                  :height 1.0
+                                                  :v-adjust -0.02
+                                                  :face 'all-the-icons-purple))
+            (Field . ,(all-the-icons-octicon "tag"
+                                             :height 1.1
+                                             :v-adjust 0
+                                             :face 'all-the-icons-lblue))
+            (Variable . ,(all-the-icons-octicon "tag"
+                                                :height 1.1
+                                                :v-adjust 0
+                                                :face 'all-the-icons-lblue))
+            (Class . ,(all-the-icons-material "settings_input_component"
+                                              :height 1.0
+                                              :v-adjust -0.2
+                                              :face 'all-the-icons-orange))
+            (Interface . ,(all-the-icons-material "share"
+                                                  :height 1.0
+                                                  :v-adjust -0.2
+                                                  :face 'all-the-icons-lblue))
+            (Module . ,(all-the-icons-material "view_module"
+                                               :height 1.0
+                                               :v-adjust -0.2
+                                               :face 'all-the-icons-lblue))
+            (Property . ,(all-the-icons-faicon "wrench"
+                                               :height 1.0
+                                               :v-adjust -0.02))
+            (Unit . ,(all-the-icons-material "settings_system_daydream"
+                                             :height 1.0
+                                             :v-adjust -0.2))
+            (Value . ,(all-the-icons-material "format_align_right"
+                                              :height 1.0
+                                              :v-adjust -0.2
+                                              :face 'all-the-icons-lblue))
+            (Enum . ,(all-the-icons-material "storage"
+                                             :height 1.0
+                                             :v-adjust -0.2
+                                             :face 'all-the-icons-orange))
+            (Keyword . ,(all-the-icons-material "filter_center_focus"
+                                                :height 1.0
+                                                :v-adjust -0.2))
+            (Snippet . ,(all-the-icons-material "format_align_center"
+                                                :height 1.0
+                                                :v-adjust -0.2))
+            (Color . ,(all-the-icons-material "palette"
+                                              :height 1.0
+                                              :v-adjust -0.2))
+            (File . ,(all-the-icons-faicon "file-o"
+                                           :height 1.0
+                                           :v-adjust -0.02))
+            (Reference . ,(all-the-icons-material "collections_bookmark"
+                                                  :height 1.0
+                                                  :v-adjust -0.2))
+            (Folder . ,(all-the-icons-faicon "folder-open"
+                                             :height 1.0
+                                             :v-adjust -0.02))
+            (EnumMember . ,(all-the-icons-material "format_align_right"
+                                                   :height 1.0
+                                                   :v-adjust -0.2))
+            (Constant . ,(all-the-icons-faicon "square-o"
+                                               :height 1.0
+                                               :v-adjust -0.1))
+            (Struct . ,(all-the-icons-material "settings_input_component"
+                                               :height 1.0
+                                               :v-adjust -0.2
+                                               :face 'all-the-icons-orange))
+            (Event . ,(all-the-icons-octicon "zap"
+                                             :height 1.0
+                                             :v-adjust 0
+                                             :face 'all-the-icons-orange))
+            (Operator . ,(all-the-icons-material "control_point"
+                                                 :height 1.0
+                                                 :v-adjust -0.2))
+            (TypeParameter . ,(all-the-icons-faicon "arrows"
+                                                    :height 1.0
+                                                    :v-adjust -0.02))
+            (Template . ,(all-the-icons-material "format_align_left"
+                                                 :height 1.0
+                                                 :v-adjust -0.2)))
+          company-box-icons-alist 'company-box-icons-all-the-icons)))
+#+end_src
+****** company-ctags
+:PROPERTIES:
+:ID:       2A92E79B-7244-4137-BB59-5DED593D8CA7
+:END:
+https://github.com/redguardtoo/company-ctags
+#+begin_src emacs-lisp :tangle yes
+(use-package company-ctags
+  :config
+  (company-ctags-auto-setup))
+
+#+end_src
+****** dabbrev
+:PROPERTIES:
+:ID:       764DBC51-8254-436F-9176-1CB2382EF5CD
+:END:
+#+begin_src emacs-lisp :tangle yes
+(use-package dabbrev)
+#+end_src
+****** COMMENT company-org-block
+:PROPERTIES:
+:ID:       8E2939F2-116D-4B0B-BBDF-ED82458EDDF6
+:END:
+https://github.com/xenodium/company-org-block
+https://xenodium.com/emacs-org-block-company-completion/
+#+begin_src emacs-lisp :tangle yes
+(use-package company-org-block
+  :after (org company)
+  :custom
+  (company-org-block-edit-style 'auto) ;; 'auto, 'prompt, or 'inline
+  :hook ((org-mode . (lambda ()
+                       ;; (setq-local company-backends '(company-org-block))
+                       (add-to-list (make-local-variable 'company-backends) 'company-org-block)
+                       (company-mode 1))))
+  :config
+  ;; (add-to-list 'company-backends 'company-org-block)
+  ;; set original buffer normal state, and when org edit exit, move cursor
+  ;; outside of src block.
+  (advice-add 'org-edit-src-code :before #'evil-force-normal-state)
+  (advice-add 'org-edit-src-code :after #'evil-insert-state)
+  (advice-add 'org-edit-src-exit :after #'(lambda (&rest args) (evil-org-forward-sentence))))
+
+#+end_src
+***** TODO corfu
+:PROPERTIES:
+:ID:       D58D0A72-6B52-4B1C-9ED2-A1FF106DEA72
+:END:
+company의 대체제.
+[[*yasnippet][yasnippet]]은 capf를 지원하지 않기 때문에 corfu에서 사용하기 위해서는 cousult-yasnippet 같은 yasnippet capf backend를 구성해야 한다.
+****** corfu
+:PROPERTIES:
+:ID:       04B06BDA-AF58-4132-BF32-03F555665970
+:END:
+https://github.com/minad/corfu
+****** kind-icon
+https://github.com/jdtsmith/kind-icon
+company에서 company-box가 그러하듯 corfu에서 아이콘을 표시하는 패키지.
+*** project
+:PROPERTIES:
+:ID:       F30AA3BC-2687-434A-98C5-970902E681FE
+:END:
+**** projectile
+https://github.com/bbatsov/projectile
+#+begin_src emacs-lisp :tangle yes
+(use-package projectile
+  ;; :diminish projectile-mode
+  :config (projectile-mode)
+  :demand t
+  ;; :bind-keymap
+  ;; ("C-c p" . projectile-command-map)
+  ;; :init
+  ;; (when (file-directory-p "~/Projects/Code")
+  ;;   (setq projectile-project-search-path '("~/Projects/Code")))
+  :config
+  (defun dw/switch-project-action ()
+    "Switch to a workspace with the project name and start `magit-status'."
+    (persp-switch (projectile-project-name))
+    (magit-status))
+  (setq projectile-switch-project-action #'dw/switch-project-action)
+  :general
+  (spc
+    :states '(normal insert visual emacs motion)
+    "p" '(:ignore t :which-key "projectile/perspective")
+    "pc" 'projectile-compile-project
+    "pd" 'projectile-dired))
+#+end_src
+
+counsel과 통합
+#+begin_src emacs-lisp :tangle yes
+(use-package counsel-projectile
+  ;; :after counsel projectile
+  ;; :bind (("C-M-p" . counsel-projectile-find-file))
+  :config
+  (counsel-projectile-mode)
+  :general
+  (spc
+   :states '(normal insert visual emacs motion)
+   "p" '(:ignore t :which-key "projectile/perspective")
+   "pf" 'counsel-projectile-find-file
+   "ps" 'counsel-projectile-switch-project
+   ;; "p s-f" 'counsel-projectile-rg
+   "pF" 'counsel-projectile-rg
+   ;; "pF"  'consult-ripgrep
+   "po" 'counsel-projectile))
+#+end_src
+**** persp-mode
+:PROPERTIES:
+:ID:       7FA6EFE1-D9E9-49CF-8538-E704C07C84E0
+:END:
+탭과 비슷한 느낌으로 한 프레임에 여러 프레임을 갈아끼우며 작업 공간을 확장하는 패키지
+https://github.com/Bad-ptr/persp-mode.el
+#+begin_src emacs-lisp :tangle yes
+(use-package persp-mode
+  :custom
+  (persp-autokill-buffer-on-remove 'kill-weak)
+  (persp-hook-up-emacs-buffer-completion t) ; try to restrict buffer list.
+  :general
+  (spc
+    :states '(normal insert visual emacs motion)
+    "p" '(:ignore t :which-key "projectile/perspective")
+    "pn" 'persp-next
+    "pp" 'persp-prev
+    "p TAB" 'persp-switch
+    "px" '(:ignore t :which-key "perspective")
+    ;; "pxA" 'persp-set-buffer
+    "pxa" 'persp-add-buffer
+    ;; "pxd" 'persp-kill
+    "pxr" 'persp-rename
+    "pxy" 'persp-copy
+    "pxd" 'persp-kill
+    "pxs" 'persp-state-save
+    "pxS" 'persp-save-to-file-by-names
+    "pxl" 'persp-load-state-from-file
+    "pxL" 'persp-load-from-file-by-names
+    "pxk" 'persp-remove-buffer
+    "pxK" 'persp-kill-buffer
+    "pxi" 'persp-import-buffers
+    "pxI" 'persp-import-win-conf
+    "pxt" 'persp-temporarily-display-buffer)
+  :config
+  (add-to-list 'command-switch-alist
+               (cons "persp-q"
+                     #'(lambda (p)
+                         (setq persp-auto-resume-time -1
+                               persp-auto-save-opt 0))))
+
+  (add-to-list 'window-persistent-parameters '(winner-ring . t))
+  (defun +workspaces-load-winner-data-h (_)
+    (when (bound-and-true-p winner-mode)
+      (cl-destructuring-bind
+          (currents alist pending-undo-ring)
+          (or (persp-parameter 'winner-ring) (list nil nil nil))
+        (setq winner-undo-frame nil
+              winner-currents currents
+              winner-ring-alist alist
+              winner-pending-undo-ring pending-undo-ring))))
+  (defun +workspaces-save-winner-data-h (_)
+    (when (and (bound-and-true-p winner-mode)
+               (get-current-persp))
+      (set-persp-parameter
+       'winner-ring (list winner-currents
+                          winner-ring-alist
+                          winner-pending-undo-ring))))
+  (add-hook 'persp-before-deactivate-functions #'+workspaces-load-winner-data-h)
+  (add-hook 'persp-activated-functions #'+workspaces-save-winner-data-h)
+
+  (with-eval-after-load "persp-mode"
+    (with-eval-after-load "ivy"
+      (add-hook 'ivy-ignore-buffers
+                #'(lambda (b)
+                    (when persp-mode
+                      (let ((persp (get-current-persp)))
+                        (if persp
+                            (not (persp-contain-buffer-p b persp))
+                          nil)))))
+
+      (setq ivy-sort-functions-alist
+            (append ivy-sort-functions-alist
+                    '((persp-kill-buffer . nil)
+                      (persp-remove-buffer . nil)
+                      (persp-add-buffer . nil)
+                      (persp-switch . nil)
+                      (persp-window-switch . nil)
+                      (persp-frame-switch . nil))))))
+
+  ;; (setq persp-interactive-completion-function #'ivy-completing-read)
+  (persp-mode))
+#+end_src
+
+***** projectile과 통합
+#+begin_src emacs-lisp :tangle yes
+(use-package persp-mode-projectile-bridge
+  :after (persp-mode projectile)
+  :config
+  (with-eval-after-load "persp-mode-projectile-bridge-autoloads"
+    (add-hook 'persp-mode-projectile-bridge-mode-hook
+              #'(lambda ()
+                  (if persp-mode-projectile-bridge-mode
+                      (persp-mode-projectile-bridge-find-perspectives-for-all-buffers)
+                    (persp-mode-projectile-bridge-kill-perspectives))))
+    (add-hook 'after-init-hook
+              #'(lambda ()
+                  (persp-mode-projectile-bridge-mode 1))
+              t)))
+
+#+end_src
+
+*** completion sorting
+**** smex
+history 기반 M-x 정렬
+#+begin_src emacs-lisp :tangle yes
+(use-package smex ;; history 기반 M-x 정렬
+  :config
+  (smex-initialize))
+#+end_src
+
+**** flx
+https://github.com/lewang/flx
+https://oremacs.com/2016/01/06/ivy-flx/
+fuzzy-matching 정렬
+#+begin_src emacs-lisp :tangle yes
+(use-package flx
+  :after ivy
+  :defer t
+  :init
+  (setq ivy-flx-limit 10000))
+#+end_src
+
+**** wgrep
+https://github.com/mhayashi1120/Emacs-wgrep
+#+begin_src emacs-lisp :tangle yes
+(use-package wgrep)
+#+end_src
+
+**** prescient
+https://github.com/raxod502/prescient.el
+ivy, company 등의 검색 결과 후보를 정렬하고 필터링하는 패키지.
+#+begin_src emacs-lisp :tangle yes
+(use-package prescient
+  :straight (prescient.el
+             :repo "raxod502/prescient.el")
+  :config
+  (prescient-persist-mode 1))
+#+end_src
+- prescient-persist-mode :: 이맥스 세션 간에 사용 통계를 저장할 수 있게 만든다.
+
+ivy와 통합. counsel의 설정값을 덮어쓰기 때문에 counsel 이후에 활성화해야 한다.
+#+begin_src emacs-lisp :tangle yes
+(use-package ivy-prescient
+  :straight nil
+  :ensure nil
+  :after counsel
+  :config
+  (ivy-prescient-mode 1))
+#+end_src
+
+company와 통합
+#+begin_src emacs-lisp :tangle yes
+(use-package company-prescient
+  :straight nil
+  :ensure nil
+  :after company prescient
+  :config
+  (company-prescient-mode 1))
+#+end_src
+
+*** undo-tree
+https://emacs.stackexchange.com/questions/61512/
+https://www.dr-qubit.org/Lost_undo-tree_history.html
+#+begin_src emacs-lisp :tangle yes
+(use-package undo-tree
+  :diminish
+  :demand t
+  :custom
+  (undo-tree-auto-save-history t)
+  (undo-tree-enable-undo-in-region t)
+  :general
+  (spc
+    :states '(normal insert visual emacs motion)
+    "u" '(undo-tree-visualize :which-key "undo-tree"))
+  ("s-z" 'undo-tree-undo
+   "s-Z" 'undo-tree-redo)
+  (:states '(visual)
+   "u" 'undo-tree-undo)
+  (undo-tree-visualizer-mode-map
+   :override t
+   :states '(normal motion)
+   "t" 'undo-tree-visualizer-toggle-timestamps)
+  :config
+  ;; (defadvice undo-tree-make-history-save-file-name
+  ;;     (after undo-tree activate)
+  ;;   (setq ad-return-value (concat ad-return-value ".gz")))
+  (global-undo-tree-mode t))
+#+end_src
+- undo-tree-auto-save-history :: undo 내역을 저장하고 다음 세션에서도 쓸 수 있게 함.
+- undo-tree-enable-undo-in-region :: 선택 region 내에서만 undo를 할 수 있는 기능
+
+*** 텍스트 편집
+:PROPERTIES:
+:ID:       E1AE2301-5561-4AA6-B601-316606B4DEAB
+:END:
+**** evil
+:PROPERTIES:
+:ID:       0F8599FE-8C21-405D-9490-D01FA3C3104A
+:END:
+https://github.com/emacs-evil/evil
+vim 키바인딩 레이어
+#+begin_src emacs-lisp :tangle yes
+(use-package evil
+  :init
+  (setq evil-want-keybinding nil)
+  :custom
+  (evil-ex-search-vim-style-regexp t)
+  (evil-search-module 'evil-search)
+  (evil-undo-system 'undo-tree)
+  (evil-respect-visual-line-mode t)
+  (evil-shift-width tab-width)    ; tab option for evil
+  (evil-want-C-u-scroll t)        ; set `C-u' to scroll up. not for insert mode.
+  (evil-want-C-i-jump nil)        ; set `C-i' to insert `TAB' key.
+  :general
+  ("M-u" 'universal-argument)
+#+end_src
+***** config
+:PROPERTIES:
+:ID:       AA15DDC6-91BC-43A4-84BA-BBEF9D691990
+:END:
+#+begin_src emacs-lisp :tangle yes
+  :config
+  ;; fix non-compatiable command for evil.
+
+  (evil-mode 1)
+#+end_src
+
+evil은 insert와 normal의 커서 모양이 다르고 커서의 위치도 다를 때가
+있다. 해당 문제를 advice로 해결하기 위한 함수
+#+begin_src emacs-lisp :tangle yes
+  (defun my/move-forward-char ()
+    "Fix evil's last character selection problem."
+    (interactive)
+    (if (equal evil-state 'normal) (forward-char 1)))
+#+end_src
+
+insert state일땐 일반적인 줄 번호를, 그 외에는 motion을 활용하기 편한 상대
+줄번호를 표시한다.
+#+begin_src emacs-lisp :tangle yes
+  (setq-default display-line-numbers 'visual
+                display-line-numbers-widen t
+                ;; this is the default
+                display-line-numbers-current-absolute t)
+
+  (defun noct:relative ()
+     (if display-line-numbers (setq-local display-line-numbers 'visual)))
+  (defun noct:absolute ()
+    (if display-line-numbers (setq-local display-line-numbers t)))
+
+  (add-hook 'evil-insert-state-entry-hook #'noct:absolute)
+  (add-hook 'evil-insert-state-exit-hook #'noct:relative))
+#+end_src
+***** evil-collection
+:PROPERTIES:
+:ID:       924A4906-0FAC-4C94-8941-D06F6CE8F548
+:END:
+https://github.com/emacs-evil/evil-collection
+evil 키바인딩 모음집.
+#+begin_src emacs-lisp :tangle yes
+(use-package evil-collection
+  ;; :after evil
+  :init
+  (setq evil-collection-company-use-tng nil)
+  :custom
+  (evil-collection-setup-minibuffer t)
+  (evil-collection-outline-bind-tab-p nil)
+  :config
+  (setq evil-collection-mode-list
+        (remove 'lispy evil-collection-mode-list))
+  (evil-collection-init))
+
+#+end_src
+
+**** 영역 편집 기능
+:PROPERTIES:
+:ID:       F5085277-203F-4032-A539-590CB45D988E
+:END:
+***** expand-region
+https://github.com/magnars/expand-region.el
+선택 영역을 확대해나가는 기능
+#+begin_src emacs-lisp :tangle yes
+(use-package expand-region
+  :commands er/expand-region
+  :general
+  (:states 'visual
+   "v" 'er/expand-region))
+#+end_src
+***** evil-surround
+괄호, 브라켓, ', 태그, 기타 등등 "감싸는" 단축키 패키지
+https://github.com/emacs-evil/evil-surround
+#+begin_src emacs-lisp :tangle yes
+(use-package evil-surround
+  :config
+  (global-evil-surround-mode 1))
+#+end_src
+***** embrace
+:PROPERTIES:
+:ID:       44B20B76-7CBA-4B21-A6B4-87267874723F
+:END:
+https://github.com/cute-jumper/embrace.el
+#+begin_src emacs-lisp :tangle yes
+(use-package embrace
+  :config/el-patch
+  (defun embrace-org-mode-hook ()       ; zero width space added.
+    (dolist (lst '((?= (el-patch-concat "​" "=") . (el-patch-concat "=" "​"))
+                   (?~ (el-patch-concat "​" "~") . (el-patch-concat "~" "​"))
+                   (?/ (el-patch-concat "​" "/") . (el-patch-concat "/" "​"))
+                   (?* (el-patch-concat "​" "*") . (el-patch-concat "*" "​"))
+                   (?_ (el-patch-concat "​" "_") . (el-patch-concat "_" "​"))
+                   (?$ (el-patch-concat "​" "$") . (el-patch-concat "$" "​"))
+                   (?+ (el-patch-concat "​" "+") . (el-patch-concat "+" "​"))
+                   (?k "@@html:<kbd>@@" . "@@html:</kbd>@@")))
+      (embrace-add-pair (car lst) (cadr lst) (cddr lst)))
+    (embrace-add-pair-regexp ?l "#\\+BEGIN_.*" "#\\+END_.*" 'embrace-with-org-block
+                             (embrace-build-help "#+BEGIN_*" "#+END") t))
+  :hook ((LaTeX-mode . embrace-Latex-mode-hook)
+         (org-mode . embrace-org-mode-hook)))
+#+end_src
+
+https://github.com/cute-jumper/evil-embrace.el
+#+begin_src emacs-lisp :tangle yes
+(use-package evil-embrace
+  :hook ((LaTeX-mode . (lambda ()
+                         (add-to-list
+                          'evil-embrace-evil-surround-keys
+                          ?o))))
+  :config
+  (evil-embrace-enable-evil-surround-integration))
+#+end_src
+***** evil-exchange
+http://github.com/Dewdrops/evil-exchange
+​=gx=​로 영역을 선택해서 맞바꾸는 기능.
+​=gX=​로 선택을 취소할 수 있다.
+#+begin_src emacs-lisp :tangle yes
+(use-package evil-exchange
+  :config
+  (evil-exchange-install))
+#+end_src
+
+**** 다중 편집 기능
+- evil과의 호환성에서 evil-mc가 더 좋다.
+- multiple-cursors의 가장 큰 문제는 너무 잦은 run once/or all 프롬프트와 "file:./var/mc-list.el" 파일 수정이 불가피하다는 점
+- 설정 측면에서 evil-mc 또한 좋은 편은 아니지만 multiple-cursors보다는 쉬운 편
+
+***** evil-mc
+https://github.com/gabesoft/evil-mc
+#+begin_src emacs-lisp :tangle yes
+(use-package evil-mc
+  :diminish
+  :functions evil-mc-has-cursors-p
+  :config/el-patch
+  (evil-define-command evil-mc-make-cursor-here ()
+    "Create a cursor at point."
+    :repeat ignore
+    :evil-mc t
+    (evil-mc-run-cursors-before)
+    (el-patch-wrap 3 0
+      (if (evil-visual-state-p) (evil-mc-make-cursor-at-pos (- (point) 1))
+        (evil-mc-make-cursor-at-pos (point)))))
+  :general
+  ("s-d" 'evil-mc-make-and-goto-next-match
+   "s-D" 'evil-mc-make-and-goto-prev-match
+   "M-<mouse-1>" 'evil-mc-toggle-cursor-on-click
+   "M-s-j" '(evil-mc-make-cursor-move-next-line :which-key "make cursor & go down")
+   "M-s-k" '(evil-mc-make-cursor-move-prev-line :which-key "make cursor & go up")
+   "M-s-i" '(evil-mc-toggle-cursor-here :which-key "toggle cursor here")
+   "M-s-n" '(evil-mc-skip-and-goto-next-match :which-key "next match")
+   "M-s-p" '(evil-mc-skip-and-goto-prev-match :which-key "prev match")
+   "M-s-q" '(evil-mc-undo-all-cursors :which-key "quit multicursor")
+   "M-s-h" '(evil-mc-skip-and-goto-prev-cursor :which-key "prev cursor")
+   "M-s-l" '(evil-mc-skip-and-goto-next-cursor :which-key "next cursor")
+   "M-s-u" '(evil-mc-undo-last-added-cursor :which-key "undo cursor")
+   "M-s-m" '(evil-mc-toggle-frozen :which-key "pause/resume cursor"))
+  (:states 'normal
+   "<escape>" (general-predicate-dispatch 'evil-force-normal-state
+                ;; (and (bound-and-true-p evil-mc-mode) (evil-mc-has-cursors-p)) 'evil-mc-undo-all-cursors
+                '(evil-mc-has-cursors-p) 'evil-mc-undo-all-cursors))
+  :config
+  (defun evil-mc-toggle-cursor-here ()
+    "Toggle Fake Cursor."
+    (interactive)
+    (if (eq (point) (evil-mc-get-cursor-start (evil-mc-find-next-cursor)))
+        (evil-mc-undo-cursor-at-pos (point))
+      (evil-mc-make-cursor-here)))
+  (defun evil-mc-toggle-frozen ()
+    "Toggle fake cursor pause/resume."
+    (interactive)
+    (if evil-mc-frozen
+        (evil-mc-resume-cursors)
+      (evil-mc-pause-cursors)))
+
+  (defun evil--mc-make-cursor-at-col (_startcol endcol orig-line)
+    (move-to-column endcol)
+    (unless (= (line-number-at-pos) orig-line)
+      (evil-mc-make-cursor-here)))
+  ;; During visual selection point has +1 value
+  (defun evil-mc-make-vertical-cursors (beg end)
+    (interactive (list (region-beginning) (- (region-end) 1)))
+    (evil-exit-visual-state)
+    (evil-mc-pause-cursors)
+    ;; Because `evil-mc-resume-cursors` produces a cursor,
+    ;; we have to skip a current line here to avoid having +1 cursor
+    (apply-on-rectangle #'evil--mc-make-cursor-at-col
+                        beg end (line-number-at-pos))
+    (evil-mc-resume-cursors)
+    ;; Because `evil-mc-resume-cursors` produces a cursor, we need to place it on on the
+    ;; same column as the others
+    (move-to-column (evil-mc-column-number end)))
+
+  ;; https://github.com/gabesoft/evil-mc/issues/22#issuecomment-273352904
+  (dolist (elem
+           '((Buffer-menu-mark . ((:default . evil-mc-execute-default-call)))
+             (Buffer-menu-unmark . ((:default . evil-mc-execute-default-call)))
+             ;; and magit
+             (magit-stage . ((:default . evil-mc-execute-default-call)))
+             (magit-unstage . ((:default . evil-mc-execute-default-call)))
+             ;; add `M-i' tab key.
+             (tab-to-tab-stop . ((:default . evil-mc-execute-default-call)))
+             ;; add wdired
+             (wdired--self-insert . ((:default . evil-mc-execute-default-call)))
+             ))
+    (add-to-list 'evil-mc-known-commands elem))
+
+  ;; for dired
+  ;; (add-to-list 'evil-mc-known-commands '(dired-flag-file-deletion . ((:default . evil-mc-execute-default-call))))
+  ;; (add-to-list 'evil-mc-known-commands '(quoted-insert . ((:default . evil-mc-execute-default-evil-repeat))))
+  (global-evil-mc-mode))
+#+end_src
+- evil-mc에 커서 토글 기능을 추가했다.
+
+evil-mc의 기능은 'evil-mc-known-commands의 목록으로 화이트리스트로 돌아가기 때문에 기능에 제한이 약간 있는 편이다.
+
+****** kak
+https://github.com/aome510/kak.el
+#+begin_src emacs-lisp :tangle yes
+(use-package kak
+  :straight (kak
+             :type git
+             :host github
+             :repo "aome510/kak.el"
+             :fork (:repo "euokyun/kak.el"))
+  :commands (kak-select kak-filter)
+  :after evil-mc
+  :preface
+  (defun kak-select-bind (beg end)
+    (interactive "r")
+    (kak-select beg end nil))
+  (defun kak-select-invert-bind (beg end)
+    (interactive "r")
+    (kak-select beg end t))
+  (defun kak-filter-bind () (interactive) (kak-filter t))
+  (defun kak-filter-exclude-bind () (interactive) (kak-filter nil))
+  :general
+  ("M-s-0" 'kak-insert-index)
+  (:states 'visual
+   "s-f" '(kak-select-bind :which-key "kak-select")
+   "s-F" '(kak-select-invert-bind :which-key "kak-select-invert")
+   "M-s-t" 'kak-split-lines
+   "M-s-f" '(kak-filter-bind :which-key "kak-filter")
+   "M-s-F" '(kak-filter-exclude-bind :which-key "kak-filter-exclude")))
+#+end_src
+- 100라인이 넘어가면 kak-split-lines는 굉장히 느려지고 max-lisp-eval-depth 에러를 띄운다.
+- 최적화에 문제가 있음.
+
+****** evil-mc-extras
+https://github.com/gabesoft/evil-mc-extras
+#+begin_src emacs-lisp :tangle yes
+(use-package evil-mc-extras
+  :config/el-patch
+  (define-minor-mode evil-mc-extras-mode
+    "Toggle evil multiple cursors extras in a single buffer."
+    :group 'evil-mc-extras
+    :init-value nil
+    (el-patch-remove :keymap evil-mc-extras-key-map)
+    (evil-normalize-keymaps))
+  ;; :disabled
+  :after evil-mc
+  :hook (evil-mc-mode . evil-mc-extras-mode)
+  :general
+  (evil-mc-cursors-map
+   :states 'visual
+   "+" 'evil-mc-inc-num-at-each-cursor
+   "-" 'evil-mc-dec-num-at-each-cursor))
+#+end_src
+
+***** COMMENT multiple-cursors
+https://github.com/magnars/multiple-cursors.el/
+#+begin_src emacs-lisp :tangle no
+(use-package multiple-cursors
+  :disabled
+  :custom
+  (mc/edit-lines-empty-lines 'ignore)
+  (mc/insert-numbers-default 1)
+  (mc/unpause-jump-back nil)
+  ;; :load-path (expand-file-name "./lisp/mc-pause.el" user-emacs-directory)
+  ;; :general
+  ;; ("s-1" 'mc/pause
+  ;;  "s-2" 'mc/unpause
+  ;;  "s-3" 'mc/toggle-pause
+  ;;  )
+  :config
+  (push 'evil-state mc/cursor-specific-vars) ; evil-mode-cursor-back
+  (load-file (expand-file-name "./lisp/mc-pause.el" user-emacs-directory))
+  (require 'mc-pause)
+
+  (defun mc/toggle-cursor-at-point ()
+    "Create a fake cursor at point."
+    (interactive)
+    (let ((existing (mc/fake-cursor-at-point (point))))
+      (if existing
+          (mc/remove-fake-cursor existing)
+        (save-excursion
+          (goto-char (point))
+          (mc/create-fake-cursor-at-point))))
+    (unless mc/paused-mode (mc/maybe-multiple-cursors-mode)))
+
+  ;; ./var/mc-list.el
+  (defun mc/toggle-cmds-to-run-for-all ()
+    "Toggle commands to apply all cursors or not."
+    (interactive)
+    (if mc/always-run-for-all
+        (setq mc/always-run-for-all t)
+      (setq mc/always-run-for-all nil)))
+
+  ;; https://xenodium.com/all/
+  (defsubst counsel--string-trim-left (string &optional regexp)
+    "Trim STRING of leading string matching REGEXP.
+
+REGEXP defaults to \"[ \\t\\n\\r]+\"."
+    (if (string-match (concat "\\`\\(?:" (or regexp "[ \t\n\r]+") "\\)") string)
+        (replace-match "" t t string)
+      string))
+  (defun adviced:counsel-M-x-action (orig-fun &rest r)
+    "Additional support for multiple cursors."
+    (apply orig-fun r)
+    (let ((cmd (intern (counsel--string-trim-left (nth 0 r) "\\^"))))
+      (when (and (boundp 'multiple-cursors-mode)
+                 multiple-cursors-mode
+                 cmd
+                 (not (memq cmd mc--default-cmds-to-run-once))
+                 (not (memq cmd mc/cmds-to-run-once))
+                 (or mc/always-run-for-all
+                     (memq cmd mc--default-cmds-to-run-for-all)
+                     (memq cmd mc/cmds-to-run-for-all)
+                     (mc/prompt-for-inclusion-in-whitelist cmd)))
+        (mc/execute-command-for-all-fake-cursors cmd))))
+
+  (advice-add #'counsel-M-x-action :around #'adviced:counsel-M-x-action))
+#+end_src
+
+**** evil-nerd-commenter
+https://github.com/redguardtoo/evil-nerd-commenter
+#+begin_src emacs-lisp :tangle yes
+(use-package evil-nerd-commenter
+  :general
+  (:states 'normal
+   "gc" 'evilnc-comment-operator
+   "s-/" 'evilnc-comment-or-uncomment-lines
+   "gy" 'evilnc-copy-and-comment-operator)
+  :config
+  (defun counsel-imenu-comments ()
+    "Imenu display comments."
+    (interactive)
+    (let* ((imenu-create-index-function 'evilnc-imenu-create-index-function))
+      (counsel-imenu))))
+#+end_src
+**** DONE structure editing
+CLOSED: [2021-11-26 Fri 23:59]
+:PROPERTIES:
+:ID:       1B6A5C59-0010-4AC6-A2A5-8C8AEF591CFC
+:END:
+코드 구조를 사용하여 쉽게 편집하는 기능을 제공한다.
+- lispy
+  - lispyville
+  - evil-lispy
+- smartparens
+  - evil-smartparens
+- paredit
+  - evil-paredit
+- parinfer
+- evil-cleverparens
+  smartparens와 paredit를 사용함
+- tree-edit
+  https://github.com/ethan-leba/tree-edit
+  tree-sitter의 구문 트리를 통해 편집. tree-sitter가 지원하는 언어라면 lisp 계열 언어가 아니더라도 작동한다.
+  - Java 지원(WIP)
+- combobulate
+  https://github.com/mickeynp/combobulate
+  tree-sitter의 구문 트리를 사용하여 소스 코드를 조작하고 편집하는 프레임워크
+  - Python
+  - Typescript + React
+  - Javascript + React
+  - HTML
+- objed
+  https://github.com/clemera/objed
+
+***** lispy
+https://github.com/abo-abo/lispy
+#+begin_src emacs-lisp :tangle yes
+(use-package lispy)
+#+end_src
+
+***** lispyville
+:PROPERTIES:
+:ID:       AD5B96EE-900D-43FC-B091-B4A1CF0483F6
+:END:
+https://github.com/noctuid/lispyville
+#+begin_src emacs-lisp :tangle yes
+(use-package lispyville
+  ;; :init
+  ;; (general-add-hook '(emacs-lisp-mode-hook racket-mode lisp-interaction-mode lisp-mode-hook) #'lispyville-mode)
+  :hook ((emacs-lisp-mode racket-mode lisp-interaction-mode lisp-mode) . lispyville-mode)
+  ;; :hook ((lispy-mode . lispyville-mode))
+  :general
+  (lispyville-mode-map
+   :states 'normal
+   "M-j" 'lispyville-drag-forward
+   "M-k" 'lispyville-drag-backward
+   ;; TODO: M-J M-K line drag
+   "C-S-j" 'lispy-join
+   "M-u" 'lispy-splice
+   "M <return>" 'lispy-split
+   "M-r" 'lispy-raise-sexp
+   "M-S-r" 'lispyville-raise-list
+   "M-t" 'transpose-sexps
+   "M-v" 'lispy-convolute-sexp)
+  (lispyville-mode-map
+   :states '(normal visual)
+   "SPC e /" '(lispy-eval-and-comment :which-key "eval and comment"))
+
+  :config
+  (lispyville-set-key-theme
+   '(operators                         ; change evil commands. y d c j .... all.
+     c-w                               ; remap evil-delete-backword-word
+     ;; additional                        ; drag, join and splice, etc.
+     additional-movement                ; H,L []{}()
+     slurp/barf-cp                      ; <>
+     prettify                           ; indent
+     commentary                         ; gc, gy, s/
+     wrap                               ; M-([{
+     ))
+
+  (advice-add 'lispy-join :before #'my/move-forward-char)
+  (advice-add 'lispy-eval-and-comment :before #'my/move-forward-char)
+  (lispyville-enter-visual-when-marking))
+#+end_src
+***** COMMENT smartparens
+:PROPERTIES:
+:ID:       503CD66C-44DB-458F-89C5-5AA44ACB9089
+:END:
+https://github.com/Fuco1/smartparens
+https://github.com/expez/evil-smartparens
+
+#+begin_src emacs-lisp :tangle yes
+(use-package smartparens)
+(use-package evil-smartparens
+  :hook (smartparens-enabled-hook . evil-smartparens-mode)
+  :config
+  ;; (add-hook 'smartparens-enabled-hook #'evil-smartparens-mode)
+  (setq sp-ignore-modes-list (delete 'minibuffer-inactive-mode sp-ignore-modes-list))
+  (setq sp-escape-quotes-after-insert nil)
+  ;; (smartparens-global-strict-mode)
+  (sp-local-pair 'minibuffer-inactive-mode "'" nil :actions nil))
+
+#+end_src
+
+**** spatial-navigate
+:PROPERTIES:
+:ID:       26EB5D96-DB2B-4B4B-A8ED-AFC62E7A7AA0
+:END:
+https://gitlab.com/ideasman42/emacs-spatial-navigate
+공백을 스킵하면서 빠르게 커서를 옮길 수 있음
+#+begin_src emacs-lisp :tangle yes
+(use-package spatial-navigate
+  :general
+  (:keymaps 'normal
+   "C-M-j" 'spatial-navigate-forward-vertical-box
+   "C-M-k" 'spatial-navigate-backward-vertical-box)
+  (:keymaps 'insert
+   "C-M-j" 'spatial-navigate-forward-vertical-bar
+   "C-M-k" 'spatial-navigate-backward-vertical-bar))
+
+#+end_src
+**** evil-numbers
+:PROPERTIES:
+:ID:       AF16B630-9036-42C6-915A-2F55092B3FC5
+:END:
+https://github.com/cofi/evil-numbers
+여러 진법의 숫자들을 가산/감산하는 기능
+#+begin_src emacs-lisp :tangle yes
+(use-package evil-numbers)
+
+#+end_src
+**** 검색 및 선택
+:PROPERTIES:
+:ID:       D3F539C9-01F0-4AF8-8F06-4AAF90A4ABF7
+:END:
+***** avy
+https://github.com/abo-abo/avy
+빠르게 화면 내를 탐색할 수 있다.
+#+begin_src emacs-lisp :tangle yes
+(use-package avy
+  ;; :config
+  ;; (set-face-italic 'avy-goto-char-timer-face nil)
+  ;; (set-face-italic 'avy-lead-face nil)
+  :general
+  ;; (spc
+  ;;   :states '(normal insert visual emacs motion)
+  ;;   ";" '(evil-avy-line-saving-column :which-key "avy-line")
+  ;;   "f" '(evil-avy-goto-char-timer :which-key "avy-timer"))
+  ("s-t" '(evil-avy-goto-char-timer :which-key "avy-timer")
+   "s-;" '(evil-avy-line-saving-column :which-key "avy-line")
+   "s-p" 'avy-copy-line
+   "s-P" 'avy-copy-region)
+  :custom
+  (avy-background nil)
+  (avy-style 'at-full)
+  (avy-timeout-seconds 0.8)
+
+  :config
+  ;; https://github.com/abo-abo/avy/issues/127
+  (defun avy-line-saving-column ()
+    (interactive)
+    (let ((col (current-column)))
+      (avy-goto-line)
+      (move-to-column col)))
+  (declare-function avy-line-saving-column "ext:avy")
+  (evil-define-avy-motion avy-line-saving-column line)
+  (dolist (command '(avy-line-saving-column))
+    (define-key evil-motion-state-map
+      (vector 'remap command) (intern-soft (format "evil-%s" command)))))
+#+end_src
+
+***** evil-matchit
+https://github.com/redguardtoo/evil-matchit
+=%= 키로 일치하는 반대편 괄호로 점프
+#+begin_src emacs-lisp :tangle yes
+(use-package evil-matchit
+  :config
+  (global-evil-matchit-mode 1))
+#+end_src
+***** anzu
+https://github.com/emacsorphanage/anzu
+
+​=M-%=​
+#+begin_src emacs-lisp :tangle yes
+(use-package anzu
+  :bind
+  ([remap query-replace] . anzu-query-replace-regexp))
+
+#+end_src
+***** ctrlf
+https://github.com/raxod502/ctrlf
+isearch와 비슷하지만 더 나은 검색 기능
+#+begin_src emacs-lisp :tangle yes
+(use-package ctrlf
+  :straight (ctrlf
+             :repo "raxod502/ctrlf")
+  :general
+  (ctrlf-minibuffer-mode-map
+   :states '(insert normal)
+   "C-n" 'ctrlf-forward-default
+   "C-p" 'ctrlf-backward-default)
+  (ctrlf-minibuffer-mode-map
+   :states 'normal
+   "j" 'ctrlf-forward-default
+   "k" 'ctrlf-backward-default))
+
+#+end_src
+***** ace-link
+https://github.com/abo-abo/ace-link
+페이지 내 링크에 쉽게 접근하는 기능
+#+begin_src emacs-lisp :tangle yes
+(use-package ace-link
+  :commands 'ace-link
+  :config/el-patch
+  (defun counsel-ace-link ()
+    "Use Ivy completion for `ace-link'."
+    (interactive)
+    (let (collection action)
+      (cond ((eq major-mode 'Info-mode)
+             (setq collection 'ace-link--info-collect)
+             (setq action 'ace-link--info-action))
+            ((el-patch-swap
+               (eq major-mode 'helpful-mode)
+               (member major-mode '(help-mode
+                                    package-menu-mode geiser-doc-mode elbank-report-mode
+                                    elbank-overview-mode slime-trace-dialog-mode helpful-mode)))
+             (setq collection 'ace-link--help-collect)
+             (setq action 'ace-link--help-action))
+            ((eq major-mode 'woman-mode)
+             (setq collection 'ace-link--woman-collect)
+             (setq action 'ace-link--woman-action))
+            ((eq major-mode 'eww-mode)
+             (setq collection 'ace-link--eww-collect)
+             (setq action 'ace-link--eww-action))
+            ((el-patch-swap
+               (eq major-mode 'compilation-mode)
+               (or (member major-mode '(compilation-mode grep-mode))
+                   (bound-and-true-p compilation-shell-minor-mode)))
+             (setq collection 'ace-link--eww-collect)
+             (setq action 'ace-link--compilation-action))
+            ((el-patch-swap (eq major-mode 'org-mode)
+                            (memq major-mode '(org-mode
+                                               erc-mode elfeed-show-mode
+                                               term-mode vterm-mode
+                                               eshell-mode
+                                               telega-chat-mode)))
+             (setq collection 'ace-link--org-collect)
+             (setq action 'ace-link--org-action)))
+      (el-patch-add
+        ((eq major-mode 'org-agenda-mode)
+         (setq collection 'ace-link--org-agenda-collect)
+         (setq action 'ace-link--org-agenda-action))
+        ((eq major-mode 'Custom-mode)
+         (setq collection 'ace-link--custom-collect)
+         (setq action 'ace-link--custom-action)))
+      (if (null collection)
+          (error "%S is not supported" major-mode)
+        (ivy-read "Ace-Link: " (funcall collection)
+                  :action (lambda (x) (funcall action (cdr x)))
+                  :require-match t
+                  :caller 'counsel-ace-link))))
+  :config
+  (ace-link-setup-default))
+#+end_src
+**** snippet
+***** yasnippet
+:PROPERTIES:
+:ID:       3E8740EC-E273-42BE-889A-8B52ABE28392
+:END:
+https://github.com/joaotavora/yasnippet
+#+begin_src emacs-lisp :tangle yes
+(use-package yasnippet
+  :hook ((prog-mode org-mode) . yas-minor-mode)
+  :config
+  (setq yas-fallback-behavior '(apply tab-jump-out 1))
+  (yas-reload-all)
+  ;; Add yasnippet support for all company backends
+  ;; https://github.com/syl20bnr/spacemacs/pull/179
+  (defvar company-mode/enable-yas t
+    "Enable yasnippet for all backends.")
+  (defun company-mode/backend-with-yas (backend)
+    (if (or (not company-mode/enable-yas) (and (listp backend) (member 'company-yasnippet backend)))
+        backend
+      (append (if (consp backend) backend (list backend))
+              '(:with company-yasnippet))))
+  )
+
+#+end_src
+
+https://github.com/AndreaCrotti/yasnippet-snippets
+#+begin_src emacs-lisp :tangle yes
+(use-package yasnippet-snippets
+  :after company)
+
+#+end_src
+***** TODO auto-yasnippet
+https://github.com/abo-abo/auto-yasnippet
+
+*** UI
+**** TODO mini-frame
+:PROPERTIES:
+:ID:       910EDDB0-47E6-4475-8633-D84BD6AA2288
+:END:
+https://github.com/muffinmad/emacs-mini-frame
+#+begin_src emacs-lisp :tangle yes
+(use-package mini-frame
+  :custom
+  (mini-frame-show-parameters '(;; (top . 0.1)
+                                ;; (top . 10)
+                                (top . 0)
+                                (width . 0.7)
+                                (left . 0.5)
+                                (min-height . 10))) ; min-height for fix blinking.
+  ;; (resize-mini-frames t)
+  ;; (resize-mini-frames 'grow-only)
+  (mini-frame-ignore-commands
+   '(eval-expression "edebug-eval-expression" debugger-eval-expression completion-at-point ediff-quit evil-ex anzu-query-replace-regexp))
+  (mini-frame-color-shift-step 15)
+  :hook (after-init . mini-frame-mode))
+
+#+end_src
+- 미니 프레임이 커서 위치를 가리는 경우가 있다.
+**** dashboard
+:PROPERTIES:
+:ID:       E4EBA189-2A87-4602-B002-0616B8F804A1
+:END:
+https://github.com/emacs-dashboard/emacs-dashboard
+대시보드를 추가함
+#+begin_src emacs-lisp :tangle yes
+(use-package dashboard
+  ;; :disabled
+  :custom
+  (dashboard-projects-switch-function 'counsel-projectile-switch-project-by-name)
+  (dashboard-set-init-info t)
+  ;; (dashboard-banner-logo-title "Welcome to Emacs Dashboard")
+  (dashboard-banner-logo-title nil)
+  (dashboard-startup-banner 2)
+  (dashboard-set-heading-icons t)
+  (dashboard-set-file-icons t)
+  (dashboard-set-navigator t)
+  (dashboard-set-footer nil)
+  :config
+  (dashboard-setup-startup-hook))
+
+#+end_src
+**** theme
+***** gruvbox
+https://github.com/greduan/emacs-theme-gruvbox
+#+begin_src emacs-lisp :tangle yes
+(use-package gruvbox-theme
+  :straight (gruvbox-theme
+             :fork (:repo "euokyun/emacs-theme-gruvbox"))
+
+  :config
+  (defun my/apply-theme (appearance)
+    "Load theme, taking current system APPEARANCE into consideration."
+    (mapc #'disable-theme custom-enabled-themes)
+    (pcase appearance
+      ;; ('light (load-theme 'doom-gruvbox-light t))
+      ;; ('dark (load-theme 'doom-gruvbox t))
+      ('light (load-theme 'gruvbox-light-soft t))
+      ('dark (load-theme 'gruvbox-dark-soft t)))
+    (if (featurep 'powerline) (powerline-reset)))
+
+  (add-hook 'ns-system-appearance-change-functions #'my/apply-theme))
+
+#+end_src
+- [[file:straight/repos/emacs-theme-gruvbox/gruvbox.el][gruvbox.el]]
+***** solaire
+https://github.com/hlissner/emacs-solaire-mode
+파일 버퍼와 기타 버퍼를 테마 컬러로 구분할 수 있게 함
+#+begin_src emacs-lisp :tangle yes
+(use-package solaire-mode
+  :config
+  (solaire-global-mode t))
+
+#+end_src
+**** indicators
+***** paren
+괄호의 양 끝을 강조표시한다.
+#+begin_src emacs-lisp :tangle yes
+(use-package paren
+  :defer t
+  :custom
+  (show-paren-style 'parenthesis)
+  ;; (show-paren-style 'expression)
+  (show-paren-delay 0)
+  (flash-matching-paren nil)
+  (show-paren-when-point-inside-paren t)
+  :config
+  (set-face-attribute 'show-paren-match-expression nil :background "#363e4a")
+  (show-paren-mode 1))
+
+#+end_src
+***** COMMENT whitespace
+:PROPERTIES:
+:ID:       30DEFACA-0125-4C26-9362-852E25605D44
+:END:
+공백 문자를 표시해줌
+#+begin_src emacs-lisp :tangle yes
+(use-package whitespace
+  :disabled
+  :demand t
+  :init
+  (global-whitespace-mode t)
+  :custom-face
+  ;; (whitespace-style-face '(trailing spaces lines-tail empty indentation::tab
+  ;;                          indentation::space tabs newline space-mark tab-mark newline-mark))
+  ;; (whitespace-empty ((t (:foreground "sienna"))))
+  ;; (whitespace-hspace ((t (:background "grey24" :foreground "MistyRose4"))))
+  ;; (whitespace-indentation ((t (:foreground "DarkOrchid4"))))
+  ;; (whitespace-newline ((t (:foreground "dark green" :weight normal))))
+  ;; (whitespace-space ((t (:foreground "DarkOrchid4"))))
+  ;; (whitespace-space-after-tab ((t (:foreground "firebrick"))))
+  ;; (whitespace-space-before-tab ((t (:foreground "firebrick"))))
+  ;; (whitespace-tab ((t (:foreground "magenta"))))
+  ;; (whitespace-trailing ((t (:foreground "yellow" :weight bold))))
+  :custom
+  (whitespace-global-modes '(not magit-diff-mode))
+  (whitespace-line-column 130)
+  (whitespace-display-mappings
+   ;; all numbers are Unicode codepoint in decimal. ⁖ (insert-char 182 1)
+   '((space-mark 32 [183] [46]) ; 32 SPACE 「 」, 183 MIDDLE DOT 「·」, 46 FULL STOP 「.」
+     (newline-mark 10 [8617 10]) ; 10 LINE FEED
+     (lines-tail 10 [8617 10]) ; 10 LINE FEED
+     (tab-mark 9 [8594 9] [183 9]) ; 9 TAB, 9655 WHITE RIGHT-POINTING TRIANGLE 「▷」
+     )))
+
+#+end_src
+***** beacon
+https://github.com/Malabarba/beacon
+스크롤링시 커서 위치를 강조표시함
+#+BEGIN_SRC emacs-lisp :tangle yes
+(use-package beacon
+  :custom
+  (beacon-mode 1))
+#+END_SRC
+***** page-break-lines
+:PROPERTIES:
+:ID:       C8F6BE12-853A-4C42-A935-6FD3F60ED8E6
+:END:
+https://github.com/purcell/page-break-lines
+#+begin_src emacs-lisp :tangle yes
+(use-package page-break-lines
+  :diminish
+  :defer 2
+  :config
+  (global-page-break-lines-mode))
+
+#+end_src
+**** highlights
+:PROPERTIES:
+:ID:       C03CC354-1BDB-4409-9BDB-9C78D746A840
+:END:
+***** volatile-highlights
+https://github.com/k-talo/volatile-highlights.el
+변경 영역을 하이라이트함
+#+begin_src emacs-lisp :lexical no
+(use-package volatile-highlights
+  :config
+  (vhl/define-extension 'undo-tree
+                        'undo-tree-yank 'undo-tree-move)
+  (vhl/install-extension 'undo-tree)
+  (vhl/define-extension 'evil
+                        'evil-paste-after 'evil-paste-before 'evil-paste-pop 'evil-move)
+  (vhl/install-extension 'evil)
+  (volatile-highlights-mode t))
+
+#+end_src
+***** TODO highlight-thing
+:PROPERTIES:
+:ID:       F5AE411B-FFA9-44D9-8EEA-0A002AA07855
+:END:
+https://github.com/fgeller/highlight-thing.el
+커서 위치와 같은 단어를 강조 표시함
+#+begin_src emacs-lisp :tangle yes
+(use-package highlight-thing
+  :diminish
+  :commands (highlight-thing-mode hilight-thing-do)
+  :custom
+  (highlight-thing-exclude-thing-under-point t)
+  :custom-face
+  (highlight-thing ((t (:box (:line-width -1
+                              ;; :color
+                              )
+                        :background "orange"
+                        :distance-foreground "white"))))
+  ;; :hook (prog-mode . highlight-thing-mode)
+  )
+
+#+end_src
+***** TODO region-occurrences-highlighter
+:PROPERTIES:
+:ID:       00283B73-B2B8-4E90-AB1B-A15742C83152
+:END:
+https://github.com/alvarogonzalezsotillo/region-occurrences-highlighter
+영역 선택시 같은 텍스트를 강조 표시함
+#+begin_src emacs-lisp :tangle yes
+(use-package region-occurrences-highlighter
+  ;; :hook ((prog-mode org-mode text-mode) . #'region-occurrences-highlighter-mode)
+  :config/el-patch
+  ;; evil compatible
+  (defun region-occurrences-highlighter--change-hook ()
+  "Called each time the region is changed."
+
+  ;;; REMOVE PREVIOUS HIGHLIGHTED REGION
+  (when region-occurrences-highlighter--previous-region
+    (unhighlight-regexp region-occurrences-highlighter--previous-region)
+    (setq region-occurrences-highlighter--previous-region nil)
+    (region-occurrences-highlighter-nav-mode -1))
+
+  (when region-occurrences-highlighter-mode
+
+    ;;; HIGHLIGHT THE CURRENT REGION
+    (when (and (region-active-p)
+               (not deactivate-mark))
+      (let ((begin (region-beginning))
+            (end (el-patch-wrap 2 0 (+ 1 (region-end)))))
+        (when (region-occurrences-highlighter--accept begin end)
+          (let ((str (regexp-quote (buffer-substring-no-properties begin end))))
+            (setq region-occurrences-highlighter--previous-region str)
+            (highlight-regexp str 'region-occurrences-highlighter-face)
+            (region-occurrences-highlighter-nav-mode 1))))))))
+#+end_src
+- org-mode에서 퍼포먼스 저하를 발견함.
+
+***** hl-block-mode
+https://gitlab.com/ideasman42/emacs-hl-block-mode
+커서가 위치한 블럭을 강조 표시함
+#+begin_src emacs-lisp :tangle yes
+(use-package hl-block-mode
+  :custom
+  (hl-block-style 'color-tint)
+  (hl-block-bracket "{")
+  (hl-block-single-level t)
+
+  ;; (hl-block-style 'bracket)             ; color tint mode disables rainbow mode.
+  ;; (hl-block-bracket-face '(:inverse-video t)) ; and this fix face t problem.
+  ;; (hl-block-color-tint "#040404")
+  :commands (hl-block-mode)
+  :hook ((prog-mode . hl-block-mode)))
+#+end_src
+color-tint와 bracket 두가지 모드가 있다.
+
+- color-tint는 rainbow-mode 등 몇가지 background face를 사용하는 모드와 충돌이 있다.
+- bracket은 t라는 face를 찾지 못한다는 에러를 띄우고, 의도와는 반대로 커서 위치가 헷갈리는 문제가 있다.
+
+*****
+*****
+***** highlight-indent-guides
+:PROPERTIES:
+:ID:       4CBD3996-76FE-42D5-80BE-44E1E776E20D
+:END:
+https://github.com/darthfennec/highlight-indent-guides
+indent 레벨을 라인으로 표시해줌
+#+begin_src emacs-lisp :tangle yes
+(use-package highlight-indent-guides
+  :diminish
+  :hook ((prog-mode
+          ;; org-mode
+          )
+         . highlight-indent-guides-mode)
+  :custom
+  ;; (highlight-indent-guides-suppress-auto-error t) ; supress errors.
+  (highlight-indent-guides-method 'bitmap)        ; bitmap line only works in gui mode
+  ;; (highlight-indent-guides-method 'character)     ; character has bug : sometimes copy character line too.
+  ;; (highlight-indent-guides-method 'column)
+  (highlight-indent-guides-auto-character-face-perc 25)
+  (highlight-indent-guides-delay 0))
+#+end_src
+***** rainbow-delimiters
+:PROPERTIES:
+:ID:       07C706EC-5E53-4201-977C-32417FE72DD2
+:END:
+https://github.com/Fanael/rainbow-delimiters
+여닫는 괄호를 색상 강조함
+#+begin_src emacs-lisp :tangle yes
+(use-package rainbow-delimiters
+  :hook ((prog-mode lisp-interaction-mode) . rainbow-delimiters-mode))
+
+#+end_src
+***** rainbow-mode
+:PROPERTIES:
+:ID:       21DFA738-5666-487C-A4E6-0AE3315B464F
+:END:
+색상 코드, 스트링의 배경색을 색상에 맞게 칠함
+#+begin_src emacs-lisp :tangle yes
+(use-package rainbow-mode
+  :diminish
+  :defer t
+  :hook (org-mode
+         help-mode
+         helpful-mode
+         emacs-lisp-mode
+         web-mode
+         typescript-mode
+         js2-mode))
+
+#+end_src
+**** modeline
+***** minions
+https://github.com/tarsius/minions
+#+begin_src emacs-lisp :tangle yes
+(use-package minions
+  :custom
+  (minions-mode t))
+
+#+end_src
+***** mlscroll
+https://github.com/jdtsmith/mlscroll
+#+begin_src emacs-lisp :tangle yes
+(use-package mlscroll
+  :custom
+  (mlscroll-width-chars 7)
+  ;; (mlscroll-shortfun-min-width 11) ; truncate which-func, for default mode-line-format's
+  :config
+  (mlscroll-mode 1))
+
+#+end_src
+**** window management
+***** transpose-frame
+#+begin_src emacs-lisp :tangle yes
+(use-package transpose-frame)
+#+end_src
+***** ace-window
+https://github.com/abo-abo/ace-window
+#+begin_src emacs-lisp :tangle yes
+(use-package ace-window
+  :init/el-patch
+  (defvar aw-dispatch-alist
+    '(((el-patch-swap ?x ?k) aw-delete-window "delete Window")
+      (?m aw-swap-window "Swap Windows")
+      (?M aw-move-window "Move Window")
+      (?c aw-copy-window "Copy Window")
+      ((el-patch-swap ?j ?o) aw-switch-buffer-in-window "Select Buffer")
+      ((el-patch-swap ?n ?`) aw-flip-window)
+      ((el-patch-swap ?u ?O) aw-switch-buffer-other-window "Switch Buffer Other Window")
+      (?e aw-execute-command-other-window "Execute Command Other Window")
+      ((el-patch-swap ?F ?f) aw-split-window-fair "Split Fair Window")
+      ((el-patch-swap ?v ?j) aw-split-window-vert "Split Vert Window")
+      ((el-patch-swap ?b ?l) aw-split-window-horz "Split Horz Window")
+      ((el-patch-swap ?o ?K) delete-other-windows "Delete Other Windows")
+      ((el-patch-swap ?T ?t) aw-transpose-frame "Transpose Frame")
+      ;; (el-patch-add (?r my/aw-winner-redo))
+      ;; (el-patch-add (?u my/aw-winner-undo))
+      ;; (el-patch-add (?! my/aw-vterm))
+      (el-patch-add (?! my/aw-vterm "open vTerm"))
+      ;; (el-patch-add (27 aw--done "exit"))
+      (el-patch-add (27 aw--done))
+      ;; ?i ?r ?t are used by hyperbole.el
+      (?? aw-show-dispatch-help))
+    "List of actions for `aw-dispatch-default'.
+each action is a list of either:
+  (char function description) where function takes a single window argument
+or
+  (char function) where function takes no argument and the description is omitted.")
+  ;; :custom-face
+  ;; (aw-leading-char-face ((t (:height 400 :background "darkorange1" :foreground gruvbox-dark1 :weight bold))))
+  ;; (aw-mode-line-face ((t (:background "darkorange1" :foreground "#3c3836" :weight bold))))
+
+  :general
+  (spc
+    :states '(normal insert visual emacs motion)
+    "w" '(ace-window :which-key "ace-window"))
+
+  :config
+
+  (defun my/aw-vterm (window)
+    (select-window window)
+    (vterm))
+
+  (setq aw-keys '(?a ?s ?d ?g ?h ?i ?n ?p ?v ?w ?x ?y ?z ?b ?v ?q))
+  ;; (setq aw-ignore-current t) ; 이러면 split이 현재 윈도우에서 작동하지 않는다.
+  (ace-window-display-mode)             ; showing window identifier on modeline.
+  (setq aw-minibuffer-flag t)
+  (setq aw-dispatch-always t))
+#+end_src
+**** font
+***** COMMENT mixed-pitch
+https://gitlab.com/jabranham/mixed-pitch
+#+begin_src emacs-lisp :tangle yes
+(use-package mixed-pitch
+  :hook
+  ;; If you want it in all text modes:
+  ((text-mode) . mixed-pitch-mode))
+
+#+end_src
+***** font-lock-plus
+https://gitlab.com/thomasluquet/font-lock-plus
+#+begin_src emacs-lisp :tangle yes
+(use-package font-lock+)
+
+#+end_src
+**** which-key
+https://github.com/justbur/emacs-which-key
+#+begin_src emacs-lisp :tangle yes
+(use-package which-key
+  :init (which-key-mode)
+  :diminish which-key-mode
+  :custom
+  (which-key-idle-delay 0.3)
+  :config
+  ;; (which-key-setup-minibuffer) ;; paging is not work in minibuffer mode
+  ;; (setq which-key-use-c-h-commands nil)
+  (which-key-setup-side-window-right-bottom))
+
+#+end_src
+**** visual-fill-column
+:PROPERTIES:
+:ID:       64A3948C-13EA-4A5D-ABFE-617627E2C547
+:END:
+https://github.com/joostkremers/visual-fill-column
+#+begin_src emacs-lisp :tangle yes
+(use-package visual-fill-column
+  ;; :disabled
+  :config
+  ;; (add-hook 'visual-fill-column-mode-hook #'visual-line-mode)
+  (add-hook 'visual-line-mode-hook #'visual-fill-column-mode)
+  (advice-add 'text-scale-adjust :after #'visual-fill-column-adjust)
+  ;; (setq visual-fill-column-width 80)
+  ;; (setq visual-fill-column-extra-text-width '(10 . 10))
+  )
+
+#+end_src
+
+​=visual-line-mode=​와 비슷하지만 window 경계가 아닌 ​=fill-column=​에 맞춰서 글자를 자른다.
+
+**** origami
+https://github.com/gregsexton/origami.el
+#+begin_src emacs-lisp :tangle yes
+(use-package origami
+  ;; :disabled
+  :defer t
+  :straight (origami
+             :type git
+             :host github
+             :repo "gregsexton/origami.el"
+             :fork (:host github
+                    :repo skrytebane/origami.el)) ; fix deprecated cl package.
+  ;; :hook (yaml-mode . origami-mode)
+  :config
+  (global-origami-mode))
+
+#+end_src
+
+***** lsp-origami
+https://github.com/emacs-lsp/lsp-origami
+#+BEGIN_SRC emacs-lisp :tangle yes
+(use-package lsp-origami
+  :after (lsp-mode origami)
+  :config
+  (add-hook 'lsp-after-open-hook #'lsp-origami-try-enable))
+#+END_SRC
+
+**** dogears
+:PROPERTIES:
+:ID:       1135283A-4C00-4103-B699-81AC0756D046
+:END:
+https://github.com/alphapapa/dogears.el
+사용자의 히스토리를 표시함
+#+begin_src emacs-lisp :tangle yes
+(use-package dogears
+  :straight (dogears
+             :type git
+             :host github
+             :repo "alphapapa/dogears.el")
+  :general
+  (spc
+    :states '(normal insert visual emacs motion)
+   "`" (general-key-dispatch 'dogears-go
+         :which-key "dogears"
+         :timeout 0.5
+         "n" 'dogears-forward
+         "p" 'dogears-back
+         "`" 'dogears-sidebar))
+  :config
+  (defun toggle-dogears (orig-fun &rest args)
+    (unless (ignore-errors (kill-buffer "*Dogears List*"))
+      (apply orig-fun args)))
+  (advice-add 'dogears-sidebar :around #'toggle-dogears)
+  (dogears-mode))
+
+#+end_src
+**** helpful
+https://github.com/Wilfred/helpful
+#+begin_src emacs-lisp :tangle yes
+(use-package helpful
+  :custom
+  (counsel-describe-function-function #'helpful-callable)
+  (counsel-describe-variable-function #'helpful-variable)
+  :bind
+  ([remap describe-function] . helpful-function)
+  ([remap describe-symbol] . helpful-symbol)
+  ([remap describe-variable] . helpful-variable)
+  ([remap describe-command] . helpful-command)
+  ([remap describe-key] . helpful-key)
+  ;; :config
+  ;; https://xenodium.com/basic-imenu-in-helpful-mode/
+  ;; (defun helpful--create-imenu-index ()
+  ;;   "Create an `imenu' index for helpful."
+  ;;   (beginning-of-buffer)
+  ;;   (let ((imenu-items '()))
+  ;;     (while (progn
+  ;;              (beginning-of-line)
+  ;;              ;; Not great, but determine if looking at heading:
+  ;;              ;; 1. if it has bold face.
+  ;;              ;; 2. if it is capitalized.
+  ;;              (when (and (eq 'bold (face-at-point))
+  ;;                         (string-match-p
+  ;;                          "[A-Z]"
+  ;;                          (buffer-substring (line-beginning-position)
+  ;;                                            (line-end-position))))
+  ;;                (add-to-list 'imenu-items
+  ;;                             (cons (buffer-substring (line-beginning-position)
+  ;;                                                     (line-end-position))
+  ;;                                   (line-beginning-position))))
+  ;;              (= 0 (forward-line 1))))
+  ;;     imenu-items))
+
+  ;; (defun helpful-mode-hook-function ()
+  ;;   "A hook function for `helpful-mode'."
+  ;;   (setq imenu-create-index-function #'helpful--create-imenu-index))
+
+  ;; (add-hook 'helpful-mode-hook
+  ;;           #'helpful-mode-hook-function)
+  )
+
+#+end_src
+*** 파일 관리
+**** auto-revert
+파일의 변경을 버퍼에 반영한다.
+#+BEGIN_SRC emacs-lisp :tangle yes
+(use-package auto-revert
+  :straight nil
+  :ensure nil
+  :defer 1
+  :custom
+  (global-auto-revert-mode t))
+#+END_SRC
+**** dired
+:PROPERTIES:
+:ID:       C1AB259E-3970-4624-9DC3-CDD184A1044F
+:END:
+dired는 이맥스 내장 파일 관리자다.(DIRectory EDit)
+#+begin_src emacs-lisp :tangle yes
+(use-package all-the-icons-dired)
+#+end_src
+
+#+begin_src emacs-lisp :tangle yes
+(use-package dired
+  :ensure nil
+  :straight nil
+  :defer 1
+  :commands (dired dired-jump)
+  :hook ((dired-load-hook . (lambda () (interactive) (dired-collapse)))
+         (dired-mode-hook . (lambda ()
+                              (interactive)
+                              (dired-omit-mode 1)
+                              (dired-hide-details-mode 1)
+                              (all-the-icons-dired-mode 1)
+                              (hl-line-mode 1)))
+         (dired-mode-hook . auto-revert-mode))
+  :general
+  (dired-mode-map
+   :states 'normal
+   "SPC" nil
+   "SPC d" '(nil :which-key "dired")
+   "SPC dh" '(dired-omit-mode :which-key "omit mode(hide)")
+   ;; "h" 'dired-single-up-directory
+   "h" 'evil-backward-char
+   "H" 'dired-single-up-directory
+   ;; "H" 'dired-omit-mode
+   ;; "l" 'dired-single-buffer
+   "l" 'evil-forward-char
+   "L" 'dired-single-buffer
+   "y" 'dired-ranger-copy
+   "X" 'dired-ranger-move
+   "p" 'dired-ranger-paste
+   "r" 'dired-rsync)
+  :custom
+  (dired-listing-switches "-agho --group-directories-first")
+  (dired-omit-files "^\\.[^.].*")
+  (dired-omit-verbose nil)
+  (dired-hide-details-hide-symlink-targets nil)
+  (delete-by-moving-to-trash t)
+  :config
+  (when (string= system-type "darwin")
+    (setq dired-use-ls-dired t
+          insert-directory-program "/usr/local/bin/gls"
+          dired-listing-switches "-aBhl --group-directories-first")))
+#+end_src
+
+#+begin_src emacs-lisp :tangle yes
+  (use-package dired-single
+    :defer t)
+
+  (use-package dired-ranger
+    :defer t)
+
+  (use-package dired-collapse
+    :defer t)
+
+  (use-package dired-rsync)
+#+end_src
+
+https://github.com/stsquad/dired-rsync/
+
+**** TODO bm [/]
+:PROPERTIES:
+:ID:       02901F61-1B1C-478B-BE86-DE96AF438206
+:END:
+https://github.com/joodland/bm
+북마크를 버퍼에 표시함
+#+begin_src emacs-lisp :tangle yes
+(use-package bm
+  :demand t
+  :init
+  ;; restore on load (even before you require bm)
+  (setq bm-restore-repository-on-load t)
+  :general
+  ;; (:global-prefix "M-SPC"
+  ;;  :prefix "SPC"
+  ;;  :states '(normal insert visual emacs motion)
+  ;;  "m" 'Visible-Bookmark
+  ;;  "mn" 'bm-next
+  ;;  "mp" 'bm-previous)
+  (:states 'normal
+   "m" (general-key-dispatch 'evil-set-marker
+         ;; :timeout 0.2
+         "m" 'bm-toggle))
+
+  :custom
+  ;; where to store persistant files
+  (bm-repository-file
+   (expand-file-name "bm-repository" no-littering-var-directory))
+  ;; Allow cross-buffer 'next'
+  ;; (bm-cycle-all-buffers t)
+  ;; save bookmarks
+  (bm-buffer-persistence t)
+
+  :config
+  ;; Loading the repository from file when on start up.
+  (add-hook 'after-init-hook 'bm-repository-load)
+  ;; Saving bookmarks
+  (add-hook 'kill-buffer-hook #'bm-buffer-save)
+  ;; Saving the repository to file when on exit.
+  ;; kill-buffer-hook is not called when Emacs is killed, so we
+  ;; must save all bookmarks first.
+  (add-hook 'kill-emacs-hook #'(lambda nil
+                                 (bm-buffer-save-all)
+                                 (bm-repository-save)))
+  ;; The `after-save-hook' is not necessary to use to achieve persistence,
+  ;; but it makes the bookmark data in repository more in sync with the file
+  ;; state.
+  (add-hook 'after-save-hook #'bm-buffer-save)
+
+  ;; Restoring bookmarks
+  (add-hook 'find-file-hooks #'bm-buffer-restore)
+  (add-hook 'after-revert-hook #'bm-buffer-restore)
+
+  ;; The `after-revert-hook' is not necessary to use to achieve persistence,
+  ;; but it makes the bookmark data in repository more in sync with the file
+  ;; state. This hook might cause trouble when using packages
+  ;; that automatically reverts the buffer (like vc after a check-in).
+  ;; This can easily be avoided if the package provides a hook that is
+  ;; called before the buffer is reverted (like `vc-before-checkin-hook').
+  ;; Then new bookmarks can be saved before the buffer is reverted.
+  ;; Make sure bookmarks is saved before check-in (and revert-buffer)
+  (add-hook 'vc-before-checkin-hook #'bm-buffer-save))
+#+end_src
+
+- [ ] bm 키바인딩
+
+**** treemacs
+:PROPERTIES:
+:ID:       644A8915-94AD-45C0-92D9-4E862AECDF67
+:END:
+https://github.com/Alexander-Miller/treemacs
+트리 레이아웃 파일 탐색기. lsp에 딸려온다.
+#+begin_src emacs-lisp :tangle yes
+(use-package treemacs
+  :defer t
+  :custom
+  (treemacs-tag-follow-mode)
+  (treemacs-indent-guide-style 'line)
+  ;; (treemacs-fringe-indicator-mode 'always)
+  :general
+  ("s-b" 'treemacs-select-window)
+  (:keymaps '(treemacs-mode-map evil-treemacs-state-map)
+   [mouse-1] #'treemacs-single-click-expand-action ; allow click to expand/collapse node.
+   "s-b" 'treemacs
+   "<escape>" 'treemacs
+   "nf" 'treemacs-create-file
+   "nd" 'treemacs-create-dir)
+
+  :config
+  (pcase (cons (not (null (executable-find "git")))
+               (not (null treemacs-python-executable)))
+    (`(t . t)
+     (treemacs-git-mode 'deferred))
+    (`(t . _)
+     (treemacs-git-mode 'simple)))
+
+  :config/el-patch
+  (defun treemacs-finish-edit ()
+    "Finish editing your workspaces and apply the change."
+    (interactive)
+    (treemacs-block
+     (treemacs-error-return-if (not (equal (buffer-name) treemacs--org-edit-buffer-name))
+       "This is not a valid treemacs workspace edit buffer")
+     (treemacs--org-edit-remove-validation-msg)
+     (widen)
+     (whitespace-cleanup)
+     (-let [lines (treemacs--read-persist-lines (buffer-string))]
+       (treemacs-error-return-if (null (buffer-string))
+         "The buffer is empty, there is nothing here to save.")
+       (pcase (treemacs--validate-persist-lines lines)
+         (`(error ,err-line ,err-msg)
+          (treemacs--org-edit-display-validation-msg err-msg err-line))
+         ('success
+          (treemacs--invalidate-buffer-project-cache)
+          (write-region
+           (apply #'concat (--map (concat it "\n") lines))
+           nil
+           treemacs-persist-file
+           nil :silent)
+          (treemacs--restore)
+          (-if-let (ws (treemacs--select-workspace-by-name
+                        (treemacs-workspace->name (treemacs-current-workspace))))
+              (setf (treemacs-current-workspace) ws)
+            (treemacs--find-workspace))
+          (treemacs--consolidate-projects)
+          (if (and (treemacs-get-local-window) (= 2 (length (window-list))))
+              (kill-buffer)
+            (quit-window)
+            (el-patch-remove (kill-buffer-and-window)))
+          (run-hooks 'treemacs-workspace-edit-hook)
+          (when treemacs-hide-gitignored-files-mode
+            (treemacs--prefetch-gitignore-cache 'all))
+          (treemacs-log "Edit completed successfully."))))))
+
+  (defun treemacs-edit-workspaces ()
+    "Edit your treemacs workspaces and projects as an `org-mode' file."
+    (interactive)
+    (require 'org)
+    (require 'outline)
+    (treemacs--persist)
+    (switch-to-buffer (get-buffer-create treemacs--org-edit-buffer-name))
+    (erase-buffer)
+    (org-mode)
+    (use-local-map (copy-keymap (with-no-warnings org-mode-map)))
+    (local-set-key (el-patch-swap (kbd "C-c C-c") (kbd "s-s")) #'treemacs-finish-edit)
+    (insert "#+TITLE: Edit Treemacs Workspaces & Projects\n")
+    (when treemacs-show-edit-workspace-help
+      (insert (el-patch-concat "# Call ~treemacs-finish-edit~ or press " (el-patch-swap "~C-c C-c~" "~s-s~") " when done.\n"))
+      (insert "# [[https://github.com/Alexander-Miller/treemacs#conveniently-editing-your-projects-and-workspaces][Click here for detailed documentation.]]\n")
+      (insert "# To cancel you can simply kill this buffer.\n\n"))
+    (insert-file-contents treemacs-persist-file)
+    (with-no-warnings
+      (outline-show-all))
+    (goto-char 0)))
+#+end_src
+
+- treemacs-edit-workspaces의 동작을 수정했다.
+
+#+begin_src emacs-lisp :tangle yes
+(use-package treemacs-all-the-icons
+  :after treemacs
+  :config
+  (treemacs-load-theme "all-the-icons"))
+(use-package treemacs-projectile
+  :after treemacs projectile)
+(use-package treemacs-magit
+  :after treemacs magit)
+
+(use-package treemacs-evil
+  :after treemacs evil)
+(use-package treemacs-persp
+  :after treemacs persp-mode
+  :config (treemacs-set-scope-type 'Perspectives))
+#+end_src
+
+**** persistent-scratch
+:PROPERTIES:
+:ID:       B34FB60C-4A6E-4F40-97DB-4BB675153919
+:END:
+https://github.com/Fanael/persistent-scratch
+​~*scratch*~​ 버퍼의 내용을 계속 보관한다.
+#+begin_src emacs-lisp :tangle yes
+(use-package persistent-scratch
+  :config
+  (persistent-scratch-setup-default))
+
+#+end_src
+**** osx-trash
+https://github.com/emacsorphanage/osx-trash/
+#+begin_src emacs-lisp :tangle yes
+(use-package osx-trash
+  :if (eq system-type 'darwin)
+  :custom
+  (delete-by-moving-to-trash t)
+  :config
+  (osx-trash-setup))
+
+#+end_src
+**** super-save
+:PROPERTIES:
+:ID:       761E243A-C7C2-454F-9820-AC8691ED8657
+:END:
+https://github.com/bbatsov/super-save
+트리거에 따라서 자동저장하는 기능.
+#+begin_src emacs-lisp :tangle yes
+(use-package super-save
+  ;; :disabled
+  :defer 1
+  :diminish super-save-mode
+  :custom
+  (super-save-auto-save-when-idle t)   ; save when idle.
+  (auto-save-visited-mode t)
+  (super-save-remote-files nil)        ; do not autosave remote files.
+  (super-save-exclude '(".gpg"))
+  :config
+  ;; add integration with ace-window
+  (add-to-list 'super-save-triggers 'ace-window)
+  ;; save on find-file
+  (add-to-list 'super-save-hook-triggers 'find-file-hook)
+  (super-save-mode +1))
+#+end_src
+*** version control
+**** ediff
+:PROPERTIES:
+:ID:       082BF8B6-8A63-44DB-AFBC-957D68426713
+:END:
+#+begin_src emacs-lisp :tangle yes
+(use-package ediff
+  :config
+  ;; https://emacs.stackexchange.com/questions/7482/restoring-windows-and-layout-after-an-ediff-session
+  (defvar my-ediff-last-windows nil)
+  (defun my-store-pre-ediff-winconfig ()
+    (setq my-ediff-last-windows (current-window-configuration)))
+  (defun my-restore-pre-ediff-winconfig ()
+    (set-window-configuration my-ediff-last-windows))
+  (add-hook 'ediff-before-setup-hook #'my-store-pre-ediff-winconfig)
+  (add-hook 'ediff-quit-hook #'my-restore-pre-ediff-winconfig)
+  ;; https://emacs.stackexchange.com/questions/17064/never-create-frame-in-ediff
+  (advice-add 'ediff-window-display-p :override #'ignore))
+
+#+end_src
+**** magit
+***** magit
+https://magit.vc/manual/magit/
+#+begin_src emacs-lisp :tangle yes
+(use-package magit
+  ;; :bind ("C-M-;" . magit-status)
+  :commands (magit-status magit-get-current-branch)
+  :custom
+  (magit-display-buffer-function #'magit-display-buffer-same-window-except-diff-v1)
+  :general
+  (spc
+    :states '(normal insert visual emacs motion)
+    "g" '(:ignore t :which-key "magit")
+    "gs" 'magit-status
+    "gd" 'magit-diff-unstaged
+    "gc" 'magit-branch-or-checkout
+    "gl" '(:ignore t :which-key "log")
+    "glc" 'magit-log-current
+    "glf" 'magit-log-buffer-file
+    "gb" 'magit-branch
+    "gP" 'magit-push-current
+    "gp" 'magit-pull-branch
+    "gf" 'magit-fetch
+    "gF" 'magit-fetch-all
+    "gr" 'magit-rebase))
+#+end_src
+***** git-mode
+https://github.com/magit/git-modes
+Major modes for git files.
+#+begin_src emacs-lisp :tangle yes
+(use-package git-modes)
+#+end_src
+***** magit-todos
+:PROPERTIES:
+:ID:       76EFFC60-3C90-4538-BF02-2A6A306D0E6D
+:END:
+https://github.com/alphapapa/magit-todos
+#+begin_src emacs-lisp :tangle yes
+(use-package magit-todos
+  :defer t
+  :general
+  (spc
+    :states '(normal insert visual emacs motion)
+    "gt" 'magit-todos-list)
+  :after magit)
+#+end_src
+***** ghub
+:PROPERTIES:
+:ID:       E8F2A6C0-19B9-449C-850C-863F278E62F3
+:END:
+https://github.com/magit/ghub
+#+begin_src emacs-lisp :tangle yes
+(use-package ghub
+  :custom
+  (epg-pinentry-mode 'loopback))
+
+#+end_src
+***** magithub
+https://github.com/vermiculus/magithub
+#+begin_src emacs-lisp :tangle yes
+(use-package magithub
+  :after magit
+  :config
+  (magithub-feature-autoinject t)
+  (setq magithub-clone-default-directory "~/git"))
+
+#+end_src
+***** COMMENT magit-reviewboard
+:PROPERTIES:
+:ID:       EC3A662F-04B8-445A-BB39-005978FCD79D
+:END:
+https://github.com/jtamagnan/magit-reviewboard
+#+begin_src emacs-lisp :tangle yes
+(use-package magit-reviewboard
+  :commands (magit-reviewboard-mode magit-reviewboard-list)
+  :custom
+  (magit-reviewboard-base-uri
+   "https://reviews.reviewboard.org/api"
+   "Set Reviewboard api to point to official reviewboard server"))
+
+#+end_src
+
+**** git-gutter
+:PROPERTIES:
+:ID:       B7B5B4B2-538B-492C-96DF-59C5DF7FB41F
+:END:
+https://github.com/emacsorphanage/git-gutter
+#+begin_src emacs-lisp :tangle yes
+(use-package git-gutter
+  :straight t
+  :diminish
+  :hook ((text-mode prog-mode) . git-gutter-mode)
+  :general
+  (spc
+    :states '(normal insert visual emacs motion)
+    "gg" '(my/git-gutters :which-key "git-gutter"))
+  :custom
+  (git-gutter:modified-sign "≡")
+  (git-gutter:added-sign "+")
+  (git-gutter:deleted-sign "-")
+
+  :config
+  ;; http://blog.binchen.org/posts/enhance-emacs-git-gutter-with-ivy-mode.html
+  (defun my-reshape-git-gutter (gutter)
+    "Re-shape gutter for `ivy-read'."
+    (let* ((linenum-start (aref gutter 3))
+           (linenum-end (aref gutter 4))
+           (target-line "")
+           (target-linenum 1)
+           (tmp-line "")
+           (max-line-length 0))
+      (save-excursion
+        (while (<= linenum-start linenum-end)
+          (goto-line linenum-start)
+          (setq tmp-line (replace-regexp-in-string "^[ \t]*" ""
+                                                   (buffer-substring (line-beginning-position)
+                                                                     (line-end-position))))
+          (when (> (length tmp-line) max-line-length)
+            (setq target-linenum linenum-start)
+            (setq target-line tmp-line)
+            (setq max-line-length (length tmp-line)))
+
+          (setq linenum-start (1+ linenum-start))))
+      ;; build (key . linenum-start)
+      (cons (format "%s %d: %s"
+                    (if (eq 'deleted (aref gutter 1))
+                        (propertize "-" 'face 'git-gutter:deleted)
+                      (propertize "+" 'face 'git-gutter:added))
+                    target-linenum target-line)
+            target-linenum)))
+
+  (defun my/goto-git-gutter ()
+    (interactive)
+    (if git-gutter:diffinfos
+        (ivy-read "git-gutters:"
+                  (mapcar 'my-reshape-git-gutter git-gutter:diffinfos)
+                  :action (lambda (e)
+                            (unless (numberp e) (setq e (cdr e)))
+                            (goto-line e))
+                  )
+      (message "NO git-gutters!")))
+
+  (transient-define-prefix my/git-gutters ()
+    [:description
+     (lambda () (let ((s (git-gutter:statistic)))
+                  (format "diff:\t%d \nadd:\t%d,\tdeleted:\t%d" (length git-gutter:diffinfos) (car s) (cdr s))))
+     ("l" "list" my/goto-git-gutter)]
+    [[("j" "next-hunk" git-gutter:next-hunk :transient t)]
+     [("k" "previous-hunk" git-gutter:previous-hunk :transient t)]]))
+#+end_src
+*** programming
+:PROPERTIES:
+:ID:       DA4A6780-B676-4166-ABD1-13D04C7549B7
+:END:
+**** highlight-defined
+:PROPERTIES:
+:ID:       B49933AE-1A4C-479B-A4F2-4596EDC08AB5
+:END:
+https://github.com/Fanael/highlight-defined
+#+begin_src emacs-lisp :tangle yes
+(use-package highlight-defined
+  :hook ((emacs-lisp-mode
+          lisp-interaction-mode) . highlight-defined-mode)
+  ;; :custom
+  ;; (highlight-defined-face-use-itself t)
+  :custom-face
+  ;; (highlight-defined-builtin-function-name-face
+  ;;  ((t (:foreground ,(doom-color 'red)
+  ;;       :slant italic))))
+  ;; (highlight-defined-function-name-face
+  ;;  ((t (:inherit font-lock-keyword-face
+  ;;       :foreground ,(doom-color 'cyan)))))
+  )
+#+end_src
+
+**** dumb-jump
+:PROPERTIES:
+:ID:       7C1E54EA-E074-47B1-BC32-C78B2D30E6E3
+:END:
+https://github.com/jacktasia/dumb-jump
+#+begin_src emacs-lisp :tangle yes
+(use-package rg
+  :ensure-system-package rg)
+(use-package ag
+  :ensure-system-package (ag . the_silver_searcher))
+;; https://github.com/jacktasia/dumb-jump
+;; this package requires `silver_searcher' and `ripgrep'
+;; https://github.com/ggreer/the_silver_searcher#installing
+;; https://github.com/BurntSushi/ripgrep#installation
+(use-package dumb-jump
+  :after (rg ag)
+  :config
+  (add-hook 'xref-backend-functions #'dumb-jump-xref-activate))
+#+end_src
+**** easy-escape
+:PROPERTIES:
+:ID:       1717A3FE-2F7C-414A-AADA-78EBE38B0A95
+:END:
+https://github.com/cpitclaudel/easy-escape
+이맥스의 정규표현식을 읽기 쉽게 보여줌
+#+begin_src emacs-lisp :tangle yes
+(use-package easy-escape
+  :hook ((lisp-mode lisp-interaction-mode emacs-lisp-mode) . easy-escape-minor-mode))
+#+end_src
+**** syntax checker
+***** flycheck
+:PROPERTIES:
+:ID:       71C7705C-D26E-41D0-9CA0-6A97B6DF25A7
+:END:
+https://github.com/flycheck/flycheck
+#+begin_src emacs-lisp :tangle yes
+(use-package flycheck
+  :defer t
+  :hook (lsp-mode . flycheck-mode))
+#+end_src
+***** TODO flycheck-inline
+:PROPERTIES:
+:ID:       C9B601F0-27FC-40C9-BC9C-95F8992ABE6A
+:END:
+https://github.com/flycheck/flycheck-inline
+#+begin_src emacs-lisp :tangle yes
+(use-package flycheck-inline
+  :config
+  (add-hook 'flycheck-mode-hook #'flycheck-inline-mode))
+#+end_src
+**** TODO tree-sitter
+:PROPERTIES:
+:ID:       BF940CDE-7558-4C97-8F73-0B2D4B35FBF0
+:END:
+***** tree-sitter
+:PROPERTIES:
+:ID:       E79633EC-159E-48FF-9D3E-8B5DFA471963
+:END:
+https://emacs-tree-sitter.github.io/
+syntax
+#+begin_src emacs-lisp :tangle yes
+(use-package tree-sitter
+  :straight (tree-sitter
+             :host github
+                         :repo "ubolonton/emacs-tree-sitter"
+                         :files ("lisp/*.el"))
+  :hook (tree-sitter-after-on-hook . tree-sitter-hl-mode-hook)
+  :config
+
+  (use-package tree-sitter-langs
+    :straight (tree-sitter-langs
+               :host github
+               :repo "ubolonton/emacs-tree-sitter"
+               :files ("langs/*.el" "langs/queries")))
+  (global-tree-sitter-mode))
+#+end_src
+***** tree-sitter-indent
+:PROPERTIES:
+:ID:       8CC57744-22CB-4F03-B4B7-663A4268675F
+:END:
+https://codeberg.org/FelipeLema/tree-sitter-indent.el
+
+#+begin_src emacs-lisp :tangle yes
+(use-package tree-sitter-indent
+  :straight (tree-sitter-indent
+             :type git
+             :repo "https://codeberg.org/FelipeLema/tree-sitter-indent.el.git"
+             :branch "main"
+             :files ("tree-sitter-indent.el")))
+#+end_src
+***** evil-textobj-tree-sitter
+:PROPERTIES:
+:ID:       6DECF728-105D-485E-97AB-00C97962510A
+:END:
+https://github.com/meain/evil-textobj-tree-sitter
+#+begin_src emacs-lisp :tangle yes
+(use-package evil-textobj-tree-sitter :straight t)
+
+#+end_src
+- Rust
+**** TODO counsel-etags
+:PROPERTIES:
+:ID:       9A2A9C17-44BD-466F-A48C-5340B8C1566E
+:END:
+https://github.com/redguardtoo/counsel-etags
+소스와 헤더 파일에서 이름을 색인하는 도구
+#+begin_src emacs-lisp :tangle yes
+(use-package counsel-etags
+  :disabled
+  :ensure-system-package (ctags . universal-ctags))
+
+#+end_src
+- 그런데 company-etags가 있는데 이게 필요할까?
+
+**** lsp
+:PROPERTIES:
+:ID:       B40025E2-A645-4B1F-94B2-89A2ACCDA874
+:END:
+https://github.com/emacs-lsp/lsp-mode
+#+begin_src emacs-lisp :tangle yes
+(use-package lsp-mode
+  :straight t
+  :defer t
+  :commands lsp
+  :hook ((java-mode
+          typescript-mode               ; https://github.com/typescript-language-server/typescript-language-server
+          js2-mode
+          web-mode
+          racket-mode) . lsp-deferred)
+  ;; :bind (:map lsp-mode-map
+  ;;             ;; ("TAB" . completion-at-point)
+  ;;             ("C-c C-f" . lsp-format-buffer))
+  :general
+  (lsp-mode-map
+    :states '(normal insert visual emacs motion)
+    "SPC l" '(:ignore t :which-key "lsp")
+    ;; "ld" 'xref-find-definitions
+    ;; "lr" 'xref-find-references
+    "SPC ld" 'lsp-ui-peek-find-definitions
+    "SPC lr" 'lsp-ui-peek-find-references
+    "SPC ln" 'lsp-ui-find-next-reference
+    "SPC lp" 'lsp-ui-find-prev-reference
+    "SPC ls" 'counsel-imenu
+    "SPC le" 'lsp-ui-flycheck-list
+    "SPC lS" 'lsp-ui-sideline-mode
+    "SPC lX" 'lsp-execute-code-action
+    "SPC lf" 'lsp-format-buffer)
+  :custom
+  (lsp-keymap-prefix "C-x l")
+  (lsp-auto-guess-root nil)
+  (lsp-prefer-flymake nil)              ; Use flycheck instead of flymake
+  (lsp-enable-file-watchers nil)
+  (lsp-enable-folding nil)              ; use evil-matchit instead
+  (lsp-enable-semantic-highlighting t)
+  (read-process-output-max (* 1024 1024))
+  (lsp-keep-workspace-alive nil)
+  ;; (lsp-headerline-breadcrumb-enable nil)
+  (lsp-treemacs-sync-mode 1)            ; https://github.com/emacs-lsp/lsp-treemacs
+  :config
+  (defun lsp-update-server ()
+    "Update LSP server."
+    (interactive)
+    ;; Equals to `C-u M-x lsp-install-server'
+    (lsp-install-server t)))
+#+end_src
+***** lsp-ui
+:PROPERTIES:
+:ID:       82B70BBB-D721-411A-9881-6E5DB5BD050E
+:END:
+https://github.com/emacs-lsp/lsp-ui
+#+begin_src emacs-lisp :tangle yes
+(use-package lsp-ui
+  :straight t
+  :hook (lsp-mode . lsp-ui-mode)
+  :custom
+  (lsp-ui-sideline-enable t)
+  ;; (lsp-ui-sideline-show-hover nil)
+  (lsp-ui-sideline-show-hover t)
+  (lsp-ui-doc-position 'bottom)
+  :config
+  (lsp-ui-doc-show))
+
+#+end_src
+***** dap-mode
+https://github.com/emacs-lsp/dap-mode
+lsp의 디버거
+#+begin_src emacs-lisp :tangle yes
+(use-package dap-mode
+  :straight t
+  :after (company lsp)
+  :custom
+  (lsp-enable-dap-auto-configure nil)
+  :config
+  (dap-ui-mode 1)
+  (dap-tooltip-mode 1)
+  (require 'dap-node)
+  (dap-node-setup))
+
+#+end_src
+**** languages
+***** emacs-lisp
+****** emacs-lisp indent
+:PROPERTIES:
+:ID:       B4957536-7F95-426F-899A-DE999C4F6C60
+:END:
+https://emacs.stackexchange.com/questions/10230/how-to-indent-keywords-aligned
+https://github.com/Fuco1/.emacs.d/blob/af82072196564fa57726bdbabf97f1d35c43b7f7/site-lisp/redef.el#L20-L94
+​~:keyword~​ 정렬이 이상하게 되는 것을 고침
+#+begin_src emacs-lisp :tangle yes
+(defun Fuco1/lisp-indent-function (indent-point state)
+  "This function is the normal value of the variable `lisp-indent-function'.
+The function `calculate-lisp-indent' calls this to determine
+if the arguments of a Lisp function call should be indented specially.
+
+INDENT-POINT is the position at which the line being indented begins.
+Point is located at the point to indent under (for default indentation);
+STATE is the `parse-partial-sexp' state for that position.
+
+If the current line is in a call to a Lisp function that has a non-nil
+property `lisp-indent-function' (or the deprecated `lisp-indent-hook'),
+it specifies how to indent.  The property value can be:
+
+,* `defun', meaning indent `defun'-style
+  \(this is also the case if there is no property and the function
+  has a name that begins with \"def\", and three or more arguments);
+
+,* an integer N, meaning indent the first N arguments specially
+  (like ordinary function arguments), and then indent any further
+  arguments like a body;
+
+,* a function to call that returns the indentation (or nil).
+  `lisp-indent-function' calls this function with the same two arguments
+  that it itself received.
+
+This function returns either the indentation to use, or nil if the
+Lisp function does not specify a special indentation."
+  (let ((normal-indent (current-column))
+        (orig-point (point)))
+    (goto-char (1+ (elt state 1)))
+    (parse-partial-sexp (point) calculate-lisp-indent-last-sexp 0 t)
+    (cond ((and (elt state 2) ; car of form doesn't seem to be a symbol, or is a keyword
+                (or (not (looking-at "\\sw\\|\\s_"))
+                    (looking-at ":")))
+           (if (not (> (save-excursion (forward-line 1) (point))
+                       calculate-lisp-indent-last-sexp))
+               (progn (goto-char calculate-lisp-indent-last-sexp)
+                      (beginning-of-line)
+                      (parse-partial-sexp (point)
+                                          calculate-lisp-indent-last-sexp 0 t)))
+           ;; Indent under the list or under the first sexp on the same
+           ;; line as calculate-lisp-indent-last-sexp.  Note that first
+           ;; thing on that line has to be complete sexp since we are
+           ;; inside the innermost containing sexp.
+           (backward-prefix-chars)
+           (current-column))
+          ((and (save-excursion
+                  (goto-char indent-point)
+                  (skip-syntax-forward " ")
+                  (not (looking-at ":")))
+                (save-excursion
+                  (goto-char orig-point)
+                  (looking-at ":")))
+           (save-excursion
+             (goto-char (+ 2 (elt state 1)))
+             (current-column)))
+          (t (let (#'(buffer-substring (point) (progn (forward-sexp 1) (point)))
+                   method)
+               (setq method
+                     (or (function-get (intern-soft function) 'lisp-indent-function)
+                         (get (intern-soft function) 'lisp-indent-hook)))
+               (cond ((or (eq method 'defun)
+                          (and (null method) (> (length function) 3)
+                               (string-match "\\`def" function)))
+                      (lisp-indent-defform state indent-point))
+                     ((integerp method)
+                      (lisp-indent-specform method state indent-point normal-indent))
+                     (method (funcall method indent-point state))))))))
+(add-hook 'emacs-lisp-mode-hook
+          (lambda () (setq-local lisp-indent-function #'Fuco1/lisp-indent-function)))
+#+end_src
+
+***** java
+****** lsp-java
+https://github.com/emacs-lsp/lsp-java
+#+begin_src emacs-lisp :tangle yes
+(use-package lsp-java
+  :after lsp-mode
+  :if (executable-find "mvn")
+  :init
+  (use-package request :defer t)
+  :custom
+  (lsp-java-server-install-dir (expand-file-name "eclipse.jdt.ls/server/" user-emacs-directory))
+  (lsp-java-workspace-dir (expand-file-name "eclipse.jdt.ls/workspace/" user-emacs-directory))
+  (lsp-java-format-settings-url "https://raw.githubusercontent.com/google/styleguide/gh-pages/eclipse-java-google-style.xml")
+  (lsp-java-format-settings-profile "GoogleStyle")
+  :config
+  (require 'lsp-java-boot)
+  ;; to enable the lenses
+  (add-hook 'lsp-mode-hook #'lsp-lens-mode)
+  (add-hook 'java-mode-hook #'lsp-java-boot-lens-mode))
+
+#+end_src
+****** dap-java
+#+begin_src emacs-lisp :tangle yes
+(use-package dap-java
+  :after company
+  :ensure nil
+  :straight nil)
+
+#+end_src
+***** latex
+****** lsp-latex
+#+begin_src emacs-lisp :tangle yes
+(use-package lsp-latex
+  :after company
+  :config
+  (with-eval-after-load "tex-mode"
+    (add-hook 'tex-mode-hook 'lsp)
+    (add-hook 'latex-mode-hook 'lsp)))
+
+#+end_src
+***** clojure
+****** COMMENT cider
+:PROPERTIES:
+:ID:       4FBFA3BB-85DA-43FC-BBA5-BAD5BBCD3191
+:END:
+#+begin_src emacs-lisp :tangle yes
+(use-package cider
+  :mode "\\.clj[sc]?\\'"
+  :config
+  (evil-collection-cider-setup))
+
+#+end_src
+***** racket
+****** racket-mode
+:PROPERTIES:
+:ID:       55D3C92B-C1CE-4C52-87FB-A9CBE3EB323A
+:END:
+#+begin_src emacs-lisp :tangle yes
+(use-package racket-mode
+  :defer t
+  :general
+  (repl-mode
+   :states '(normal insert)
+   "C-n")
+  (racket-mode-map
+    :states '(normal visual)
+    "SPC eb" 'racket-run-module-at-point
+    "SPC ex" 'racket-send-last-sexp
+    "SPC ed" 'racket-send-definition)
+  (racket-mode-map
+    :states 'visual
+    "SPC er" 'racket-send-region)
+  :config
+  (advice-add 'racket-send-last-sexp :before #'my/move-forward-char)
+  (advice-add 'racket-send-definition :before #'my/move-forward-char))
+#+end_src
+
+****** lsp-racket
+https://mullikine.github.io/posts/setting-up-lsp-with-emacs-attempt-2/
+#+begin_src emacs-lisp :tangle yes
+(use-package lsp-racket
+  :after (lsp-mode racket-mode)
+  :straight (lsp-racket
+             :type git
+             :host github
+             :repo "mullikine/lsp-racket-el"))
+
+#+end_src
+
+****** geiser
+:PROPERTIES:
+:ID:       CF24EB74-DE9E-4AF8-9E7E-3382619421C7
+:END:
+https://gitlab.com/emacs-geiser/geiser
+#+begin_src emacs-lisp :tangle yes
+(use-package geiser
+  :commands (geiser run-geiser geiser-repl)
+  :defer t
+  :config
+  ;; https://gitlab.com/jaor/geiser/-/issues/224
+  (defun cooldown-flycheck-on-racket (&rest _)
+    (if (eq geiser-impl--implementation 'racket)
+        (setq-local flycheck-check-syntax-automatically '(save mode-enabled))
+      (setq flycheck-check-syntax-automatically (default-value 'flycheck-check-syntax-automatically))))
+
+  (advice-add 'geiser-set-scheme :after 'cooldown-flycheck-on-racket)
+  (add-hook 'geiser-mode-hook 'cooldown-flycheck-on-racket))
+#+end_src
+
+***** javascript/typescript
+****** nvm
+#+begin_src emacs-lisp :tangle yes
+(use-package nvm
+  :defer t)
+
+#+end_src
+****** typescript-mode
+#+begin_src emacs-lisp :tangle yes
+(use-package typescript-mode
+  :mode "\\.ts\\'"
+  :config
+  (setq typescript-indent-level 2))
+
+#+end_src
+****** js-doc
+#+begin_src emacs-lisp :tangle yes
+(use-package js-doc)
+
+#+end_src
+****** js2-mode
+#+begin_src emacs-lisp :tangle yes
+(use-package js2-mode
+  ;; :mode "\\.jsx?\\'"
+  :mode (rx ".js" eos)
+  :custom
+  (js2-mode-show-strict-warnings nil) ; Don't use built-in syntax checking
+  (js-switch-indent-offset 2)
+  (js2-highlight-level 3)
+  (js2-idle-timer-delay 0)
+  (js2-mode-show-parse-errors nil)
+  :config
+  ;; Use js2-mode for Node scripts
+  (add-to-list 'magic-mode-alist '("#!/usr/bin/env node" . js2-mode))
+  ;; (setq js2-mode-show-strict-warnings nil)
+  ;; (add-hook 'js2-mode-hook #'dw/set-js-indentation)
+  )
+#+end_src
+****** json-mode
+#+begin_src emacs-lisp :tangle yes
+(use-package json-mode
+  :mode "\\.json\\'")
+
+#+end_src
+****** rjax-mode
+#+begin_src emacs-lisp :tangle yes
+(use-package rjsx-mode
+  :mode
+  (rx (or ".jsx"
+          (and (or "components" "pages") "/" (* anything) ".js"))
+      eos))
+
+#+end_src
+***** C/C++
+****** ccls
+:PROPERTIES:
+:ID:       1AF863BB-42B0-4832-B6AF-5B53A6C69CF8
+:END:
+#+begin_src emacs-lisp :tangle yes
+(use-package ccls
+  :hook ((c-mode c++-mode objc-mode cuda-mode) .
+         (lambda () (require 'ccls) (lsp))))
+
+#+end_src
+
+***** markdown
+****** markdown-mode
+#+begin_src emacs-lisp :tangle yes
+(use-package markdown-mode
+  :straight t
+  :mode "\\.md\\'"
+  :config
+  (setq markdown-command "marked"))
+
+#+end_src
+***** web
+****** web-mode
+#+begin_src emacs-lisp :tangle yes
+(use-package web-mode
+  ;; :mode "(\\.\\(html?\\|ejs\\|tsx\\|jsx\\)\\'"
+  :mode "(\\.\\(html?\\|ejs\\|tsx\\)\\'"
+  :config
+  (setq-default web-mode-code-indent-offset 2)
+  (setq-default web-mode-markup-indent-offset 2)
+  (setq-default web-mode-attribute-indent-offset 2))
+
+#+end_src
+
+****** impatient-mode
+https://github.com/skeeto/impatient-mode
+live HTML server
+#+begin_src emacs-lisp :tangle yes
+(use-package impatient-mode
+  :defer t
+  :straight t)
+
+#+end_src
+1. Start the server with ​=httpd-start=​
+2. Use ​=impatient-mode=​ on any buffer
+
+****** skewer-mode
+https://github.com/skeeto/skewer-mode
+#+begin_src emacs-lisp :tangle yes
+(use-package skewer-mode
+  :defer t
+  :straight t
+  :hook
+  ((js2-mode-hook . skewer-mode)
+  (css-mode-hook . skewer-css-mode)
+  (html-mode-hook . skewer-html-mode)))
+#+end_src
+
+1. `run-skewer' to attach a brower to emacs
+2. from `js2-mode' buffer with `skewer-mode' minor mode enabled,
+   send forms to the brower to evaluate.
+
+****** restclient
+https://github.com/pashky/restclient.el
+HTTP REST API 테스트용
+#+begin_src emacs-lisp :tangle yes
+(use-package restclient
+  :mode ((rx ".http" eos) . restclient-mode)
+  :bind
+  (:map restclient-mode-map
+        ([remap restclient-http-send-current]
+         . restclient-http-send-current-stay-in-window)
+        ("C-n" . restclient-jump-next)
+        ("C-p" . restclient-jump-prev))
+  :hook
+  (restclient-mode . display-line-numbers-mode))
+
+#+end_src
+
+***** emmet-mode
+https://github.com/smihica/emmet-mode
+#+begin_src emacs-lisp :tangle yes
+(use-package emmet-mode
+  ;; :custom
+  ;; (emmet-insert-flash-time 0.1)
+  ;; (emmet-move-cursor-between-quote t)
+  :hook (web-mode css-mode))
+
+#+end_src
+***** vue-mode
+#+begin_src emacs-lisp :tangle yes
+(use-package vue-mode
+  :mode "\\.vue\\'"
+  :commands (vue-mode))
+
+#+end_src
+***** yaml
+****** yaml-mode
+:PROPERTIES:
+:ID:       E49DD1A7-4162-48C5-8F34-DAD57018A36E
+:END:
+#+begin_src emacs-lisp :tangle yes
+(use-package yaml-mode
+  :mode "\\.ya?ml\\'")
+
+#+end_src
+**** code formatter
+:PROPERTIES:
+:ID:       060D652D-7014-4748-8FF4-AEFB93F0183E
+:END:
+***** ws-butler
+:PROPERTIES:
+:ID:       27517D93-C940-4314-827E-D341DEF14EC9
+:END:
+https://github.com/lewang/ws-butler
+#+BEGIN_SRC emacs-lisp :tangle yes
+(use-package ws-butler
+  :diminish
+  :defer t
+  :hook ((text-mode prog-mode) . ws-butler-mode)
+  :config
+  (ws-butler-mode))
+#+END_SRC
+***** apheleia
+:PROPERTIES:
+:ID:       AFFD7462-28C1-4F12-BA1D-45E29BC8EBA6
+:END:
+https://github.com/raxod502/apheleia
+auto code formatter
+#+begin_src emacs-lisp :tangle yes
+(use-package apheleia
+  ;; :disabled
+  :straight (apheleia
+             :host github
+             :repo "raxod502/apheleia")
+  :config
+  (apheleia-global-mode +1))
+#+end_src
+**** compile
+:PROPERTIES:
+:ID:       DA4726BD-A0E6-4884-8ED0-BF1EC8635C9F
+:END:
+#+begin_src emacs-lisp :tangle yes
+;; (use-package compile
+;;   :straight nil
+;;   :custom
+;;   (compilation-scroll-output t))
+
+;; (defun auto-recompile-buffer ()
+;;   (interactive)
+;;   (if (member #'recompile after-save-hook)
+;;       (remove-hook 'after-save-hook #'recompile t)
+;;     (add-hook 'after-save-hook #'recompile nil t)))
+
+#+end_src
+*** org
+:PROPERTIES:
+:ID:       021BE967-5548-498C-BDAD-9775B7EB2C5C
+:END:
+**** org
+:PROPERTIES:
+:ID:       59B0FC24-3214-4802-ABA4-31A9A5F02789
+:END:
+#+begin_src emacs-lisp :tangle yes
+(use-package org
+  :hook (
+         ;; (org-mode . org-mode-setup)
+         ;; (org-mode . org-icons)
+         ;; https://emacs.stackexchange.com/questions/16845/expand-org-mode-subtree-with-point-after-ellipsis/44568
+         ;; expand when press TAB after ellipsis.
+         (org-tab-first-hook . org-end-of-line))
+#+end_src
+**** 키바인딩 [1/7]
+:PROPERTIES:
+:ID:       F1716479-97B0-44F2-8F99-E5B987F12882
+:END:
+#+begin_src emacs-lisp :tangle yes
+:general
+(org-mode-map
+ :states '(normal visual emacs motion)
+ "SPC o" '(:ignore t :which-key "org-mode")
+ "SPC op" '(org-pomodoro :which-key "pomodoro")
+ "SPC on" '(org-toggle-narrow-to-subtree :which-key "toggle narrow")
+ "SPC of" '(dw/search-org-files :which-key "search notes")
+ ;; "os"  '(counsel-rg :which-key "search notes")
+ "SPC os" '(org-agenda :which-key "status")
+ "SPC ot" '(org-todo-list :which-key "todos")
+ "SPC oc" '(org-capture t :which-key "capture")
+ "SPC ox" '(org-export-dispatch t :which-key "export")
+ ;; insert
+ "SPC oi" '(:ignore t :which-key "insert")
+ "SPC oil" '(org-insert-link :which-key "insert link")
+ "SPC oi," '(org-insert-structure-template :which-key "insert structure")
+ "SPC oii" '(org-emphasize :which-key "emphasize")
+ ;; transclusion
+ "SPC oit" '(org-transclusion-add)
+ ;; whitespace
+ "SPC oi SPC" '(insert-zero-width-space :which-key "zero width space"))
+(org-mode-map
+ "C-j" 'org-next-visible-heading
+ "C-k" 'org-previous-visible-heading)
+(org-mode-map
+ :states 'normal
+  ;; [remap evil-backward-char]
+ "h" (general-predicate-dispatch 'evil-backward-char
+       (and (eolp) (bolp)) 'evil-backward-word-begin)
+ ;; [remap evil-forward-char]
+ "l" (general-predicate-dispatch 'evil-forward-char
+       (and (eolp) (bolp)) 'evil-forward-word-begin))
+
+(general-define-key
+ :keymaps 'org-mode-map
+ :states 'normal
+ :predicate '(eq (car (org-element-at-point)) 'headline)
+ "s-/" 'org-toggle-comment)
+
+;; (general-define-key
+;;  :keymaps 'org-mode-map
+;;  :states 'normal
+;;  :predicate '(eq (car (org-element-at-point)) 'headline)
+;;  "gc" 'nil
+;;  "gcc" 'org-toggle-comment)
+
+(org-src-mode-map
+ "s-s" 'org-edit-src-save
+ "s-k" 'org-edit-src-exit)
+
+(org-mode-map
+ :states '(normal visual emacs motion)
+ "SPC ee" '(my/org-edit-this :which-key "edit-this")
+ "SPC ex" '(org-babel-execute-src-block :which-key "execute this block"))
+
+(org-mode-map
+ :states '(normal motion visual)
+ "$" (general-key-dispatch '(lambda () (interactive) (evil-org-end-of-line))
+       :timeout 0.25
+       "$" 'evil-end-of-line))
+
+#+end_src
+
+- [X] org-toggle-comment
+- [ ] org-store-link
+- [ ] org-insert-last-stored-link
+- [ ] 체크박스 생성
+- [ ] fold - unfold는 불편하지 않음
+- [ ] org-block 진입시 insert 대신 normal 모드로
+
+
+**** el-patch
+#+begin_src emacs-lisp :tangle yes
+:config/el-patch
+#+end_src
+***** org-emphasize
+#+begin_src emacs-lisp :tangle yes
+  (defun org-emphasize (&optional char)
+    "Insert or change an emphasis, i.e. a font like bold or italic.
+If there is an active region, change that region to a new emphasis.
+If there is no region, just insert the marker characters and position
+the cursor between them.
+CHAR should be the marker character.  If it is a space, it means to
+remove the emphasis of the selected region.
+If CHAR is not given (for example in an interactive call) it will be
+prompted for."
+    (interactive)
+    (let ((erc org-emphasis-regexp-components)
+          (string "") beg end move s)
+      (if (org-region-active-p)
+          (setq beg (region-beginning)
+                end (region-end)
+                string (buffer-substring beg end))
+        (setq move t))
+      (unless char
+        (message "Emphasis marker or tag: [%s]"
+                 (mapconcat #'car org-emphasis-alist ""))
+        (setq char (read-char-exclusive)))
+      (if (equal char ?\s)
+          (setq s ""
+                move nil)
+        (unless (assoc (char-to-string char) org-emphasis-alist)
+          (user-error "No such emphasis marker: \"%c\"" char))
+        (setq s (char-to-string char)))
+      (while (and (> (length string) 1)
+                  (equal (substring string 0 1) (substring string -1))
+                  (assoc (substring string 0 1) org-emphasis-alist))
+        (setq string (substring string 1 -1)))
+      (setq string (concat (el-patch-add "​") s string s (el-patch-add "​")))
+      (when beg (delete-region beg end))
+      (unless (or (bolp)
+                  (string-match (concat "[" (nth 0 erc) "\n]")
+                                (char-to-string (char-before (point)))))
+        (insert (el-patch-swap " " "")) (el-patch-add (forward-char 1)))
+      (unless (or (eobp)
+                  (string-match (concat "[" (nth 1 erc) "\n]")
+                                (char-to-string (char-after (point)))))
+        (insert (el-patch-swap " " " ")) (el-patch-remove (backward-char 1)))
+      (insert string)
+      (and move (backward-char (el-patch-swap 1 2)))))
+#+end_src
+
+**** custom
+:PROPERTIES:
+:ID:       C91448C2-3FDC-42FF-B77A-1988CABE99C9
+:END:
+#+begin_src emacs-lisp :tangle yes
+:custom
+(org-id-link-to-org-use-id t)    ; create ID if need to make link.
+(org-startup-indented t)         ; Keep the indentation
+(org-src-tab-acts-natively t)    ; indentation setting
+(org-log-done t)                 ; Automatically log done times in todo items.
+;; (org-log-into-drawer t)         ; Log stuff into the LOGBOOK drawer by default
+(org-hide-emphasis-markers t)         ; hide markup indicator
+(org-ellipsis "​")                     ; change ellipsis shape.
+(prettify-symbols-unprettify-at-point 'right-edge)
+(org-fontify-done-headline t)         ; apply special face to DONE
+(org-pretty-entities t)               ; show entities as UTF-8 char.
+;; (org-odd-levels-only t)               ; odd levels only
+(org-hide-leading-stars t)            ; hide the stars.
+;; (org-ellipsis "⋱")                    ; change ellipsis shape.
+(org-src-fontify-natively t)
+(org-fontify-quote-and-verse-blocks t) ; fontify quote, verse too
+(org-src-tab-acts-natively t)
+;; (org-edit-src-content-indentation 4)   ; indentation for contents of code block.
+(org-edit-src-content-indentation 0) ; indentation for contents of code block. if `org-src-preserve-indentation' is `non-nil' this will be ignored.
+;; (org-src-preserve-indentation nil)     ;
+(org-hide-block-startup nil)
+(org-startup-folded 'content)         ; start with folded content.
+(org-confirm-babel-evaluate nil) ; do not ask confirmation when evaluate code block.
+;; (org-return-follows-link t)           ; open link with enter key
+(org-refile-targets '((nil :maxlevel . 1)
+                      (org-agenda-files :maxlevel . 1)))
+(org-refile-use-outline-path t)
+(org-outline-path-complete-in-steps nil)
+;; emphasis using zero with space
+(org-emphasis-regexp-components '("   ('\"{\x200B" "-     .,:!?;'\")}\\[\x200B" " ,\"'" "." 1))
+(org-startup-with-inline-images t)    ; start with inline images
+;; (org-startup-with-latex-preview t)                ; start with latex preview
+(org-latex-create-formula-image-program 'dvisvgm) ; latex to svg
+(org-agenda-restore-windows-after-quit t)
+;; "
+(org-list-demote-modify-bullet '(("+" . "-") ("-" . "+")))
+#+end_src
+
+***** clock 설정
+:PROPERTIES:
+:ID:       2930C0CF-2119-4574-A720-7A2EBBCDB1C3
+:END:
+#+begin_src emacs-lisp :tangle yes
+(org-clock-persist t)
+(org-clock-in-resume t)
+(org-clock-persist-query-resume nil)
+#+end_src
+
+자리비움 상태로 간주할 시간(분 단위)
+#+begin_src emacs-lisp :tangle yes
+;; (org-clock-idle-time 15)
+#+end_src
+
+**** config
+:PROPERTIES:
+:ID:       095B0BE2-F8BD-42A7-A8E1-88AF24C46090
+:END:
+#+begin_src emacs-lisp :tangle yes
+:config
+#+end_src
+***** org 키워드 아이콘화
+:PROPERTIES:
+:ID:       C87F5E88-5E5D-4ADE-A242-CD73E6A2BA0A
+:END:
+#+begin_src emacs-lisp :tangle yes
+(setq org-icons-list
+'(("#+begin_src" . "")
+ ("#+end_src" . "")
+ ("#+begin_quote" . "")
+ ("#+end_quote" . "")
+ ("#+begin_example" . "")
+ ("#+end_example" . "")
+ (":properties:" . "")
+ (":end:" . "")
+ ("#+startup:" . "")
+ ("#+title:" . "")
+ ("#+results:" . "")
+ ("#+tag:" . "")
+ ("#+name:" . "")
+ ("#+roam_tags:" . "")
+ ("#+filetags:" . "")
+ ("#+html_head:" . "")
+ ("#+subtitle:" . "")
+ ("#+author:" . " ")
+ ("#+header:" . " ")
+ ("scheduled:" . "")
+ ("deadline:" . "")
+ (":Effort:" . "")
+ ("[ ]" . "")
+ ("[X]" . "")
+ ("[-]" . "")
+ ("TODO" . "")
+ ;; ("WAIT" . "")
+ ;; ("NOPE" . "")
+ ("DONE" . "")
+ ;; ("[#A]" . "")
+ ;; ("[#B]" . "")
+ ;; ("[#C]" . "")
+ ))
+#+end_src
+
+#+begin_src emacs-lisp :tangle no
+(defun org-icons ()
+  "Beautify org mode keywords."
+  (setq prettify-symbols-alist org-icons-list)
+  (prettify-symbols-mode t))
+#+end_src
+
+https://pank.eu/blog/pretty-babel-src-blocks.html
+org-src-block의 기타 인자들을 숨기는 기능
+#+begin_src emacs-lisp :tangle yes
+(defvar-local rasmus/org-at-src-begin -1
+  "Variable that holds whether last position was a ")
+
+(defvar rasmus/ob-header-symbol ?
+  "Symbol used for babel headers")
+
+(defun rasmus/org-prettify-src--update ()
+  (let ((case-fold-search t)
+        (re "^[ \t]*#\\+begin_src[ \t]+[^ \f\t\n\r\v]+[ \t]*")
+        found)
+    (save-excursion
+      (goto-char (point-min))
+      (while (re-search-forward re nil t)
+        (goto-char (match-end 0))
+        (let ((args (org-trim
+                     (buffer-substring-no-properties (point)
+                                                     (line-end-position)))))
+          (when (org-string-nw-p args)
+            (let ((new-cell (cons args rasmus/ob-header-symbol)))
+              (cl-pushnew new-cell prettify-symbols-alist :test #'equal)
+              (cl-pushnew new-cell found :test #'equal)))))
+      (setq prettify-symbols-alist
+            (cl-set-difference prettify-symbols-alist
+                               (cl-set-difference
+                                (cl-remove-if-not
+                                 (lambda (elm)
+                                   (eq (cdr elm) rasmus/ob-header-symbol))
+                                 prettify-symbols-alist)
+                                found :test #'equal)))
+      ;; Clean up old font-lock-keywords.
+      (font-lock-remove-keywords nil prettify-symbols--keywords)
+      (setq prettify-symbols--keywords (prettify-symbols--make-keywords))
+      (font-lock-add-keywords nil prettify-symbols--keywords)
+      (while (re-search-forward re nil t)
+        (font-lock-flush (line-beginning-position) (line-end-position))))))
+
+(defun rasmus/org-prettify-src ()
+  "Hide src options via `prettify-symbols-mode'.
+
+  `prettify-symbols-mode' is used because it has uncollpasing. It's
+  may not be efficient."
+  (let* ((case-fold-search t)
+         (at-src-block (save-excursion
+                         (beginning-of-line)
+                         (looking-at "^[ \t]*#\\+begin_src[ \t]+[^ \f\t\n\r\v]+[ \t]*"))))
+    ;; Test if we moved out of a block.
+    (when (or (and rasmus/org-at-src-begin
+                   (not at-src-block))
+              ;; File was just opened.
+              (eq rasmus/org-at-src-begin -1))
+      (rasmus/org-prettify-src--update))
+    ;; Remove composition if at line; doesn't work properly.
+    ;; (when at-src-block
+    ;;   (with-silent-modifications
+    ;;     (remove-text-properties (match-end 0)
+    ;;                             (1+ (line-end-position))
+    ;;                             '(composition))))
+    (setq rasmus/org-at-src-begin at-src-block)))
+
+(defun rasmus/org-prettify-symbols ()
+  (mapc (apply-partially 'add-to-list 'prettify-symbols-alist)
+        (cl-reduce 'append
+                   (mapcar (lambda (x) (list x (cons (upcase (car x)) (cdr x))))
+                           org-icons-list)))
+  (turn-on-prettify-symbols-mode)
+  (add-hook 'post-command-hook 'rasmus/org-prettify-src t t))
+(add-hook 'org-mode-hook #'rasmus/org-prettify-symbols)
+#+end_src
+***** 패키지
+:PROPERTIES:
+:ID:       95AC3B12-9644-4F46-9F7A-B3AF833C1215
+:END:
+****** org-indent
+#+begin_src emacs-lisp :tangle yes
+  (use-package org-indent
+    :ensure nil
+    :straight nil
+    :diminish
+    :custom
+    (org-indent-indentation-per-level 1))
+#+end_src
+
+****** org-bookmark-heading
+:PROPERTIES:
+:ID:       C0D0C96D-B00A-4AAF-9C7C-B0DECC74612E
+:END:
+https://github.com/alphapapa/org-bookmark-heading
+org heading을 이맥스 내장 북마크로 저장할 수 있는 기능
+#+begin_src emacs-lisp :tangle yes
+  (use-package org-bookmark-heading
+    :custom
+    (org-bookmark-jump-indirect t))
+
+#+end_src
+****** org-sticky-header
+:PROPERTIES:
+:ID:       87CFE711-61FD-4B65-AB22-E70D0441C3E5
+:END:
+https://github.com/alphapapa/org-sticky-header
+#+begin_src emacs-lisp :tangle yes
+(use-package org-sticky-header
+    :custom
+    (org-sticky-header-full-path 'full)
+    (org-sticky-header-show-keyword nil) ; todo keyword
+    :hook (org-mode . org-sticky-header-mode))
+#+end_src
+
+****** TODO org-src [1/2]
+:PROPERTIES:
+:ID:       5199CA35-4768-42B0-AF8A-D9E186E2F912
+:END:
+#+begin_src emacs-lisp :tangle yes
+(use-package org-src
+  :ensure nil
+  :straight nil
+  :custom
+  (org-src-window-setup 'split-window-below) ; show edit buffer below current buffer
+  ;; :init/el-patch
+  :init/el-patch
+  (defvar org-src-mode-map
+    (let ((map (make-sparse-keymap)))
+      (define-key map (el-patch-swap "\C-c'" "s-s") 'org-edit-src-exit)
+      (define-key map (el-patch-swap "\C-c\C-k" "s-k") 'org-edit-src-abort)
+      (define-key map (el-patch-swap "\C-x\C-s" "\C-x\C-s") 'org-edit-src-save)
+      map))
+  ;; :config
+  ;; (defvar org-src-mode-map
+  ;;   (let ((map (make-sparse-keymap)))
+  ;;     (define-key map "s-s" 'org-edit-src-exit)
+  ;;     (define-key map "s-k" 'org-edit-src-abort)
+  ;;     (define-key map "\C-x\C-s" 'org-edit-src-save)
+  ;;     map))
+  ;; (advice-add 'org-edit-src-code
+  ;;     :before
+  ;;   #'(lambda () (if (eq evil-state 'normal) (evil-force-normal-state))))
+  ;; (advice-add 'org-edit-src-code :after #'evil-insert-state)
+  )
+#+end_src
+
+- [X] 키매핑을 쓰기 쉬운 것으로 변경해야 함
+- [ ] 키매핑이 src edit buffer에서 표시되어야 함
+
+****** org-fragtog
+프리뷰에 커서를 가져다 대면 원본을 토글하는 기능
+#+begin_src emacs-lisp :tangle yes
+  (use-package org-fragtog
+    :hook (org-mode . org-fragtog-mode))
+#+end_src
+****** org-babel
+:PROPERTIES:
+:ID:       6FB92E61-75D2-4072-9075-29D29B39E384
+:END:
+#+begin_src emacs-lisp :tangle yes
+  (push '("conf-unix" . conf-unix) org-src-lang-modes)
+#+end_src
+******* ob-racket
+https://github.com/hasu/emacs-ob-racket
+#+begin_src emacs-lisp :tangle yes
+  (use-package ob-racket
+    :straight (ob-racket
+               :type git
+               :host github
+               :repo "hasu/emacs-ob-racket"
+               :files ("*.el" "*.rkt"))
+    :defer t
+    :commands (org-babel-execute:racket
+               org-babel-expand-body:racket))
+
+#+end_src
+
+******* ox-latex
+#+begin_src emacs-lisp :tangle yes
+  (use-package ox-latex
+    :straight nil
+    :ensure nil
+    :config
+    (setq org-format-latex-options
+          (plist-put org-format-latex-options
+              :scale 2.0)) ;; for hidpi display.
+    )
+
+#+end_src
+******* ob-shell
+#+begin_src emacs-lisp :tangle yes
+  (use-package ob-shell
+    :defer t
+    :ensure nil
+    :straight nil
+    :commands (org-babel-execute:sh
+               org-babel-expand-body:sh
+               org-babel-execute:bash
+               org-babel-expand-body:bash))
+
+#+end_src
+******* TODO math-preview
+:PROPERTIES:
+:ID:       3AE70A5B-EF88-4CCB-8C7C-3AB19C7EA364
+:END:
+https://gitlab.com/matsievskiysv/math-preview
+latex preview with node backend.
+******* ob-async
+:PROPERTIES:
+:ID:       725F20C8-A906-4C52-80A8-C46C1517F524
+:END:
+https://github.com/astahlman/ob-async
+#+begin_src emacs-lisp :tangle yes
+  (use-package ob-async
+    :commands 'ob-async-org-babel-execute-src-block)
+
+#+end_src
+​~:async~​ 키워드를 헤더에 추가하면 된다.
+******* org-babel block chaining
+:PROPERTIES:
+:ID:       5CE268D9-6ECD-42FE-9521-183C7652667B
+:END:
+https://xenodium.com/emacs-chaining-org-babel-blocks/
+여러 소스 블럭을 묶어서 실행하는 기능
+1. ​~#+name:~​ 으로 블럭에 이름을 추가한다.(PROPERTIES 처럼)
+2. 묶어서 실행할 블럭의 헤더에 ​=:include 블럭이름=​
+#+begin_src emacs-lisp :tangle yes
+(defun adviced:org-babel-execute-src-block (&optional orig-fun arg info params)
+  (let ((body (nth 1 info))
+        (include (assoc :include (nth 2 info)))
+        (named-blocks (org-element-map (org-element-parse-buffer)
+                          'src-block (lambda (item)
+                                       (when (org-element-property :name item)
+                                         (cons (org-element-property :name item)
+                                               item))))))
+    (while include
+      (unless (cdr include)
+        (user-error ":include without value" (cdr include)))
+      (unless (assoc (cdr include) named-blocks)
+        (user-error "source block \"%s\" not found" (cdr include)))
+      (setq body (concat (org-element-property :value (cdr (assoc (cdr include) named-blocks)))
+                         body))
+      (setf (nth 1 info) body)
+      (setq include (assoc :include
+                      (org-babel-parse-header-arguments
+                       (org-element-property :parameters (cdr (assoc (cdr include) named-blocks)))))))
+    (funcall orig-fun arg info params)))
+(advice-add 'org-babel-execute-src-block :around 'adviced:org-babel-execute-src-block)
+#+end_src
+******* org-babel-async-tangle
+https://www.reddit.com/r/emacs/comments/8eozfl/advanced_techniques_for_reducing_emacs_startup/dxy5437/
+#+begin_src emacs-lisp :tangle yes
+(defmacro d/after (feature &rest body)
+  "Load BODY after FEATURE, catching errors and displaying as warnings."
+  (declare (indent defun))
+  `(with-eval-after-load ,feature
+     (condition-case-unless-debug err
+         (progn
+           ,@body)
+       (error
+        (display-warning
+         'init
+         (format "%s eval-after-load: %s "
+                 (symbol-name ,feature)
+                 (error-message-string err))
+         :error)))))
+
+(d/after 'org
+  (defvar d/show-async-tangle-results nil
+    "Keep *emacs* async buffers around for later inspection.")
+  (defvar d/async-babel-tangle-decrypt nil
+    "Decrypt org entries before tangling.
+
+Probably most useful as a file-local variable.")
+
+  (defun d/async-babel-tangle (&optional decrypt)
+    "Tangle org file asynchronously.
+
+If optional DECRYPT argument is given, dercypt entries before
+tangling."
+    (interactive)
+    (let ((init-tangle-start-time (current-time))
+          (file (buffer-file-name))
+          (async-quiet-switch "-q"))
+      (async-start
+       `(lambda ()
+          (require 'org)
+          (when ,d/async-babel-tangle-decrypt
+            (require 'org-crypt)
+            (org-crypt-use-before-save-magic)
+            (add-hook 'org-babel-pre-tangle-hook 'org-decrypt-entries)
+            (remove-hook 'org-babel-pre-tangle-hook 'save-buffer))
+          (org-babel-tangle-file ,file))
+       (unless d/show-async-tangle-results
+         `(lambda (result)
+            (if result
+                (message "SUCCESS: init.org successfully tangled. (%.3fs)"
+                         (float-time (time-subtract (current-time)
+                                                    ',init-tangle-start-time)))
+              (message "ERROR: init.org tangle failed."))))))))
+#+end_src
+****** org-transclusion
+:PROPERTIES:
+:ID:       D96D9C66-08C6-4B7B-A626-C39031603691
+:END:
+https://github.com/nobiot/org-transclusion
+#+begin_src emacs-lisp :tangle yes
+  (use-package org-transclusion
+    :straight (org-transclusion
+               :type git
+               :host github
+               :repo "nobiot/org-transclusion"))
+#+end_src
+****** org-auto-expand
+:PROPERTIES:
+:ID:       F99EC594-1880-4E3F-99BB-F043B7802A24
+:END:
+https://github.com/alphapapa/org-auto-expand
+org 파일의 properties 설정에 따라 자동적으로 heading을 확장하는 패키지
+#+begin_src emacs-lisp :tangle yes
+  (use-package org-auto-expand
+    :straight (org-auto-expand
+               :type git
+               :host github
+               :repo "alphapapa/org-auto-expand")
+    :custom
+    (org-auto-expand-nodes 'heading))
+#+end_src
+
+- 모든 항목이 접힌 채 시작하려면 ​=org-startup-folded=​ 변수를 설정하거나 ​~#+STARTUP~​ 키워드를 사용
+- ​=org-auto-expand-nodes=​ 변수 혹은 org properties로 설정할 수 있다.
+  - :auto-expand:
+    - heading :: 헤딩만 보여줌
+    - body :: 헤딩과 그 본문까지만 표시함
+    - children :: 헤딩과 하위 헤딩을 표시하지만 본문은 표시하지 않음
+    - 숫자 :: 하위 헤딩을 숫자만큼의 깊이까지 표시
+
+****** org-bars
+:PROPERTIES:
+:ID:       1A3F717B-789D-47E1-82D0-8DDB9276B77B
+:END:
+https://github.com/tonyaldon/org-bars
+highlight-indent처럼 org의 아웃라인을 표시한다.
+#+begin_src emacs-lisp :tangle yes
+  (use-package org-bars
+    :straight (org-bars
+               :type git
+               :host github
+               :repo "tonyaldon/org-bars")
+    :hook (org-mode . org-bars-mode)
+    ;; (org-bars-extra-pixels-height 7)
+    ;; :custom-face
+    ;; (org-bars-star-empty ((t (:weight bold))))
+    ;; (org-bars-star-invisible ((t (:weight bold))))
+    ;; (org-bars-star-visible ((t (:weight bold))))
+    :config
+    (setq org-bars-stars '(:empty ""
+                           :invisible ""
+                           :visible ""))
+    ;; (setq org-bars-with-dynamic-stars-p nil)
+    (setq org-bars-color-options '(:desaturate-level-faces 30
+                                   :darken-level-faces 15)))
+#+end_src
+
+****** org-superstar
+https://github.com/integral-dw/org-superstar-mode
+#+begin_src emacs-lisp :tangle yes
+(use-package org-superstar
+  :hook (org-mode . org-superstar-mode)
+  :custom
+  (org-superstar-prettify-item-bullets t)
+  (org-superstar-item-bullet-alist '((?+ . ?•)
+                                     ;; (?+ . ?‣)
+                                     (?- . ?•)))
+  (org-superstar-headline-bullets-list '("◉" "●" "○" "◆"))
+  ;; (org-superstar-headline-bullets-list nil)
+  (org-superstar-remove-leading-stars t)
+  :config/el-patch
+  (defun org-superstar--prettify-main-hbullet ()
+    "Prettify the trailing star in a headline.
+
+This function uses ‘org-superstar-headline-or-inlinetask-p’ to avoid
+prettifying bullets in (for example) source blocks."
+    (el-patch-swap
+      (when (org-superstar-headline-or-inlinetask-p)
+        (let ((bullet (org-superstar--hbullet (org-superstar--heading-level))))
+          (if bullet
+              (compose-region (match-beginning 1) (match-end 1)
+                              bullet)
+            (org-superstar--make-invisible 1)))
+        'org-superstar-header-bullet) nil)))
+
+#+end_src
+
+****** COMMENT org-pomodoro
+:PROPERTIES:
+:ID:       F14734B4-167E-4DD4-AF51-3C7BCA563AAF
+:END:
+#+begin_src emacs-lisp :tangle yes
+  (use-package org-pomodoro
+    :after org)
+#+end_src
+
+****** evil-org-mode
+https://github.com/Somelauw/evil-org-mode
+#+begin_src emacs-lisp :tangle yes
+  (use-package evil-org-mode
+    ;; :after org evil
+    :hook ((org-mode . evil-org-mode)
+           (org-agenda-mode . evil-org-mode)
+           (evil-org-mode . (lambda ()
+                              (evil-org-set-key-theme
+                               '(navigation
+                                 todo
+                                 insert
+                                 textobjects
+                                 additional)))))
+    :config
+    (require 'evil-org-agenda)
+    (evil-org-agenda-set-keys))
+#+end_src
+
+****** org-appear
+https://github.com/awth13/org-appear
+#+begin_src emacs-lisp :tangle yes
+  (use-package org-appear
+    :hook (org-mode . org-appear-mode)
+    :custom
+    (org-appear-autolinks t))
+#+end_src
+
+****** COMMENT org-roam
+#+begin_src emacs-lisp :tangle yes
+(use-package org-roam
+    :straight t
+    ;; :hook
+    ;; (after-init . org-roam-mode)
+    :config
+    (org-roam-db-autosync-mode)
+    :custom
+    (org-roam-directory "~/Notes/Roam/")
+    (org-roam-completion-everywhere t)
+    (org-roam-completion-system 'default)
+    (org-roam-capture-templates
+     '(("d" "default" plain
+        #'org-roam-capture--get-point
+        "%?"
+        :file-name "%<%Y%m%d%H%M%S>-${slug}"
+        :head "#+title: ${title}\n"
+        :unnarrowed t)
+       ("ll" "link note" plain
+        #'org-roam-capture--get-point
+        "* %^{Link}"
+        :file-name "Inbox"
+        :olp ("Links")
+        :unnarrowed t
+        :immediate-finish)
+       ("lt" "link task" entry
+        #'org-roam-capture--get-point
+        "* TODO %^{Link}"
+        :file-name "Inbox"
+        :olp ("Tasks")
+        :unnarrowed t
+        :immediate-finish)))
+    (org-roam-dailies-directory "Journal/")
+    (org-roam-dailies-capture-templates
+     '(("d" "default" entry
+        #'org-roam-capture--get-point
+        "* %?"
+        :file-name "Journal/%<%Y-%m-%d>"
+        :head "#+title: %<%Y-%m-%d %a>\n\n[[roam:%<%Y-%B>]]\n\n")
+       ("t" "Task" entry
+        #'org-roam-capture--get-point
+        "* TODO %?\n  %U\n  %a\n  %i"
+        :file-name "Journal/%<%Y-%m-%d>"
+        :olp ("Tasks")
+        :empty-lines 1
+        :head "#+title: %<%Y-%m-%d %a>\n\n[[roam:%<%Y-%B>]]\n\n")
+       ("j" "journal" entry
+        #'org-roam-capture--get-point
+        "* %<%I:%M %p> - Journal  :journal:\n\n%?\n\n"
+        :file-name "Journal/%<%Y-%m-%d>"
+        :olp ("Log")
+        :head "#+title: %<%Y-%m-%d %a>\n\n[[roam:%<%Y-%B>]]\n\n")
+       ("l" "log entry" entry
+        #'org-roam-capture--get-point
+        "* %<%I:%M %p> - %?"
+        :file-name "Journal/%<%Y-%m-%d>"
+        :olp ("Log")
+        :head "#+title: %<%Y-%m-%d %a>\n\n[[roam:%<%Y-%B>]]\n\n")
+       ("m" "meeting" entry
+        #'org-roam-capture--get-point
+        "* %<%I:%M %p> - %^{Meeting Title}  :meetings:\n\n%?\n\n"
+        :file-name "Journal/%<%Y-%m-%d>"
+        :olp ("Log")
+        :head "#+title: %<%Y-%m-%d %a>\n\n[[roam:%<%Y-%B>]]\n\n")))
+    :bind (:map org-roam-mode-map
+           (("C-c n l" . org-roam)
+            ("C-c n f" . org-roam-find-file)
+            ("C-c n d" . org-roam-dailies-find-date)
+            ("C-c n c" . org-roam-dailies-capture-today)
+            ("C-c n C r" . org-roam-dailies-capture-tomorrow)
+            ("C-c n t" . org-roam-dailies-find-today)
+            ("C-c n y" . org-roam-dailies-find-yesterday)
+            ("C-c n r" . org-roam-dailies-find-tomorrow)
+            ("C-c n g" . org-roam-graph))
+           :map org-mode-map
+           (("C-c n i" . org-roam-insert))
+           (("C-c n I" . org-roam-insert-immediate))))
+#+end_src
+
+***** 기타 function
+:PROPERTIES:
+:ID:       59EFFD4B-F0B9-443B-B131-F7C53E9EBB86
+:END:
+****** my/org-edit-this
+:PROPERTIES:
+:ID:       1C2094F6-52F0-4A4D-961E-D52E6E5F0902
+:END:
+#+begin_src emacs-lisp :tangle yes
+  (defun my/org-edit-this ()
+    "Edit element under the cursor."
+    (interactive)
+    (let ((elem (if (org-appear--current-elem)
+                    (car (org-appear--current-elem))
+                  (car (org-element-at-point)))))
+      (pcase elem
+        ('src-block (org-edit-special))
+        ('example-block (org-edit-special))
+        ('link (org-insert-link)))))
+  (advice-add 'org-ctrl-c-ret :before #'my/move-forward-char)
+
+#+end_src
+
+****** org-link-complete-at-point
+:PROPERTIES:
+:ID:       1E4E2596-72CB-4BBE-9347-59FF5E686EC2
+:END:
+https://www.reddit.com/r/emacs/comments/ouh44f/company_completion_for_org_links/
+#+begin_src emacs-lisp :tangle yes
+  (defun org-link-complete-at-point ()
+    "`completion-at-point' function for att: and file: org links."
+    (let ((end (point))
+          (start (point))
+          (exit-fn (lambda (&rest _) nil))
+          collection)
+      (when (looking-back "\\(att\\|attachment\\|file\\):\\(.*\\)" (line-beginning-position))
+        (setq start (match-beginning 2)
+              end (point))
+        (setq collection (pcase (cons (match-string 1) (match-string 2))
+                           (`(,(rx "att" (zero-or-more (any))) . ,val)
+                            (->> (org-attach-dir-get-create)
+                                 (directory-files)
+                                 (cl-remove-if (lambda (file)
+                                                 (pcase file
+                                                   ((or "." "..") t)
+                                                   (_ nil))))))
+                           (`(,(rx "file") . ,val)
+                            (company-files--complete (expand-file-name (or val "~"))))
+                           (_ '()))))
+      (when collection
+        (let ((prefix (buffer-substring-no-properties start end)))
+          (list start end collection
+                :exit-function exit-fn)))))
+
+#+end_src
+****** org-custom-link-img-follow
+:PROPERTIES:
+:ID:       2F1388BC-A1B5-47E7-BCE7-1BD91B17170A
+:END:
+https://seorenn.tistory.com/65
+외부 이미지 링크
+#+begin_src emacs-lisp :tangle yes
+  (defun org-custom-link-img-follow (path)
+    (org-link-open-from-string path))
+  (defun org-custom-link-img-export (path desc format)
+    (cond ((eq format 'html)
+           (format "<img src=\"%s\" alt=\"%s\"/>" path desc))))
+  (org-add-link-type "img" 'org-custom-link-img-follow 'org-custom-link-img-export)
+
+  (add-to-list 'org-emphasis-alist '("$" latex))
+
+#+end_src
+****** zero width space
+:PROPERTIES:
+:ID:       EDF4C234-AB85-4D66-B2D3-C76382DB7D2C
+:END:
+강조 구문(=+~$ 등등)에 zero width space를 넣는다.
+org 기본 상태에서는 e=mac=s가 안되기 때문.
+e​=mac=​s
+******* insert
+#+begin_src emacs-lisp :tangle yes
+(defun insert-zero-width-space ()
+  "Insert zero with space character (U+200B)."
+  (interactive)
+  (insert-char #x200b))
+
+#+end_src
+******* export
+:PROPERTIES:
+:ID:       311ED005-293C-4C71-984B-F4D2DD411533
+:END:
+#+begin_src emacs-lisp :tangle yes
+  (defun my-filter-remove-u200b (text backend info)
+    "Remove zero width space character (U+200B) from TEXT."
+    (replace-regexp-in-string "\x200B" "" text))
+
+  (if (fboundp 'org-export-filter-plain-text-functions)
+      (add-to-list 'org-export-filter-plain-text-functions
+                   'my-filter-remove-u200b))
+
+#+end_src
+******* 관련 패키지
+[[*embrace][embrace]]
+[[*org-emphasize][org-emphasize]]
+****** font-lock
+:PROPERTIES:
+:ID:       429D31B6-7B3F-4D4D-8040-9C42856BDA77
+:END:
+******* org-checkbox-done-text
+:PROPERTIES:
+:ID:       B7170108-06A4-4687-B1B9-4D7D261A5FF0
+:END:
+#+begin_src emacs-lisp :tangle yes
+  (font-lock-add-keywords
+   'org-mode
+   `(("^[ \t]*\\(?:[-+*]\\|[0-9]+[).]\\)[ \t]+\\(\\(?:\\[@\\(?:start:\\)?[0-9]+\\][ \t]*\\)?\\[\\(?:X\\|\\([0-9]+\\)/\\2\\)\\][^\n]*\n\\)"
+      1 'org-checkbox-done-text prepend))
+   'append)
+#+end_src
+******* 리스트 표시
+#+begin_src emacs-lisp :tangle no
+  (font-lock-add-keywords 'org-mode '(("^ *\\([-]\\) " (0 (prog1 () (compose-region (match-beginning 1) (match-end 1) "•"))))))
+#+end_src
+org-superstar나 org-bars 때문인지 작동하지 않는다.
+****** dw/search-org-files
+:PROPERTIES:
+:ID:       C0B585F1-E896-49F0-8B0F-E963F1384F82
+:END:
+https://config.daviwil.com/
+#+begin_src emacs-lisp :tangle yes
+(defun dw/search-org-files ()
+  "Find Org files in ~/Notes."
+  (interactive)
+  (counsel-rg "" "~/Notes" nil "Search Notes: "))
+#+end_src
+**** end org
+#+begin_src emacs-lisp :tangle yes
+)
+#+end_src
+*** terminal thing
+:PROPERTIES:
+:ID:       5AEA32D6-AC78-444E-9A2A-41126C23BA2C
+:END:
+**** vterm
+https://github.com/akermu/emacs-libvterm
+#+begin_src emacs-lisp :tangle yes
+(use-package vterm
+  :commands vterm
+  :defer t
+  :config
+  (defun vterm-counsel-yank-pop-action (orig-fun &rest args)
+    (if (equal major-mode 'vterm-mode)
+        (let ((inhibit-read-only t)
+              (yank-undo-function (lambda (_start _end) (vterm-undo))))
+          (cl-letf (((symbol-function 'insert-for-yank)
+                     (lambda (str) (vterm-send-string str t))))
+            (apply orig-fun args)))
+      (apply orig-fun args)))
+  (advice-add 'counsel-yank-pop-action :around #'vterm-counsel-yank-pop-action)
+
+  (defun evil-collection-vterm-escape-stay ()
+    "Go back to normal state but don't move
+cursor backwards. Moving cursor backwards is the default vim behavior but it is
+not appropriate in some cases like terminals."
+    (setq-local evil-move-cursor-back nil))
+  (add-hook 'vterm-mode-hook #'evil-collection-vterm-escape-stay))
+#+end_src
+**** comint
+:PROPERTIES:
+:ID:       2CCBC1BC-C677-4E8F-A1BA-EB65F6B3EDDE
+:END:
+comint는 외부 프로세스를 이맥스 모드로 감싸는 패키지다.
+#+begin_src emacs-lisp :tangle yes
+(use-package comint
+  :straight nil
+  :ensure nil
+  :commands (comint-mode shell-command-at-line)
+  :bind
+  ("C-!" . shell-command-at-line)
+  ;; :general
+  ;; (:keymaps 'shell-mode-map
+  ;;           :states  '(insert emacs)
+  ;;           "SPC"    'comint-magic-space)
+  :config
+  ;; Arrange for Emacs to notice password prompts and turn off echoing for them, as follows:
+  (add-hook 'comint-output-filter-functions
+            'comint-watch-for-password-prompt)
+  (setq ansi-color-for-comint-mode t)   ; package ansi-color
+  ;; Auto-kill buffer and window of comint process when done
+  (advice-add 'comint-send-eof :after
+    (defun comint-kill-after-finish-a (&rest _args)
+      (let (confirm-kill-processes kill-buffer-query-functions)
+        ;; (set-process-query-on-exit-flag (get-buffer-process (current-buffer)) nil)
+        (ignore-errors (kill-buffer-and-window)))))
+
+  (defun shell-command-at-line (&optional prefix)
+    "Run contents of line around point as a shell command and
+replace the line with output. With a prefix argument, append the
+output instead."
+    (interactive "P")
+    (let ((command (thing-at-point 'line)))
+      (cond ((null prefix)
+             (kill-whole-line)
+             (indent-according-to-mode))
+            (t (newline-and-indent)))
+      (shell-command command t nil)
+      (exchange-point-and-mark))))
+#+end_src
+*** 유틸리티
+**** calibre
+***** calibredb
+https://github.com/chenyanming/calibredb.el
+#+begin_src emacs-lisp :tangle yes
+(use-package calibredb
+  :after org
+  :config 
+  (setq calibredb-root-dir "~/Documents/eBook/calibre"
+        calibredb-db-dir (expand-file-name "metadata.db" calibredb-root-dir)
+        calibredb-library-alist '(("~/Documents/eBook/calibre"))
+        calibredb-format-character-icons t
+        calibredb-size-show t))
+#+end_src
+***** TODO calibre-layer
+https://github.com/dalanicolai/calibre-layer
+**** restart-emacs
+#+begin_src emacs-lisp :tangle yes
+(use-package restart-emacs)
+#+end_src
+
+*** 기타 코드들
+:PROPERTIES:
+:ID:       8851551D-EC7F-4275-AE88-A855A25A0B8E
+:END:
+**** unadvice
+:PROPERTIES:
+:ID:       44DF7EA2-FDB7-48A2-91B9-1A7BAAE7C175
+:END:
+https://emacs.stackexchange.com/questions/24657/unadvise-a-function-remove-all-advice-from-it
+symbol에 대한 모든 advice를 제거한다.
+#+begin_src emacs-lisp :tangle yes
+(defun unadvice (sym)
+  "Remove all advices from symbol SYM."
+  (interactive "aFunction symbol: ")
+  (advice-mapc (lambda (advice _props) (advice-remove sym advice)) sym))
+#+end_src
+**** uniquify region
+https://www.emacswiki.org/emacs/DuplicateLines
+#+begin_src emacs-lisp :tangle yes
+(defun uniquify-region-lines (beg end)
+  "Remove duplicate adjacent lines in region."
+  (interactive "*r")
+  (save-excursion
+    (goto-char beg)
+    (while (re-search-forward "^\\(.*\n\\)\\1+" end t)
+      (replace-match "\\1"))))
+
+(defun paf/sort-and-uniquify-region ()
+  "Remove duplicates and sort lines in region."
+  (interactive)
+  (sort-lines nil (region-beginning) (region-end))
+  (uniquify-region-lines (region-beginning) (region-end)))
+#+end_src
+**** last-message
+#+begin_src emacs-lisp :tangle yes
+(defun last-message (&optional num)
+  (or num (setq num 1))
+  (if (= num 0)
+      (current-message)
+    (save-excursion
+      (set-buffer "*Messages*")
+      (save-excursion
+        (forward-line (- 1 num))
+        (backward-char)
+        (let ((end (point)))
+          (forward-line 0)
+          (buffer-substring-no-properties (point) end))))))
+(defun insert-last-message (&optional num)
+  (interactive "*p")
+  (insert (last-message num)))
+#+end_src
+**** TODO toggle-window-dedicated [/]
+https://emacs.stackexchange.com/a/2198
+#+begin_src emacs-lisp :tangle yes
+(defun toggle-window-dedicated ()
+  "Control whether or not Emacs is allowed to display another buffer in current window."
+  (interactive)
+  (message
+   (if (let (window (get-buffer-window (current-buffer)))
+         (set-window-dedicated-p window (not (window-dedicated-p window))))
+       "%s: Can't touch this!"
+     "%s is up for grabs.")
+   (current-buffer)))
+#+end_src
+- [ ] ace-window와 통합
+**** tail message buffer
+#+begin_src emacs-lisp :tangle yes
+(advice-add 'message :after
+  (defun me/message-tail (&rest _)
+    (let* ((name "*Messages*")
+           (buffer (get-buffer-create name)))
+      (when (not (string= name (buffer-name)))
+        (dolist (window (get-buffer-window-list name nil t))
+          (with-selected-window window
+            (goto-char (point-max))))))))
+
+#+end_src
+**** enlarge window
+https://www.reddit.com/r/emacs/comments/qgxz43/allow_use_of_to_repeat_emacs_command_aliased_as/
+#+begin_src emacs-lisp :tangle yes
+(defun my-enlarge-window ()
+  "Enlarge window horizontally or vertically"
+  (interactive)
+  (let ((echo-keystrokes nil))
+    (message "Enlarge window: [h]orizontally [v]ertically [q]uit")
+    (set-transient-map
+     (let ((map (make-sparse-keymap)))
+       (define-key map (kbd "h") #'enlarge-window-horizontally)
+       (define-key map (kbd "v") (lambda (delta) (interactive "p") (enlarge-window delta)))
+       map)
+     t)))
+#+end_src
+
+**** toggle maximize buffer
+https://github.com/pascalfleury/emacs-config
+#+begin_src emacs-lisp :tangle yes
+(defun toggle-maximize-buffer () "Maximize buffer"
+       (interactive)
+       (if (= 1 (length (window-list)))
+           (jump-to-register '_)
+         (progn
+           (window-configuration-to-register '_)
+           (delete-other-windows))))
+
+#+end_src
+
+** keybinding
+:PROPERTIES:
+:ID:       4C33B0B2-73B1-4C4E-9B00-E57B2EBE00BE
+:END:
+#+begin_src emacs-lisp :tangle yes
+(general-define-key
+ "<f17>" 'toggle-input-method
+ "s-n" '(nil :which-key "new buffer & frame")
+ "s-n f" 'make-frame
+ "s-n b" '(clone-indirect-buffer-other-window :which-key "clone indirect buffer - other window")
+ "s-n B" '(make-indirect-buffer :which-key "make indirect buffer")
+ "C-h '" 'describe-char
+ )
+
+(spc-e
+  :states '(normal visual)
+  "" '(nil :which-key "eval")
+  "b" '(eval-buffer :which-key "eval buffer")
+  "x" '(eval-last-sexp :which-key "eval sexp"))
+(spc-e
+  :keymaps '(visual)
+  "r" '(eval-region :which-key "eval region"))
+#+end_src
+
+** end init.el
+:PROPERTIES:
+:ID:       17ADECE2-E0DC-4D2D-AE59-516BFFEF7471
+:END:
+
+*** initialize theme
+#+begin_src emacs-lisp :tangle yes
+(my/apply-theme ns-system-appearance)
+#+end_src
+
+*** gcmh
+https://github.com/emacsmirror/gcmh
+#+begin_src emacs-lisp :tangle yes
+(use-package gcmh
+  :init
+  (gcmh-mode 1)
+  ;; :custom
+  ;; (gcmh-vervose t)
+  )
+#+end_src
+
+*** setup
+:PROPERTIES:
+:ID:       9B789433-65DE-4BE5-8D0A-48DE26029717
+:END:
+#+begin_src emacs-lisp :tangle yes
+(provide 'init)
+;;; init.el ends here
+#+end_src
+
+* Local Variables :noexport:
+# Local Variables:
+# eval: (add-hook 'after-save-hook 'd/async-babel-tangle 'append 'local)
+# End:
