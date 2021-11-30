@@ -46,6 +46,8 @@
 (require 'use-package-ensure)
 (setq straight-use-package-by-default t)
 
+(straight-use-package 'esup)
+
 ;; (setq use-package-enable-imenu-support t)
 
 ;; https://github.com/purcell/exec-path-from-shell

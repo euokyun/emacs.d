@@ -1,4 +1,3 @@
-#+PROPERTY: header-args:elisp :lexical t
 * euokyun's emacs init file
 :PROPERTIES:
 :ID:       9BF718E4-02C9-48A7-9FE2-953EA2D2C2DD
@@ -13,10 +12,10 @@
 ;;; Code:
 
 #+end_src
-*** debug setting
+*** COMMENT debug setting
 init 파일 디버그 용도
 #+begin_src emacs-lisp :tangle yes
-;; (setq debug-on-error t)
+(setq debug-on-error t)
 #+end_src
 *** user information
 #+begin_src emacs-lisp :tangle yes
@@ -31,7 +30,7 @@ init 파일 디버그 용도
 #+end_src
 *** font settings
 **** 기본 폰트 설정
-한글 폰트는 D2Coding을 사용한다.
+기본 폰트는 Iosevka SS08을, 한글 폰트는 D2Coding을 사용한다.
 #+begin_src emacs-lisp :tangle yes
 (set-face-attribute 'default nil :font "Iosevka SS08" :height 170)
 (set-frame-font "Iosevka SS08" t t)
@@ -52,6 +51,13 @@ init 파일 디버그 용도
 #+begin_src emacs-lisp :tangle yes
 (set-fontset-font t 'hangul "D2Coding" nil 'prepend)
 #+end_src
+**** 폰트 수정 하드코딩
+#+begin_src emacs-lisp :tangle yes
+(set-fontset-font "fontset-default"
+                  (decode-char 'ucs #x2318) ; mac의 command 키 아이콘
+                  "D2Coding")
+#+end_src
+
 *** variable
 이맥스 기본 설정들의 묶음
 #+begin_src emacs-lisp :tangle yes
@@ -387,6 +393,95 @@ fancy한 유니코드 아이콘을 추가함.
 #+end_src
 로 폰트를 설치해줘야 사용할 수 있다.
 
+**** svg-lib
+https://github.com/rougier/svg-lib
+#+begin_src emacs-lisp :tangle yes
+(use-package svg-lib
+  :config/el-patch
+  (defun svg-lib-style-compute-default (&optional face)
+    "Compute the default style according to face (which defaults
+to the default face)."
+
+    (let* ((face (or face 'default))
+           (font-family (face-attribute face :family nil 'default))
+           (font-weight (face-attribute face :weight nil 'default))
+           ((el-patch-swap font-size default-font-size) (face-attribute face :height nil 'default))
+           (font-size ((el-patch-swap round ceiling) (* (el-patch-swap font-size default-font-size) 0.085)))
+           (foreground (face-attribute face :foreground nil 'default))
+           (background (face-attribute face :background nil 'default)))
+
+      `(:background ,(el-patch-swap background foreground)
+        :foreground ,(el-patch-swap foreground background)
+
+        :padding 1 ;; In characters (tag and icons) or pixels (progress)
+        :margin 1  ;; In chracters
+        :stroke 2  ;; In pixels
+        :radius 3  ;; In pixels
+        :width 20  ;; In characters
+        :height 0.9 ;; Ratio of text line height
+        :scale 0.75 ;; Icon scaling
+
+        :collection "material" ;; Icon collection
+
+        :font-family ,font-family
+        :font-size ,font-size
+        :font-weight ,font-weight)))
+
+  (defun svg-lib-tag (label &optional style &rest args)
+    "Create an image displaying LABEL in a rounded box using given STYLE
+and style elements ARGS."
+
+    (let* ((default svg-lib-style-default)
+           (style (if style (apply #'svg-lib-style nil style) default))
+           (style (if args (apply #'svg-lib-style style args) style))
+
+           (foreground (plist-get style :foreground))
+           (background (plist-get style :background))
+           (stroke (plist-get style :stroke))
+           ;; (width       (plist-get style :width))
+           (height (plist-get style :height))
+           (radius (plist-get style :radius))
+           ;; (scale       (plist-get style :scale))
+           (margin (plist-get style :margin))
+           (padding (plist-get style :padding))
+           (font-size (plist-get style :font-size))
+           (font-family (plist-get style :font-family))
+           (font-weight (plist-get style :font-weight))
+
+           (txt-char-width (el-patch-wrap 1 1 (* (window-font-width) 0.96)))
+           (txt-char-height (window-font-height))
+           (font-info (font-info (format "%s-%d" font-family font-size)))
+           (ascent (aref font-info 8))
+           (tag-char-width (aref font-info 11))
+           ;; (tag-char-height (aref font-info 3))
+         (label-length (+ (length label) (s-count-matches "[가-힣]" label)))
+         (tag-width (* (+ (el-patch-swap (length label) label-length) padding) txt-char-width))
+           (tag-height (* txt-char-height height))
+
+           (svg-width (+ tag-width (* margin txt-char-width)))
+           (svg-height tag-height)
+
+           (tag-x (/ (- svg-width tag-width) 2))
+         (text-x (+ tag-x (el-patch-swap
+                            (/ (- tag-width (* (length label) tag-char-width)) 2)
+                            (- tag-width (* label-length txt-char-width)
+                               (/ (* padding txt-char-width) 2.0)))))
+           (text-y ascent)
+
+           (svg (svg-create svg-width svg-height)))
+
+      (if (>= stroke 0.25)
+          (svg-rectangle svg tag-x 0 tag-width tag-height
+                         :fill foreground :rx radius))
+      (svg-rectangle svg (+ tag-x (/ stroke 2.0)) (/ stroke 2.0)
+                     (- tag-width stroke) (- tag-height stroke)
+                     :fill background :rx (- radius (/ stroke 2.0)))
+      (svg-text svg label
+                :font-family font-family :font-weight font-weight :font-size font-size
+                :fill foreground :x text-x :y text-y)
+      (svg-image svg :ascent 'center)))
+  )
+#+end_src
 *** completion UI
 :PROPERTIES:
 :ID:       D6139E36-A745-4F23-98BA-273117F479BB
@@ -1129,6 +1224,8 @@ ivy, company 등의 검색 결과 후보를 정렬하고 필터링하는 패키�
 #+begin_src emacs-lisp :tangle yes
 (use-package prescient
   :straight (prescient.el
+             :type git
+             :host github
              :repo "raxod502/prescient.el")
   :config
   (prescient-persist-mode 1))
@@ -2464,7 +2561,7 @@ dired는 이맥스 내장 파일 관리자다.(DIRectory EDit)
 
 https://github.com/stsquad/dired-rsync/
 
-**** TODO bm [/]
+**** TODO bm [0/1]
 :PROPERTIES:
 :ID:       02901F61-1B1C-478B-BE86-DE96AF438206
 :END:
@@ -3496,7 +3593,7 @@ auto code formatter
          ;; expand when press TAB after ellipsis.
          (org-tab-first-hook . org-end-of-line))
 #+end_src
-**** 키바인딩 [1/7]
+**** 키바인딩 [2/6]
 :PROPERTIES:
 :ID:       F1716479-97B0-44F2-8F99-E5B987F12882
 :END:
@@ -3569,8 +3666,7 @@ auto code formatter
 - [ ] org-insert-last-stored-link
 - [ ] 체크박스 생성
 - [ ] fold - unfold는 불편하지 않음
-- [ ] org-block 진입시 insert 대신 normal 모드로
-
+- [X] org-block 진입시 insert 대신 normal 모드로
 
 **** el-patch
 #+begin_src emacs-lisp :tangle yes
@@ -3692,6 +3788,7 @@ prompted for."
 :PROPERTIES:
 :ID:       C87F5E88-5E5D-4ADE-A242-CD73E6A2BA0A
 :END:
+****** pretty-babel-src-blocks
 #+begin_src emacs-lisp :tangle yes
 (setq org-icons-list
 '(("#+begin_src" . "")
@@ -3700,7 +3797,7 @@ prompted for."
  ("#+end_quote" . "")
  ("#+begin_example" . "")
  ("#+end_example" . "")
- (":properties:" . "")
+ ;; (":properties:" . "")
  (":end:" . "")
  ("#+startup:" . "")
  ("#+title:" . "")
@@ -3719,25 +3816,17 @@ prompted for."
  ("[ ]" . "")
  ("[X]" . "")
  ("[-]" . "")
- ("TODO" . "")
+ ;; ("TODO" . "")
  ;; ("WAIT" . "")
  ;; ("NOPE" . "")
- ("DONE" . "")
+ ;; ("DONE" . "")
  ;; ("[#A]" . "")
  ;; ("[#B]" . "")
  ;; ("[#C]" . "")
  ))
 #+end_src
-
-#+begin_src emacs-lisp :tangle no
-(defun org-icons ()
-  "Beautify org mode keywords."
-  (setq prettify-symbols-alist org-icons-list)
-  (prettify-symbols-mode t))
-#+end_src
-
 https://pank.eu/blog/pretty-babel-src-blocks.html
-org-src-block의 기타 인자들을 숨기는 기능
+org-src-block의 기타 파라미터를 숨기는 기능
 #+begin_src emacs-lisp :tangle yes
 (defvar-local rasmus/org-at-src-begin -1
   "Variable that holds whether last position was a ")
@@ -3807,6 +3896,107 @@ org-src-block의 기타 인자들을 숨기는 기능
   (add-hook 'post-command-hook 'rasmus/org-prettify-src t t))
 (add-hook 'org-mode-hook #'rasmus/org-prettify-symbols)
 #+end_src
+******* COMMENT 옛날 버전
+#+begin_src emacs-lisp :tangle yes
+(defun org-icons ()
+  "Beautify org mode keywords."
+  (setq prettify-symbols-alist org-icons-list)
+  (prettify-symbols-mode t))
+#+end_src
+
+****** org-checkbox-done-text
+:PROPERTIES:
+:ID:       B7170108-06A4-4687-B1B9-4D7D261A5FF0
+:END:
+done 시에 헤드라인의 이름에도 색상을 적용함.
+#+begin_src emacs-lisp :tangle yes
+  (font-lock-add-keywords
+   'org-mode
+   `(("^[ \t]*\\(?:[-+*]\\|[0-9]+[).]\\)[ \t]+\\(\\(?:\\[@\\(?:start:\\)?[0-9]+\\][ \t]*\\)?\\[\\(?:X\\|\\([0-9]+\\)/\\2\\)\\][^\n]*\n\\)"
+      1 'org-checkbox-done-text prepend))
+   'append)
+#+end_src
+******** DONE 이렇게
+CLOSED: [2021-11-30 Tue 19:28]
+****** COMMENT 리스트 표시
+#+begin_src emacs-lisp :tangle no
+  (font-lock-add-keywords 'org-mode '(("^ *\\([-]\\) " (0 (prog1 () (compose-region (match-beginning 1) (match-end 1) "•"))))))
+#+end_src
+- org-superstar나 org-bars 때문인지 작동하지 않는다.
+- org-superstart가 대체
+****** svg-lib
+#+begin_src emacs-lisp :tangle yes
+(defvar svg-font-lock-keywords
+  `(("TODO"
+     (0 (list 'face nil 'display (svg-font-lock-todo))))
+    ("\\:\\([0-9a-zA-Z]+\\)\\:"
+     (0 (list 'face nil 'display (svg-font-lock-tag (match-string 1)))))
+    ("DONE"
+     (0 (list 'face nil 'display (svg-font-lock-done))))
+    ("\\[\\([0-9]\\{1,3\\}\\)%\\]"
+     (0 (list 'face nil 'display (svg-font-lock-progress_percent (match-string 1)))))
+    ("\\[\\([0-9]+/[0-9]+\\)\\]"
+     (0 (list 'face nil 'display (svg-font-lock-progress_count (match-string 1)))))))
+
+(defun svg-font-lock-tag (label)
+  (svg-lib-tag label nil))
+
+(defun svg-font-lock-todo ()
+  (svg-lib-tag "TODO" nil :margin 0
+               :font-weight 400
+               ;; :foreground "#ebdbb2"
+               :background "#fb4933"))
+
+(defun svg-font-lock-done ()
+  (svg-lib-tag "DONE" nil :margin 0
+               :font-weight 400
+               ;; :foreground "#ebdbb2"
+               :background "#8ec07c"))
+
+(defun svg-font-lock-progress_percent (value)
+  (svg-image (svg-lib-concat
+              (svg-lib-progress-bar (/ (string-to-number value) 100.0)
+                                nil :margin 0 :stroke 2 :radius 3 :padding 2 :width 6)
+              (svg-lib-tag (concat value "%")
+                           nil :stroke 0 :margin 0)) :ascent 'center))
+
+(defun svg-font-lock-progress_count (value)
+  (let* ((seq (mapcar #'string-to-number (split-string value "/")))
+         (count (float (car seq)))
+         (total (float (cadr seq))))
+  (svg-image (svg-lib-concat
+              (svg-lib-progress-bar (/ count total) nil
+                                :margin 0 :stroke 2 :radius 3 :padding 2 :width 6)
+              (svg-lib-tag value nil
+                           :stroke 0 :margin 0)) :ascent 'center)))
+
+
+(defvar svg-lib-status nil "")
+
+;; Activate
+(defun svg-lib-on ()
+  (when (and (boundp 'svg-font-lock-keywords) svg-font-lock-keywords)
+    (push 'display font-lock-extra-managed-props)
+    (font-lock-add-keywords nil svg-font-lock-keywords)
+    (setq svg-lib-status t)
+    (font-lock-flush (point-min) (point-max))
+    (message "svg-lib on")))
+
+;; Deactivate
+
+(defun svg-lib-off ()
+  (font-lock-remove-keywords nil svg-font-lock-keywords)
+  (setq svg-lib-status nil)
+  (font-lock-flush (point-min) (point-max))
+  (message "svg-lib off"))
+
+(defun svg-lib-toggle ()
+  (interactive)
+  (if svg-lib-status (svg-lib-off) (svg-lib-on)))
+
+(svg-lib-on)
+#+end_src
+
 ***** 패키지
 :PROPERTIES:
 :ID:       95AC3B12-9644-4F46-9F7A-B3AF833C1215
@@ -4138,20 +4328,22 @@ prettifying bullets in (for example) source blocks."
 ****** evil-org-mode
 https://github.com/Somelauw/evil-org-mode
 #+begin_src emacs-lisp :tangle yes
-  (use-package evil-org-mode
-    ;; :after org evil
-    :hook ((org-mode . evil-org-mode)
-           (org-agenda-mode . evil-org-mode)
-           (evil-org-mode . (lambda ()
-                              (evil-org-set-key-theme
-                               '(navigation
-                                 todo
-                                 insert
-                                 textobjects
-                                 additional)))))
-    :config
-    (require 'evil-org-agenda)
-    (evil-org-agenda-set-keys))
+(use-package evil-org-mode
+  ;; :after org evil
+  :straight '(evil-org-mode
+             :repo "Somelauw/evil-org-mode")
+  :hook ((org-mode . evil-org-mode)
+         (org-agenda-mode . evil-org-mode)
+         (evil-org-mode . (lambda ()
+                            (evil-org-set-key-theme
+                             '(navigation
+                               todo
+                               insert
+                               textobjects
+                               additional)))))
+  :config
+  (require 'evil-org-agenda)
+  (evil-org-agenda-set-keys))
 #+end_src
 
 ****** org-appear
@@ -4351,22 +4543,6 @@ e​=mac=​s
 :PROPERTIES:
 :ID:       429D31B6-7B3F-4D4D-8040-9C42856BDA77
 :END:
-******* org-checkbox-done-text
-:PROPERTIES:
-:ID:       B7170108-06A4-4687-B1B9-4D7D261A5FF0
-:END:
-#+begin_src emacs-lisp :tangle yes
-  (font-lock-add-keywords
-   'org-mode
-   `(("^[ \t]*\\(?:[-+*]\\|[0-9]+[).]\\)[ \t]+\\(\\(?:\\[@\\(?:start:\\)?[0-9]+\\][ \t]*\\)?\\[\\(?:X\\|\\([0-9]+\\)/\\2\\)\\][^\n]*\n\\)"
-      1 'org-checkbox-done-text prepend))
-   'append)
-#+end_src
-******* 리스트 표시
-#+begin_src emacs-lisp :tangle no
-  (font-lock-add-keywords 'org-mode '(("^ *\\([-]\\) " (0 (prog1 () (compose-region (match-beginning 1) (match-end 1) "•"))))))
-#+end_src
-org-superstar나 org-bars 때문인지 작동하지 않는다.
 ****** dw/search-org-files
 :PROPERTIES:
 :ID:       C0B585F1-E896-49F0-8B0F-E963F1384F82
@@ -4523,7 +4699,7 @@ https://www.emacswiki.org/emacs/DuplicateLines
   (interactive "*p")
   (insert (last-message num)))
 #+end_src
-**** TODO toggle-window-dedicated [/]
+**** TODO toggle-window-dedicated [0/1]
 https://emacs.stackexchange.com/a/2198
 #+begin_src emacs-lisp :tangle yes
 (defun toggle-window-dedicated ()

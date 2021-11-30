@@ -11,7 +11,7 @@ advice의 함수와 원본 함수가 어떻게 합성되어야 하는지 명시�
 *** :before
 - 원본 함수 이전에 호출한다.
 - 두 함수는 같은 인자를 받는다. 반환값은 원본 함수의 반환값을 따른다.
-- ​~(lambda ($rest r) (apply advice-fun r) (apply orig-fun r))~​
+- ​~(lambda (&rest r) (apply advice-fun r) (apply orig-fun r))~​
 
 *** :after
 - 원본 함수 이후에 호출한다.
