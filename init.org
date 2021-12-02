@@ -12,7 +12,7 @@
 ;;; Code:
 
 #+end_src
-*** COMMENT debug setting
+*** debug setting
 init 파일 디버그 용도
 #+begin_src emacs-lisp :tangle yes
 (setq debug-on-error t)
@@ -195,6 +195,11 @@ use-package에서 ​~:ensure-system-package~​ 키워드로 사용할 수 있�
 #+end_example
 car는 바이너리 파일명, cdr는 패키지 관리자에서의 이름이다. 바이너리가 없을 경우 패키지 관리자를 실행하여 설치한다.
 
+**** org
+straight의 org 로드 순서를 앞당김
+#+begin_src emacs-lisp :tangle yes
+(use-package org)
+#+end_src
 **** el-patch
 https://github.com/raxod502/el-patch
 el-patch 패키지는 패키지의 elisp 소스를 변경하는 기능을 제공한다.
@@ -303,7 +308,7 @@ https://github.com/noctuid/general.el
   (general-override-mode)
   (general-evil-setup t)
   (general-unbind 'global
-    "s-q"
+    ;; "s-q"
     "s-z"
     "s-Z"
     "s-f"
@@ -348,6 +353,7 @@ https://github.com/mickeynp/ligature.el
              :type git
              :host github
              :repo "mickeynp/ligature.el")
+  :defer 2
   :config
   ;; Enable the "www" ligature in every possible major mode
   (ligature-set-ligatures 't '("www"))
@@ -448,7 +454,7 @@ and style elements ARGS."
            (font-family (plist-get style :font-family))
            (font-weight (plist-get style :font-weight))
 
-           (txt-char-width (el-patch-wrap 1 1 (* (window-font-width) 0.96)))
+           (txt-char-width (el-patch-wrap 1 1 (* (window-font-width) 0.9)))
            (txt-char-height (window-font-height))
            (font-info (font-info (format "%s-%d" font-family font-size)))
            (ascent (aref font-info 8))
@@ -647,12 +653,14 @@ company를 주로 쓴다. 관련 생태계가 company를 중심으로 돌아가�
 https://github.com/TommyX12/company-tabnine
 #+begin_src emacs-lisp :tangle yes
 (use-package company-tabnine
-  :defer 1
+  :defer t
   :custom
   (company-tabnine-max-num-results 9)
-  :bind
+  ;; :bind
+
   ;; (("M-q" . company-other-backend)
   ;;  ("C-z t" . company-tabnine))
+  :commands (company-tabnine company-tabnine-toggle)
   :init
   (defun company//sort-by-tabnine (candidates)
     "Integrate company-tabnine with lsp-mode"
@@ -1089,7 +1097,7 @@ counsel과 통합
    ;; "pF"  'consult-ripgrep
    "po" 'counsel-projectile))
 #+end_src
-**** persp-mode
+**** TODO persp-mode
 :PROPERTIES:
 :ID:       7FA6EFE1-D9E9-49CF-8538-E704C07C84E0
 :END:
@@ -1190,7 +1198,7 @@ https://github.com/Bad-ptr/persp-mode.el
               t)))
 
 #+end_src
-
+- [ ] transient keymap 만들기
 *** completion sorting
 **** smex
 history 기반 M-x 정렬
@@ -1374,6 +1382,7 @@ https://github.com/magnars/expand-region.el
 선택 영역을 확대해나가는 기능
 #+begin_src emacs-lisp :tangle yes
 (use-package expand-region
+  :defer t
   :commands er/expand-region
   :general
   (:states 'visual
@@ -1394,6 +1403,7 @@ https://github.com/emacs-evil/evil-surround
 https://github.com/cute-jumper/embrace.el
 #+begin_src emacs-lisp :tangle yes
 (use-package embrace
+  :defer t
   :config/el-patch
   (defun embrace-org-mode-hook ()       ; zero width space added.
     (dolist (lst '((?= (el-patch-concat "​" "=") . (el-patch-concat "=" "​"))
@@ -1414,10 +1424,10 @@ https://github.com/cute-jumper/embrace.el
 https://github.com/cute-jumper/evil-embrace.el
 #+begin_src emacs-lisp :tangle yes
 (use-package evil-embrace
-  :hook ((LaTeX-mode . (lambda ()
-                         (add-to-list
-                          'evil-embrace-evil-surround-keys
-                          ?o))))
+  ;; :hook ((LaTeX-mode . (lambda ()
+  ;;                        (add-to-list
+  ;;                         'evil-embrace-evil-surround-keys
+  ;;                         ?o))))
   :config
   (evil-embrace-enable-evil-surround-integration))
 #+end_src
@@ -1442,6 +1452,7 @@ https://github.com/gabesoft/evil-mc
 (use-package evil-mc
   :diminish
   :functions evil-mc-has-cursors-p
+  :commands (evil-mc-mode)
   :config/el-patch
   (evil-define-command evil-mc-make-cursor-here ()
     "Create a cursor at point."
@@ -1953,7 +1964,8 @@ https://github.com/AndreaCrotti/yasnippet-snippets
 https://github.com/abo-abo/auto-yasnippet
 
 *** UI
-**** TODO mini-frame
+**** minibuffer
+***** COMMENT mini-frame
 :PROPERTIES:
 :ID:       910EDDB0-47E6-4475-8633-D84BD6AA2288
 :END:
@@ -1970,12 +1982,80 @@ https://github.com/muffinmad/emacs-mini-frame
   ;; (resize-mini-frames t)
   ;; (resize-mini-frames 'grow-only)
   (mini-frame-ignore-commands
-   '(eval-expression "edebug-eval-expression" debugger-eval-expression completion-at-point ediff-quit evil-ex anzu-query-replace-regexp))
+   '(eval-expression
+     "edebug-eval-expression"
+     debugger-eval-expression
+     completion-at-point
+     ediff-quit
+     evil-ex
+     anzu-query-replace-regexp))
   (mini-frame-color-shift-step 15)
   :hook (after-init . mini-frame-mode))
-
 #+end_src
 - 미니 프레임이 커서 위치를 가리는 경우가 있다.
+- persp-mode의 ivy-switch-buffer 필터가 작동하지 않는다. maple-miniframe에서도 안 되는걸 보면 해결하기 쉽지 않은 듯 하다.
+***** COMMENT maple-minibuffer
+https://github.com/honmaple/emacs-maple-minibuffer
+#+begin_src emacs-lisp :tangle yes
+(use-package maple-minibuffer
+  :straight '(emacs-maple-minibuffer
+              :type git
+              :host github
+              :repo "honmaple/emacs-maple-minibuffer"
+              :files ("*.el")
+               ;; :build
+               )
+  :hook (after-init . maple-minibuffer-mode)
+  :config
+  (setq maple-minibuffer:position-type 'window-bottom-left
+        maple-minibuffer:border-color "gray50"
+        maple-minibuffer:height nil
+        maple-minibuffer:width 0.7
+        maple-minibuffer:cache t)
+
+  (setq maple-minibuffer:action '(read-from-minibuffer read-string)
+        maple-minibuffer:ignore-action '(evil-ex eval-expression))
+
+  (add-to-list 'maple-minibuffer:ignore-action 'org-schedule)
+  (add-to-list 'maple-minibuffer:ignore-regexp "^helm-")
+
+  ;; more custom parameters for frame
+  (defun maple-minibuffer:parameters ()
+    "Maple minibuffer parameters."
+    `((height . ,(or maple-minibuffer:height 10))
+      (width . ,(or maple-minibuffer:width (window-pixel-width)))
+      (left-fringe . 5)
+      (right-fringe . 5))))
+
+#+end_src
+***** ivy-posframe
+https://github.com/tumashu/ivy-posframe
+#+begin_src emacs-lisp :tangle yes
+(use-package ivy-posframe
+  :custom
+  (ivy-posframe-display-functions-alist '((t . ivy-posframe-display)))
+  (ivy-posframe-height-alist '((swiper . 20)))
+#+end_src
+
+https://github.com/tumashu/ivy-posframe/issues/105
+너비를 고정한다. (200 혹은 프레임의 0.75배)
+#+begin_src emacs-lisp :tangle yes
+:config
+(defun my-ivy-posframe-get-size ()
+  "Set the ivy-posframe size according to the current frame."
+  (let ((height (or ivy-posframe-height (or ivy-height 10)))
+        (width (min (or ivy-posframe-width 200) (round (* 0.75 (frame-width))))))
+    (list :height height :width width :min-height height :min-width width)))
+(setq ivy-posframe-size-function 'my-ivy-posframe-get-size)
+#+end_src
+
+#+begin_src emacs-lisp :tangle yes
+(ivy-posframe-mode t)
+)
+#+end_src
+- mini-frame, maple-miniframe에서 작동하지 않던 persp-mode의 ivy-switch-buffer 필터링이 제대로 작동함
+- 마우스 지원이 안 됨. 나쁘지 않음
+- 다른 것들에 비해 약간 느림.
 **** dashboard
 :PROPERTIES:
 :ID:       E4EBA189-2A87-4602-B002-0616B8F804A1
@@ -2088,6 +2168,7 @@ https://github.com/Malabarba/beacon
 스크롤링시 커서 위치를 강조표시함
 #+BEGIN_SRC emacs-lisp :tangle yes
 (use-package beacon
+  :defer 3
   :custom
   (beacon-mode 1))
 #+END_SRC
@@ -2099,7 +2180,7 @@ https://github.com/purcell/page-break-lines
 #+begin_src emacs-lisp :tangle yes
 (use-package page-break-lines
   :diminish
-  :defer 2
+  :defer t
   :config
   (global-page-break-lines-mode))
 
@@ -2153,6 +2234,7 @@ https://github.com/alvarogonzalezsotillo/region-occurrences-highlighter
 영역 선택시 같은 텍스트를 강조 표시함
 #+begin_src emacs-lisp :tangle yes
 (use-package region-occurrences-highlighter
+  :defer t
   ;; :hook ((prog-mode org-mode text-mode) . #'region-occurrences-highlighter-mode)
   :config/el-patch
   ;; evil compatible
@@ -2178,7 +2260,7 @@ https://github.com/alvarogonzalezsotillo/region-occurrences-highlighter
             (highlight-regexp str 'region-occurrences-highlighter-face)
             (region-occurrences-highlighter-nav-mode 1))))))))
 #+end_src
-- org-mode에서 퍼포먼스 저하를 발견함.
+- 긴 org-mode에서 퍼포먼스 저하를 발견함.(fold 때문인 듯)
 
 ***** hl-block-mode
 https://gitlab.com/ideasman42/emacs-hl-block-mode
@@ -2271,7 +2353,6 @@ https://github.com/jdtsmith/mlscroll
   ;; (mlscroll-shortfun-min-width 11) ; truncate which-func, for default mode-line-format's
   :config
   (mlscroll-mode 1))
-
 #+end_src
 **** window management
 ***** transpose-frame
@@ -2556,7 +2637,8 @@ dired는 이맥스 내장 파일 관리자다.(DIRectory EDit)
   (use-package dired-collapse
     :defer t)
 
-  (use-package dired-rsync)
+  (use-package dired-rsync
+    :defer t)
 #+end_src
 
 https://github.com/stsquad/dired-rsync/
@@ -2634,87 +2716,90 @@ https://github.com/joodland/bm
 https://github.com/Alexander-Miller/treemacs
 트리 레이아웃 파일 탐색기. lsp에 딸려온다.
 #+begin_src emacs-lisp :tangle yes
-(use-package treemacs
-  :defer t
-  :custom
-  (treemacs-tag-follow-mode)
-  (treemacs-indent-guide-style 'line)
-  ;; (treemacs-fringe-indicator-mode 'always)
-  :general
-  ("s-b" 'treemacs-select-window)
-  (:keymaps '(treemacs-mode-map evil-treemacs-state-map)
-   [mouse-1] #'treemacs-single-click-expand-action ; allow click to expand/collapse node.
-   "s-b" 'treemacs
-   "<escape>" 'treemacs
-   "nf" 'treemacs-create-file
-   "nd" 'treemacs-create-dir)
+  (use-package treemacs
+    ;; :defer t
+    :custom
+    (treemacs-indent-guide-style 'line)
+    ;; (treemacs-indentation 1)
+    ;; (treemacs-indentation-string "\t\t")
+    ;; (treemacs-fringe-indicator-mode 'always)
+    :general
+    ("s-b" 'treemacs-select-window)
+    (:keymaps '(treemacs-mode-map evil-treemacs-state-map)
+     [mouse-1] #'treemacs-single-click-expand-action ; allow click to expand/collapse node.
+     "s-b" 'treemacs
+     "<escape>" 'treemacs
+     "nf" 'treemacs-create-file
+     "nd" 'treemacs-create-dir)
 
-  :config
-  (pcase (cons (not (null (executable-find "git")))
-               (not (null treemacs-python-executable)))
-    (`(t . t)
-     (treemacs-git-mode 'deferred))
-    (`(t . _)
-     (treemacs-git-mode 'simple)))
+    :config
+    (require 'treemacs-persistence)
+    (pcase (cons (not (null (executable-find "git")))
+                 (not (null treemacs-python-executable)))
+      (`(t . t)
+       (treemacs-git-mode 'deferred))
+      (`(t . _)
+       (treemacs-git-mode 'simple)))
 
-  :config/el-patch
-  (defun treemacs-finish-edit ()
-    "Finish editing your workspaces and apply the change."
-    (interactive)
-    (treemacs-block
-     (treemacs-error-return-if (not (equal (buffer-name) treemacs--org-edit-buffer-name))
-       "This is not a valid treemacs workspace edit buffer")
-     (treemacs--org-edit-remove-validation-msg)
-     (widen)
-     (whitespace-cleanup)
-     (-let [lines (treemacs--read-persist-lines (buffer-string))]
-       (treemacs-error-return-if (null (buffer-string))
-         "The buffer is empty, there is nothing here to save.")
-       (pcase (treemacs--validate-persist-lines lines)
-         (`(error ,err-line ,err-msg)
-          (treemacs--org-edit-display-validation-msg err-msg err-line))
-         ('success
-          (treemacs--invalidate-buffer-project-cache)
-          (write-region
-           (apply #'concat (--map (concat it "\n") lines))
-           nil
-           treemacs-persist-file
-           nil :silent)
-          (treemacs--restore)
-          (-if-let (ws (treemacs--select-workspace-by-name
-                        (treemacs-workspace->name (treemacs-current-workspace))))
-              (setf (treemacs-current-workspace) ws)
-            (treemacs--find-workspace))
-          (treemacs--consolidate-projects)
-          (if (and (treemacs-get-local-window) (= 2 (length (window-list))))
-              (kill-buffer)
-            (quit-window)
-            (el-patch-remove (kill-buffer-and-window)))
-          (run-hooks 'treemacs-workspace-edit-hook)
-          (when treemacs-hide-gitignored-files-mode
-            (treemacs--prefetch-gitignore-cache 'all))
-          (treemacs-log "Edit completed successfully."))))))
+    (treemacs-tag-follow-mode t)
+    :config/el-patch
+    (defun treemacs-finish-edit ()
+      "Finish editing your workspaces and apply the change."
+      (interactive)
+      (treemacs-block
+       (treemacs-error-return-if (not (equal (buffer-name) treemacs--org-edit-buffer-name))
+         "This is not a valid treemacs workspace edit buffer")
+       (treemacs--org-edit-remove-validation-msg)
+       (widen)
+       (whitespace-cleanup)
+       (-let [lines (treemacs--read-persist-lines (buffer-string))]
+         (treemacs-error-return-if (null (buffer-string))
+           "The buffer is empty, there is nothing here to save.")
+         (pcase (treemacs--validate-persist-lines lines)
+           (`(error ,err-line ,err-msg)
+            (treemacs--org-edit-display-validation-msg err-msg err-line))
+           ('success
+            (treemacs--invalidate-buffer-project-cache)
+            (write-region
+             (apply #'concat (--map (concat it "\n") lines))
+             nil
+             treemacs-persist-file
+             nil :silent)
+            (treemacs--restore)
+            (-if-let (ws (treemacs--select-workspace-by-name
+                          (treemacs-workspace->name (treemacs-current-workspace))))
+                (setf (treemacs-current-workspace) ws)
+              (treemacs--find-workspace))
+            (treemacs--consolidate-projects)
+            (if (and (treemacs-get-local-window) (= 2 (length (window-list))))
+                (kill-buffer)
+              (quit-window)
+              (el-patch-remove (kill-buffer-and-window)))
+            (run-hooks 'treemacs-workspace-edit-hook)
+            (when treemacs-hide-gitignored-files-mode
+              (treemacs--prefetch-gitignore-cache 'all))
+            (treemacs-log "Edit completed successfully."))))))
 
-  (defun treemacs-edit-workspaces ()
-    "Edit your treemacs workspaces and projects as an `org-mode' file."
-    (interactive)
-    (require 'org)
-    (require 'outline)
-    (treemacs--persist)
-    (switch-to-buffer (get-buffer-create treemacs--org-edit-buffer-name))
-    (erase-buffer)
-    (org-mode)
-    (use-local-map (copy-keymap (with-no-warnings org-mode-map)))
-    (local-set-key (el-patch-swap (kbd "C-c C-c") (kbd "s-s")) #'treemacs-finish-edit)
-    (insert "#+TITLE: Edit Treemacs Workspaces & Projects\n")
-    (when treemacs-show-edit-workspace-help
-      (insert (el-patch-concat "# Call ~treemacs-finish-edit~ or press " (el-patch-swap "~C-c C-c~" "~s-s~") " when done.\n"))
-      (insert "# [[https://github.com/Alexander-Miller/treemacs#conveniently-editing-your-projects-and-workspaces][Click here for detailed documentation.]]\n")
-      (insert "# To cancel you can simply kill this buffer.\n\n"))
-    (insert-file-contents treemacs-persist-file)
-    (with-no-warnings
-      (outline-show-all))
-    (goto-char 0)))
+    (defun treemacs-edit-workspaces ()
+      "Edit your treemacs workspaces and projects as an `org-mode' file."
+      (interactive)
+      (require 'org)
+      (require 'outline)
+      (treemacs--persist)
+      (switch-to-buffer (get-buffer-create treemacs--org-edit-buffer-name))
+      (erase-buffer)
+      (org-mode)
+      (use-local-map (copy-keymap (with-no-warnings org-mode-map)))
+      (local-set-key (el-patch-swap (kbd "C-c C-c") (kbd "s-s")) #'treemacs-finish-edit)
+      (insert "#+TITLE: Edit Treemacs Workspaces & Projects\n")
+      (when treemacs-show-edit-workspace-help
+        (insert (el-patch-concat "# Call ~treemacs-finish-edit~ or press " (el-patch-swap "~C-c C-c~" "~s-s~") " when done.\n"))
+        (insert "# [[https://github.com/Alexander-Miller/treemacs#conveniently-editing-your-projects-and-workspaces][Click here for detailed documentation.]]\n")
+        (insert "# To cancel you can simply kill this buffer.\n\n"))
+      (insert-file-contents treemacs-persist-file)
+      (with-no-warnings
+        (outline-show-all))
+      (goto-char 0)))
 #+end_src
 
 - treemacs-edit-workspaces의 동작을 수정했다.
@@ -2722,15 +2807,28 @@ https://github.com/Alexander-Miller/treemacs
 #+begin_src emacs-lisp :tangle yes
 (use-package treemacs-all-the-icons
   :after treemacs
+  ;; :custom
+  ;; (treemacs-load-all-the-icons-with-workaround-font "Iosevka SS08")
   :config
   (treemacs-load-theme "all-the-icons"))
+#+end_src
+
+#+begin_src emacs-lisp :tangle yes
 (use-package treemacs-projectile
   :after treemacs projectile)
+#+end_src
+
+#+begin_src emacs-lisp :tangle yes
 (use-package treemacs-magit
   :after treemacs magit)
+#+end_src
 
+#+begin_src emacs-lisp :tangle yes
 (use-package treemacs-evil
   :after treemacs evil)
+#+end_src
+
+#+begin_src emacs-lisp :tangle yes
 (use-package treemacs-persp
   :after treemacs persp-mode
   :config (treemacs-set-scope-type 'Perspectives))
@@ -2789,6 +2887,7 @@ https://github.com/bbatsov/super-save
 :END:
 #+begin_src emacs-lisp :tangle yes
 (use-package ediff
+  :defer t
   :config
   ;; https://emacs.stackexchange.com/questions/7482/restoring-windows-and-layout-after-an-ediff-session
   (defvar my-ediff-last-windows nil)
@@ -3027,7 +3126,7 @@ https://github.com/flycheck/flycheck-inline
   :config
   (add-hook 'flycheck-mode-hook #'flycheck-inline-mode))
 #+end_src
-**** TODO tree-sitter
+**** TODO COMMENT tree-sitter
 :PROPERTIES:
 :ID:       BF940CDE-7558-4C97-8F73-0B2D4B35FBF0
 :END:
@@ -3095,6 +3194,7 @@ https://github.com/redguardtoo/counsel-etags
 :PROPERTIES:
 :ID:       B40025E2-A645-4B1F-94B2-89A2ACCDA874
 :END:
+***** lsp
 https://github.com/emacs-lsp/lsp-mode
 #+begin_src emacs-lisp :tangle yes
 (use-package lsp-mode
@@ -3265,8 +3365,9 @@ https://github.com/emacs-lsp/lsp-java
 (use-package lsp-java
   :after lsp-mode
   :if (executable-find "mvn")
-  :init
-  (use-package request :defer t)
+  :hook (java-mode . #'lsp)
+  ;; :init
+  ;; (use-package request :defer t)
   :custom
   (lsp-java-server-install-dir (expand-file-name "eclipse.jdt.ls/server/" user-emacs-directory))
   (lsp-java-workspace-dir (expand-file-name "eclipse.jdt.ls/workspace/" user-emacs-directory))
@@ -3282,7 +3383,7 @@ https://github.com/emacs-lsp/lsp-java
 ****** dap-java
 #+begin_src emacs-lisp :tangle yes
 (use-package dap-java
-  :after company
+  :after company dap-mode
   :ensure nil
   :straight nil)
 
@@ -3298,6 +3399,9 @@ https://github.com/emacs-lsp/lsp-java
     (add-hook 'latex-mode-hook 'lsp)))
 
 #+end_src
+****** TODO listex
+https://github.com/alejandrogallo/listex
+s-expression to latex
 ***** clojure
 ****** COMMENT cider
 :PROPERTIES:
@@ -3559,21 +3663,21 @@ auto code formatter
   :config
   (apheleia-global-mode +1))
 #+end_src
-**** compile
+**** COMMENT compile
 :PROPERTIES:
 :ID:       DA4726BD-A0E6-4884-8ED0-BF1EC8635C9F
 :END:
 #+begin_src emacs-lisp :tangle yes
-;; (use-package compile
-;;   :straight nil
-;;   :custom
-;;   (compilation-scroll-output t))
+(use-package compile
+  :straight nil
+  :custom
+  (compilation-scroll-output t))
 
-;; (defun auto-recompile-buffer ()
-;;   (interactive)
-;;   (if (member #'recompile after-save-hook)
-;;       (remove-hook 'after-save-hook #'recompile t)
-;;     (add-hook 'after-save-hook #'recompile nil t)))
+(defun auto-recompile-buffer ()
+  (interactive)
+  (if (member #'recompile after-save-hook)
+      (remove-hook 'after-save-hook #'recompile t)
+    (add-hook 'after-save-hook #'recompile nil t)))
 
 #+end_src
 *** org
@@ -3586,11 +3690,13 @@ auto code formatter
 :END:
 #+begin_src emacs-lisp :tangle yes
 (use-package org
+;; :demand t 
   :hook (
          ;; (org-mode . org-mode-setup)
          ;; (org-mode . org-icons)
          ;; https://emacs.stackexchange.com/questions/16845/expand-org-mode-subtree-with-point-after-ellipsis/44568
          ;; expand when press TAB after ellipsis.
+         (org-mode . svg-lib-on)
          (org-tab-first-hook . org-end-of-line))
 #+end_src
 **** 키바인딩 [2/6]
@@ -3791,39 +3897,38 @@ prompted for."
 ****** pretty-babel-src-blocks
 #+begin_src emacs-lisp :tangle yes
 (setq org-icons-list
-'(("#+begin_src" . "")
- ("#+end_src" . "")
- ("#+begin_quote" . "")
- ("#+end_quote" . "")
- ("#+begin_example" . "")
- ("#+end_example" . "")
- ;; (":properties:" . "")
- (":end:" . "")
- ("#+startup:" . "")
- ("#+title:" . "")
- ("#+results:" . "")
- ("#+tag:" . "")
- ("#+name:" . "")
- ("#+roam_tags:" . "")
- ("#+filetags:" . "")
- ("#+html_head:" . "")
- ("#+subtitle:" . "")
- ("#+author:" . " ")
- ("#+header:" . " ")
- ("scheduled:" . "")
- ("deadline:" . "")
- (":Effort:" . "")
- ("[ ]" . "")
- ("[X]" . "")
- ("[-]" . "")
- ;; ("TODO" . "")
- ;; ("WAIT" . "")
- ;; ("NOPE" . "")
- ;; ("DONE" . "")
- ;; ("[#A]" . "")
- ;; ("[#B]" . "")
- ;; ("[#C]" . "")
- ))
+      '(("#+begin_src" . "")
+        ("#+end_src" . "")
+        ("#+begin_quote" . "")
+        ("#+end_quote" . "")
+        ("#+begin_example" . "")
+        ("#+end_example" . "")
+        ;; (":properties:" . "")
+        (":end:" . "")
+        ("#+startup:" . "")
+        ("#+title:" . "")
+        ("#+results:" . "")
+        ("#+tag:" . "")
+        ("#+name:" . "")
+        ("#+roam_tags:" . "")
+        ("#+filetags:" . "")
+        ("#+html_head:" . "")
+        ("#+subtitle:" . "")
+        ("#+author:" . " ")
+        ("#+header:" . " ")
+        ("scheduled:" . "")
+        ("deadline:" . "")
+        (":Effort:" . "")
+        ;; ("TODO" . "")
+        ;; ("WAIT" . "")
+        ;; ("NOPE" . "")
+        ;; ("DONE" . "")
+        ;; ("[#A]" . "")
+        ;; ("[#B]" . "")
+        ;; ("[#C]" . "")
+        ("[ ]" . "")
+        ("[X]" . "")
+        ("[-]" . "")))
 #+end_src
 https://pank.eu/blog/pretty-babel-src-blocks.html
 org-src-block의 기타 파라미터를 숨기는 기능
@@ -3958,7 +4063,7 @@ CLOSED: [2021-11-30 Tue 19:28]
               (svg-lib-progress-bar (/ (string-to-number value) 100.0)
                                 nil :margin 0 :stroke 2 :radius 3 :padding 2 :width 6)
               (svg-lib-tag (concat value "%")
-                           nil :stroke 0 :margin 0)) :ascent 'center))
+                           nil :stroke 2 :margin 0)) :ascent 'center))
 
 (defun svg-font-lock-progress_count (value)
   (let* ((seq (mapcar #'string-to-number (split-string value "/")))
@@ -3968,7 +4073,7 @@ CLOSED: [2021-11-30 Tue 19:28]
               (svg-lib-progress-bar (/ count total) nil
                                 :margin 0 :stroke 2 :radius 3 :padding 2 :width 6)
               (svg-lib-tag value nil
-                           :stroke 0 :margin 0)) :ascent 'center)))
+                           :stroke 2 :margin 0)) :ascent 'center)))
 
 
 (defvar svg-lib-status nil "")
@@ -3993,8 +4098,6 @@ CLOSED: [2021-11-30 Tue 19:28]
 (defun svg-lib-toggle ()
   (interactive)
   (if svg-lib-status (svg-lib-off) (svg-lib-on)))
-
-(svg-lib-on)
 #+end_src
 
 ***** 패키지
@@ -4364,7 +4467,7 @@ https://github.com/awth13/org-appear
     :config
     (org-roam-db-autosync-mode)
     :custom
-    (org-roam-directory "~/Notes/Roam/")
+    (org-roam-directory "~/org-roam/")
     (org-roam-completion-everywhere t)
     (org-roam-completion-system 'default)
     (org-roam-capture-templates
@@ -4539,10 +4642,6 @@ e​=mac=​s
 ******* 관련 패키지
 [[*embrace][embrace]]
 [[*org-emphasize][org-emphasize]]
-****** font-lock
-:PROPERTIES:
-:ID:       429D31B6-7B3F-4D4D-8040-9C42856BDA77
-:END:
 ****** dw/search-org-files
 :PROPERTIES:
 :ID:       C0B585F1-E896-49F0-8B0F-E963F1384F82
@@ -4586,6 +4685,8 @@ not appropriate in some cases like terminals."
     (setq-local evil-move-cursor-back nil))
   (add-hook 'vterm-mode-hook #'evil-collection-vterm-escape-stay))
 #+end_src
+**** TODO vterm-toggle
+https://github.com/jixiuf/vterm-toggle
 **** comint
 :PROPERTIES:
 :ID:       2CCBC1BC-C677-4E8F-A1BA-EB65F6B3EDDE
@@ -4634,7 +4735,9 @@ https://github.com/chenyanming/calibredb.el
 #+begin_src emacs-lisp :tangle yes
 (use-package calibredb
   :after org
-  :config 
+  :defer t
+  :commands (calibredb)
+  :config
   (setq calibredb-root-dir "~/Documents/eBook/calibre"
         calibredb-db-dir (expand-file-name "metadata.db" calibredb-root-dir)
         calibredb-library-alist '(("~/Documents/eBook/calibre"))
@@ -4754,6 +4857,29 @@ https://github.com/pascalfleury/emacs-config
 
 #+end_src
 
+**** COMMENT svg screenshot
+#+begin_src emacs-lisp :tangle yes
+(defun screenshot-svg ()
+  "Save a screenshot of the current frame as an SVG image.
+Saves to a temp file and puts the filename in the kill ring."
+  (interactive)
+  (let* ((filename (make-temp-file "Emacs" nil ".svg"))
+         (data (x-export-frames nil 'svg)))
+    (with-temp-file filename
+      (insert data))
+    (kill-new filename)
+    (message filename)))
+#+end_src
+- cario가 필요함
+- cario를 사용하는 MacOS 빌드는 없음
+**** open-scratch
+#+begin_src emacs-lisp :tangle yes
+(defun open-scratch ()
+  (interactive)
+  (unless (get-buffer "*scratch*")
+    (get-buffer-create "*scratch*"))
+  (switch-to-buffer "*scratch*"))
+#+end_src
 ** keybinding
 :PROPERTIES:
 :ID:       4C33B0B2-73B1-4C4E-9B00-E57B2EBE00BE
@@ -4808,7 +4934,8 @@ https://github.com/emacsmirror/gcmh
 ;;; init.el ends here
 #+end_src
 
-* Local Variables :noexport:
+* Local Variables
+:noexport:
 # Local Variables:
 # eval: (add-hook 'after-save-hook 'd/async-babel-tangle 'append 'local)
 # End:
