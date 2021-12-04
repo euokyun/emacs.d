@@ -8,12 +8,7 @@
  '(lsp-semantic-tokens-enable t nil nil "Customized with use-package lsp-mode")
  '(org-preview-latex-default-process 'dvisvgm nil nil "Customized with use-package org")
  '(safe-local-variable-values
-   '((eval add-hook 'after-save-hook 'd/async-babel-tangle 'append 'local)
-     (eval add-hook 'after-save-hook
-           (lambda nil
-             (org-babel-tangle))
-           nil t)
-     (eval when
+   '((eval when
            (fboundp 'rainbow-mode)
            (rainbow-mode 1)))))
 (custom-set-faces

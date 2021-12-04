@@ -236,8 +236,14 @@ el-patch는 원본과 재정의한 함수의 차이를 보여주며(ediff) 사�
 #+end_src
 
 ***** 사용법
-use-package에 통합해서 사용할 수 있고, 그것이 제일 쉬운 사용법이다.
+:PROPERTIES:
+:ID:       C00D0759-02D6-4958-BE7A-BCB810982879
+:END:
+use-package에 통합해서 사용하는게 편하다
 ****** use-package
+:PROPERTIES:
+:ID:       892EEE33-1CB2-4734-8F1B-21CE4DE75D59
+:END:
 #+begin_example emacs-lisp :tangle no
 (use-package ace-window
   :init/el-patch
@@ -366,7 +372,7 @@ https://github.com/magit/transient
 주로 magit에서 사용하는 일시적인 키 매핑&GUI.
 #+begin_src emacs-lisp :tangle yes
 (use-package transient
-  :defer t
+  ;; :defer t
   :config
   (transient-bind-q-to-quit))
 #+end_src
@@ -420,6 +426,26 @@ fancy한 유니코드 아이콘을 추가함.
   (unless (member "all-the-icons" (font-family-list))
     (all-the-icons-install-fonts t)))
 #+end_src
+
+**** icons-in-terminal
+:PROPERTIES:
+:ID:       90EA68DA-1E5C-4C50-B45F-AECAE7607F82
+:END:
+https://github.com/sebastiencs/icons-in-terminal
+
+#+begin_src emacs-lisp :tangle yes
+(use-package icons-in-terminal
+  :straight '(icons-in-terminal
+              :type git
+              :host github
+              :repo "sebastiencs/icons-in-terminal"
+              :files ("build/icons-in-terminal.el")))
+
+#+end_src
+
+#+begin_example emacs-lisp
+(insert (icons-in-terminal 'fa_bookmark))
+#+end_example
 
 **** svg-lib
 https://github.com/rougier/svg-lib
@@ -617,6 +643,9 @@ auto-complete, company, corfu
 auto-complete는 오래되고 느린데다 메인테이너도 없는 상태.
 company를 주로 쓴다. 관련 생태계가 company를 중심으로 돌아가는 것이 대부분이다.
 ***** company
+:PROPERTIES:
+:ID:       02968554-15E9-45EA-A244-58AF5E8DC12E
+:END:
 ****** company
 :PROPERTIES:
 :ID:       BE78DEDD-F67B-4A48-A30C-81941E36163C
@@ -755,14 +784,16 @@ https://github.com/TommyX12/company-tabnine
 
 - 설치 후 ​~M-x company-tabnine-install-binary~​로 TabNine 바이너리를 설치해야 작동한다.
 ****** company-box
+:PROPERTIES:
+:ID:       05488E01-F31B-4664-B6B8-2887C5281ADD
+:END:
 https://github.com/sebastiencs/company-box
 #+begin_src emacs-lisp :tangle yes
 (use-package company-box
   :diminish
   :if (display-graphic-p)
   :defines company-box-icons-all-the-icons
-  :hook ((company-mode . company-box-mode)
-         (company-yasnippet . company-box-mode))
+  :hook ((company-mode company-yasnippet) . company-box-mode)
   :custom
   ;; (company-box-doc-enable nil)
   ;; (company-box-backends-colors nil)
@@ -772,169 +803,166 @@ https://github.com/sebastiencs/company-box
   ;;                                     (left-fringe . -1)
   ;;                                     (right-fringe . -1)))
   :config
-  ;; (with-no-warnings
-  ;;   ;; Prettify icons
-  ;;   (defun my-company-box-icons--elisp (candidate)
-  ;;     (when (or (derived-mode-p 'emacs-lisp-mode) (derived-mode-p 'lisp-mode))
-  ;;       (let ((sym (intern candidate)))
-  ;;         (cond ((fboundp sym) 'Function)
-  ;;               ((featurep sym) 'Module)
-  ;;               ((facep sym) 'Color)
-  ;;               ((boundp sym) 'Variable)
-  ;;               ((symbolp sym) 'Text)
-  ;;               (t . nil)))))
-  ;;   (advice-add #'company-box-icons--elisp :override #'my-company-box-icons--elisp)
+  (with-no-warnings
+    ;; Prettify icons
+    (defun my-company-box-icons--elisp (candidate)
+      (when (or (derived-mode-p 'emacs-lisp-mode) (derived-mode-p 'lisp-mode))
+        (let ((sym (intern candidate)))
+          (cond ((fboundp sym) 'Function)
+                ((featurep sym) 'Module)
+                ((facep sym) 'Color)
+                ((boundp sym) 'Variable)
+                ((symbolp sym) 'Text)
+                (t . nil)))))
+    (advice-add #'company-box-icons--elisp :override #'my-company-box-icons--elisp)
 
-  ;;   ;; Credits to Centaur for these configurations
-  ;;   ;; Display borders and optimize performance
-  ;;   (defun my-company-box--display (string on-update)
-  ;;     "Display the completions."
-  ;;     (company-box--render-buffer string on-update)
+    ;; Credits to Centaur for these configurations
+    ;; Display borders and optimize performance
+    (defun my-company-box--display (string on-update)
+      "Display the completions."
+      (company-box--render-buffer string on-update)
+      (let ((frame (company-box--get-frame))
+            (border-color (face-foreground 'font-lock-comment-face nil t)))
+        (unless frame
+          (setq frame (company-box--make-frame))
+          (company-box--set-frame frame))
+        (company-box--compute-frame-position frame)
+        (company-box--move-selection t)
+        (company-box--update-frame-position frame)
+        (unless (frame-visible-p frame)
+          (make-frame-visible frame))
+        (company-box--update-scrollbar frame t)
+        (set-face-background 'internal-border border-color frame)
+        (when (facep 'child-frame-border)
+          (set-face-background 'child-frame-border border-color frame)))
+      (with-current-buffer (company-box--get-buffer)
+        (company-box--maybe-move-number (or company-box--last-start 1))))
+    (advice-add #'company-box--display :override #'my-company-box--display)
 
-  ;;     (let ((frame (company-box--get-frame))
-  ;;           (border-color (face-foreground 'font-lock-comment-face nil t)))
-  ;;       (unless frame
-  ;;         (setq frame (company-box--make-frame))
-  ;;         (company-box--set-frame frame))
-  ;;       (company-box--compute-frame-position frame)
-  ;;       (company-box--move-selection t)
-  ;;       (company-box--update-frame-position frame)
-  ;;       (unless (frame-visible-p frame)
-  ;;         (make-frame-visible frame))
-  ;;       (company-box--update-scrollbar frame t)
-  ;;       (set-face-background 'internal-border border-color frame)
-  ;;       (when (facep 'child-frame-border)
-  ;;         (set-face-background 'child-frame-border border-color frame))
-  ;;       )
-  ;;     (with-current-buffer (company-box--get-buffer)
-  ;;       (company-box--maybe-move-number (or company-box--last-start 1))))
-  ;;   (advice-add #'company-box--display :override #'my-company-box--display)
+    (defun my-company-box-doc--make-buffer (object)
+      (let* ((buffer-list-update-hook nil)
+             (inhibit-modification-hooks t)
+             (string (cond ((stringp object) object)
+                           ((bufferp object) (with-current-buffer object (buffer-string))))))
+        (when (and string (> (length (string-trim string)) 0))
+          (with-current-buffer (company-box--get-buffer "doc")
+            (erase-buffer)
+            (insert (propertize "\n" 'face '(:height 0.5)))
+            (insert string)
+            (insert (propertize "\n\n" 'face '(:height 0.5)))
 
-  ;;   (defun my-company-box-doc--make-buffer (object)
-  ;;     (let* ((buffer-list-update-hook nil)
-  ;;            (inhibit-modification-hooks t)
-  ;;            (string (cond ((stringp object) object)
-  ;;                          ((bufferp object) (with-current-buffer object (buffer-string))))))
-  ;;       (when (and string (> (length (string-trim string)) 0))
-  ;;         (with-current-buffer (company-box--get-buffer "doc")
-  ;;           (erase-buffer)
-  ;;           (insert (propertize "\n" 'face '(:height 0.5)))
-  ;;           (insert string)
-  ;;           (insert (propertize "\n\n" 'face '(:height 0.5)))
+            ;; Handle hr lines of markdown
+            ;; @see `lsp-ui-doc--handle-hr-lines'
+            (with-current-buffer (company-box--get-buffer "doc")
+              (let (bolp next before after)
+                (goto-char 1)
+                (while (setq next (next-single-property-change (or next 1) 'markdown-hr))
+                  (when (get-text-property next 'markdown-hr)
+                    (goto-char next)
+                    (setq bolp (bolp)
+                          before (char-before))
+                    (delete-region (point) (save-excursion (forward-visible-line 1) (point)))
+                    (setq after (char-after (1+ (point))))
+                    (insert
+                     (concat
+                      (and bolp (not (equal before ?\n)) (propertize "\n" 'face '(:height 0.5)))
+                      (propertize "\n" 'face '(:height 0.5))
+                      (propertize " "
+                                  'display '(space :height (1))
+                                  'company-box-doc--replace-hr t
+                                  'face `(:background ,(face-foreground 'font-lock-comment-face)))
+                      (propertize " " 'display '(space :height (1)))
+                      (and (not (equal after ?\n)) (propertize " \n" 'face '(:height 0.5)))))))))
 
-  ;;           ;; Handle hr lines of markdown
-  ;;           ;; @see `lsp-ui-doc--handle-hr-lines'
-  ;;           (with-current-buffer (company-box--get-buffer "doc")
-  ;;             (let (bolp next before after)
-  ;;               (goto-char 1)
-  ;;               (while (setq next (next-single-property-change (or next 1) 'markdown-hr))
-  ;;                 (when (get-text-property next 'markdown-hr)
-  ;;                   (goto-char next)
-  ;;                   (setq bolp (bolp)
-  ;;                         before (char-before))
-  ;;                   (delete-region (point) (save-excursion (forward-visible-line 1) (point)))
-  ;;                   (setq after (char-after (1+ (point))))
-  ;;                   (insert
-  ;;                    (concat
-  ;;                     (and bolp (not (equal before ?\n)) (propertize "\n" 'face '(:height 0.5)))
-  ;;                     (propertize "\n" 'face '(:height 0.5))
-  ;;                     (propertize " "
-  ;;                                 'display '(space :height (1))
-  ;;                                 'company-box-doc--replace-hr t
-  ;;                                 'face `(:background ,(face-foreground 'font-lock-comment-face)))
-  ;;                     (propertize " " 'display '(space :height (1)))
-  ;;                     (and (not (equal after ?\n)) (propertize " \n" 'face '(:height 0.5)))))))))
+            (setq mode-line-format nil
+                  display-line-numbers nil
+                  header-line-format nil
+                  show-trailing-whitespace nil
+                  cursor-in-non-selected-windows nil)
+            (current-buffer)))))
+    (advice-add #'company-box-doc--make-buffer :override #'my-company-box-doc--make-buffer)
 
-  ;;           (setq mode-line-format nil
-  ;;                 display-line-numbers nil
-  ;;                 header-line-format nil
-  ;;                 show-trailing-whitespace nil
-  ;;                 cursor-in-non-selected-windows nil)
-  ;;           (current-buffer)))))
-  ;;   (advice-add #'company-box-doc--make-buffer :override #'my-company-box-doc--make-buffer)
+    ;; Display the border and fix the markdown header properties
+    (defun my-company-box-doc--show (selection frame)
+      (cl-letf (((symbol-function 'completing-read) #'company-box-completing-read)
+                (window-configuration-change-hook nil)
+                (inhibit-redisplay t)
+                (display-buffer-alist nil)
+                (buffer-list-update-hook nil))
+        (-when-let* ((valid-state (and (eq (selected-frame) frame)
+                                       company-box--bottom
+                                       company-selection
+                                       (company-box--get-frame)
+                                       (frame-visible-p (company-box--get-frame))))
+                     (candidate (nth selection company-candidates))
+                     (doc (or (company-call-backend 'quickhelp-string candidate)
+                              (company-box-doc--fetch-doc-buffer candidate)))
+                     (doc (company-box-doc--make-buffer doc)))
+          (let ((frame (frame-local-getq company-box-doc-frame))
+                (border-color (face-foreground 'font-lock-comment-face nil t)))
+            (unless (frame-live-p frame)
+              (setq frame (company-box-doc--make-frame doc))
+              (frame-local-setq company-box-doc-frame frame))
+            (set-face-background 'internal-border border-color frame)
+            ;; (when (facep 'child-frame-border)
+            ;;   (set-face-background 'child-frame-border border-color frame))
+            (company-box-doc--set-frame-position frame)
 
-  ;;   ;; Display the border and fix the markdown header properties
-  ;;   (defun my-company-box-doc--show (selection frame)
-  ;;     (cl-letf (((symbol-function 'completing-read) #'company-box-completing-read)
-  ;;               (window-configuration-change-hook nil)
-  ;;               (inhibit-redisplay t)
-  ;;               (display-buffer-alist nil)
-  ;;               (buffer-list-update-hook nil))
-  ;;       (-when-let* ((valid-state (and (eq (selected-frame) frame)
-  ;;                                      company-box--bottom
-  ;;                                      company-selection
-  ;;                                      (company-box--get-frame)
-  ;;                                      (frame-visible-p (company-box--get-frame))))
-  ;;                    (candidate (nth selection company-candidates))
-  ;;                    (doc (or (company-call-backend 'quickhelp-string candidate)
-  ;;                             (company-box-doc--fetch-doc-buffer candidate)))
-  ;;                    (doc (company-box-doc--make-buffer doc)))
-  ;;         (let ((frame (frame-local-getq company-box-doc-frame))
-  ;;               (border-color (face-foreground 'font-lock-comment-face nil t)))
-  ;;           (unless (frame-live-p frame)
-  ;;             (setq frame (company-box-doc--make-frame doc))
-  ;;             (frame-local-setq company-box-doc-frame frame))
-  ;;           (set-face-background 'internal-border border-color frame)
-  ;;           ;; (when (facep 'child-frame-border)
-  ;;           ;;   (set-face-background 'child-frame-border border-color frame))
-  ;;           (company-box-doc--set-frame-position frame)
+            ;; Fix hr props. @see `lsp-ui-doc--fix-hr-props'
+            (with-current-buffer (company-box--get-buffer "doc")
+              (let (next)
+                (while (setq next (next-single-property-change (or next 1) 'company-box-doc--replace-hr))
+                  (when (get-text-property next 'company-box-doc--replace-hr)
+                    (put-text-property next (1+ next) 'display
+                                       '(space :align-to (- right-fringe 1) :height (1)))
+                    (put-text-property (1+ next) (+ next 2) 'display
+                                       '(space :align-to right-fringe :height (1)))))))
 
-  ;;           ;; Fix hr props. @see `lsp-ui-doc--fix-hr-props'
-  ;;           (with-current-buffer (company-box--get-buffer "doc")
-  ;;             (let (next)
-  ;;               (while (setq next (next-single-property-change (or next 1) 'company-box-doc--replace-hr))
-  ;;                 (when (get-text-property next 'company-box-doc--replace-hr)
-  ;;                   (put-text-property next (1+ next) 'display
-  ;;                                      '(space :align-to (- right-fringe 1) :height (1)))
-  ;;                   (put-text-property (1+ next) (+ next 2) 'display
-  ;;                                      '(space :align-to right-fringe :height (1)))))))
+            (unless (frame-visible-p frame)
+              (make-frame-visible frame))))))
+    (advice-add #'company-box-doc--show :override #'my-company-box-doc--show)
 
-  ;;           (unless (frame-visible-p frame)
-  ;;             (make-frame-visible frame))))))
-  ;;   (advice-add #'company-box-doc--show :override #'my-company-box-doc--show)
+    (defun my-company-box-doc--set-frame-position (frame)
+      (-let* ((frame-resize-pixelwise t)
 
-  ;;   (defun my-company-box-doc--set-frame-position (frame)
-  ;;     (-let* ((frame-resize-pixelwise t)
+              (box-frame (company-box--get-frame))
+              (box-position (frame-position box-frame))
+              (box-width (frame-pixel-width box-frame))
+              (box-height (frame-pixel-height box-frame))
+              (box-border-width (frame-border-width box-frame))
 
-  ;;             (box-frame (company-box--get-frame))
-  ;;             (box-position (frame-position box-frame))
-  ;;             (box-width (frame-pixel-width box-frame))
-  ;;             (box-height (frame-pixel-height box-frame))
-  ;;             (box-border-width (frame-border-width box-frame))
+              (window (frame-root-window frame))
+              ((text-width . text-height) (window-text-pixel-size window nil nil
+                                                                  (/ (frame-pixel-width) 2)
+                                                                  (/ (frame-pixel-height) 2)))
+              (border-width (or (alist-get 'internal-border-width company-box-doc-frame-parameters) 0))
 
-  ;;             (window (frame-root-window frame))
-  ;;             ((text-width . text-height) (window-text-pixel-size window nil nil
-  ;;                                                                 (/ (frame-pixel-width) 2)
-  ;;                                                                 (/ (frame-pixel-height) 2)))
-  ;;             (border-width (or (alist-get 'internal-border-width company-box-doc-frame-parameters) 0))
+              (x (- (+ (car box-position) box-width) border-width))
+              (space-right (- (frame-pixel-width) x))
+              (space-left (car box-position))
+              (fringe-left (or (alist-get 'left-fringe company-box-doc-frame-parameters) 0))
+              (fringe-right (or (alist-get 'right-fringe company-box-doc-frame-parameters) 0))
+              (width (+ text-width border-width fringe-left fringe-right))
+              (x (if (> width space-right)
+                     (if (> space-left width)
+                         (- space-left width)
+                       space-left)
+                   x))
+              (y (cdr box-position))
+              (bottom (+ company-box--bottom (frame-border-width)))
+              (height (+ text-height (* 2 border-width)))
+              (y (cond ((= x space-left)
+                        (if (> (+ y box-height height) bottom)
+                            (+ (- y height) border-width)
+                          (- (+ y box-height) border-width)))
+                       ((> (+ y height) bottom)
+                        (- (+ y box-height) height))
+                       (t y))))
+        (set-frame-position frame (max x 0) (max y 0))
+        (set-frame-size frame text-width text-height t)))
 
-  ;;             (x (- (+ (car box-position) box-width) border-width))
-  ;;             (space-right (- (frame-pixel-width) x))
-  ;;             (space-left (car box-position))
-  ;;             (fringe-left (or (alist-get 'left-fringe company-box-doc-frame-parameters) 0))
-  ;;             (fringe-right (or (alist-get 'right-fringe company-box-doc-frame-parameters) 0))
-  ;;             (width (+ text-width border-width fringe-left fringe-right))
-  ;;             (x (if (> width space-right)
-  ;;                    (if (> space-left width)
-  ;;                        (- space-left width)
-  ;;                      space-left)
-  ;;                  x))
-  ;;             (y (cdr box-position))
-  ;;             (bottom (+ company-box--bottom (frame-border-width)))
-  ;;             (height (+ text-height (* 2 border-width)))
-  ;;             (y (cond ((= x space-left)
-  ;;                       (if (> (+ y box-height height) bottom)
-  ;;                           (+ (- y height) border-width)
-  ;;                         (- (+ y box-height) border-width)))
-  ;;                      ((> (+ y height) bottom)
-  ;;                       (- (+ y box-height) height))
-  ;;                      (t y))))
-  ;;       (set-frame-position frame (max x 0) (max y 0))
-  ;;       (set-frame-size frame text-width text-height t)))
-
-  ;;   ;; (advice-add #'company-box-doc--set-frame-position
-  ;;   ;;     :override #'my-company-box-doc--set-frame-position)
-  ;;   )
+    (advice-add #'company-box-doc--set-frame-position
+        :override #'my-company-box-doc--set-frame-position))
 
   (when (require 'all-the-icons nil t)
     (declare-function all-the-icons-faicon 'all-the-icons)
@@ -1167,7 +1195,7 @@ https://github.com/Bad-ptr/persp-mode.el
     "pxr" 'persp-rename
     "pxy" 'persp-copy
     "pxd" 'persp-kill
-    "pxs" 'persp-state-save
+    "pxs" 'persp-save-state
     "pxS" 'persp-save-to-file-by-names
     "pxl" 'persp-load-state-from-file
     "pxL" 'persp-load-from-file-by-names
@@ -2230,6 +2258,9 @@ https://github.com/hlissner/emacs-solaire-mode
 #+end_src
 **** indicators
 ***** TODO paren [0/1]
+:PROPERTIES:
+:ID:       1ED87A96-8E28-4647-8BA3-E26AB55177A4
+:END:
 괄호의 양 끝을 강조표시한다.
 #+begin_src emacs-lisp :tangle yes
 (use-package paren
@@ -2246,7 +2277,6 @@ https://github.com/hlissner/emacs-solaire-mode
 #+end_src
 
 - [ ] 커서 위치가 헷갈리는 문제
-
 
 ***** COMMENT whitespace
 :PROPERTIES:
@@ -2597,6 +2627,9 @@ or
   )
 #+end_src
 **** font
+:PROPERTIES:
+:ID:       39EB7FC4-28EA-425B-AC20-4A8C05C71B19
+:END:
 ***** COMMENT mixed-pitch
 https://gitlab.com/jabranham/mixed-pitch
 variable-pitch, fixed-pitch의 간격을 적당하게 조절
@@ -2614,6 +2647,9 @@ https://gitlab.com/thomasluquet/font-lock-plus
 
 #+end_src
 **** which-key
+:PROPERTIES:
+:ID:       06F4C962-D8EF-4BA9-B3D0-696EAB26BA45
+:END:
 https://github.com/justbur/emacs-which-key
 키 치트시트
 #+begin_src emacs-lisp :tangle yes
@@ -2635,19 +2671,36 @@ https://github.com/justbur/emacs-which-key
 https://github.com/joostkremers/visual-fill-column
 ​=visual-line-mode=​와 비슷하지만 window 경계가 아닌 ​=fill-column=​에 맞춰서 글자를 자른다.
 #+begin_src emacs-lisp :tangle yes
-(use-package visual-fill-column
-  ;; :disabled
-  :config
-  ;; (add-hook 'visual-fill-column-mode-hook #'visual-line-mode)
-  (add-hook 'visual-line-mode-hook #'visual-fill-column-mode)
-  (advice-add 'text-scale-adjust :after #'visual-fill-column-adjust)
-  ;; (setq visual-fill-column-width 80)
-  ;; (setq visual-fill-column-extra-text-width '(10 . 10))
-  )
+  (use-package visual-fill-column
+    ;; :hook ((visual-line-mode . visual-fill-column-mode)
+           ;; (visual-fill-column-mode . (lambda () (toggle-truncate-lines -1)))
+           )
+    :config
+    ;; (add-hook 'visual-fill-column-mode-hook #'visual-line-mode)
+    ;; (add-hook 'visual-line-mode-hook #'visual-fill-column-mode)
+    (advice-add 'text-scale-adjust :after #'visual-fill-column-adjust)
+    ;; (setq visual-fill-column-width 80)
+    ;; (setq visual-fill-column-extra-text-width '(10 . 10))
 
+    (when evil-respect-visual-line-mode
+      (evil-define-minor-mode-key 'motion 'visual-fill-column-mode
+        "j" 'evil-next-visual-line
+        "gj" 'evil-next-line
+        "k" 'evil-previous-visual-line
+        "gk" 'evil-previous-line
+        "0" 'evil-beginning-of-visual-line
+        "g0" 'evil-beginning-of-line
+        "$" 'evil-end-of-visual-line
+        "g$" 'evil-end-of-line
+        "V" 'evil-visual-screen-line)))
 #+end_src
 
+- [[git-gutter][git-gutter]]의 버퍼 표시를 덮어쓴다.
+
 **** origami
+:PROPERTIES:
+:ID:       CC0E4678-527A-4A59-BEB6-BDB209E19518
+:END:
 https://github.com/gregsexton/origami.el
 fold/unfold
 #+begin_src emacs-lisp :tangle yes
@@ -3184,6 +3237,7 @@ https://github.com/jtamagnan/magit-reviewboard
 **** git-gutter
 :PROPERTIES:
 :ID:       B7B5B4B2-538B-492C-96DF-59C5DF7FB41F
+:CUSTOM_ID: git-gutter
 :END:
 https://github.com/emacsorphanage/git-gutter
 git 변경 내용을 표시하는 패키지 
@@ -3198,6 +3252,8 @@ git 변경 내용을 표시하는 패키지
     :states '(normal insert visual emacs motion)
     "gg" '(my/git-gutters :which-key "git-gutter"))
   :custom
+  (git-gutter:hide-gutter t)
+  (git-gutter:visual-line t)
   (git-gutter:modified-sign "≡")
   (git-gutter:added-sign "+")
   (git-gutter:deleted-sign "-")
@@ -3239,8 +3295,7 @@ git 변경 내용을 표시하는 패키지
                   (mapcar 'my-reshape-git-gutter git-gutter:diffinfos)
                   :action (lambda (e)
                             (unless (numberp e) (setq e (cdr e)))
-                            (goto-line e))
-                  )
+                            (goto-line e)))
       (message "NO git-gutters!")))
 
   (transient-define-prefix my/git-gutters ()
@@ -3251,6 +3306,7 @@ git 변경 내용을 표시하는 패키지
     [[("j" "next-hunk" git-gutter:next-hunk :transient t)]
      [("k" "previous-hunk" git-gutter:previous-hunk :transient t)]]))
 #+end_src
+
 *** programming
 :PROPERTIES:
 :ID:       DA4A6780-B676-4166-ABD1-13D04C7549B7
@@ -3908,7 +3964,7 @@ auto code formatter
 (use-package org
 ;; :demand t 
   :hook (
-         ;; (org-mode . org-mode-setup)
+         (org-mode . org-mode-setup)
          ;; (org-mode . org-icons)
          ;; https://emacs.stackexchange.com/questions/16845/expand-org-mode-subtree-with-point-after-ellipsis/44568
          ;; expand when press TAB after ellipsis.
@@ -4112,6 +4168,9 @@ prompted for."
 :ID:       C87F5E88-5E5D-4ADE-A242-CD73E6A2BA0A
 :END:
 ****** pretty-babel-src-blocks
+:PROPERTIES:
+:ID:       26CE090F-CCC8-4584-BED6-BE78708D86F8
+:END:
 #+begin_src emacs-lisp :tangle yes
 (setq org-icons-list
       '(("#+begin_src" . "")
@@ -4802,9 +4861,12 @@ https://github.com/yilkalargaw/org-auto-tangle
 :ID:       6C097999-4930-4C4C-9C7D-CE9A89559855
 :END:
 #+begin_src emacs-lisp :tangle yes
-(visual-line-mode 1)
-(display-line-numbers-mode nil)
-(setq evil-auto-indent nil)
+(defun org-mode-setup ()
+  (visual-line-mode 1)
+  ;; (visual-fill-column-mode 1)
+  (toggle-truncate-lines -1)
+  (display-line-numbers-mode -1)
+  (setq evil-auto-indent nil))
 #+end_src
 ****** my/org-edit-this
 :PROPERTIES:
