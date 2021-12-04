@@ -218,10 +218,11 @@ straight의 org 로드 순서를 앞당김
 :END:
 https://github.com/raxod502/el-patch
 el-patch 패키지는 패키지의 elisp 소스를 변경하는 기능을 제공한다.
-emacs에서 기능을 재정의하는 방법은
+emacs에서 기능을 재정의하는 방법은 크게 두가지가 있다.
 1. advice, hook
-2. 재정의, 원본 소스 파일 수정
-이 있는데, 2는 패키지 업데이트나 변경시 정의가 수정한 부분을 확인하기 어렵다. el-patch는 2의 단계에서 사용자가 재정의한 함수가 변경되었을 때 사용자 설정에 업데이트가 필요하다는 것을 알려준다.
+2. 코드 덮어쓰기, 원본 소스 파일 수정
+hook을 제외한 두 방법 모두 패키지 업데이트 등으로 코드가 변경되면 변경점을 찾아보기 어려울 수 있다.
+el-patch는 원본과 재정의한 함수의 차이를 보여주며(ediff) 사용자가 재정의한 함수가 변경되었을 때 사용자 설정에 업데이트가 필요하다는 것을 알려준다.
 #+begin_src emacs-lisp :tangle yes
 (use-package el-patch
   :custom
@@ -271,6 +272,9 @@ or
 :init나 :config에 /el-patch를 더해서 쓰면 된다.
 
 ****** without use-package
+:PROPERTIES:
+:ID:       59843D80-8B37-420A-960A-BF624BC041B9
+:END:
 #+begin_example emacs-lisp :tangle no
 (el-patch-feature ace-window)
 (with-eval-after-load 'ace-window
@@ -285,14 +289,15 @@ or
            (call-interactively 'switch-to-buffer)))))
 #+end_example
 
-el-patch-feature로 어떤 패키지를 변경할지 선언하고 el-patch-*로 코드를 수정한다.
+1. el-patch-feature로 어떤 패키지를 변경할지 선언하고
+2. el-patch-*로 코드를 수정한다.
 
 ***** keyboard-escape-quit
 :PROPERTIES:
 :ID:       F71F46C1-3852-40D3-96A1-F56856FC7AC4
 :END:
 https://stackoverflow.com/questions/557282/in-emacs-whats-the-best-way-for-keyboard-escape-quit-not-destroy-other-windows
-esc가 윈도우를 지우지 않게 변경
+esc가 화면의 윈도우를 지우지 않게 변경
 #+begin_src emacs-lisp :tangle yes
 (el-patch-defun keyboard-escape-quit ()
   "Exit the current \"mode\" (in a generalized sense of the word).
@@ -314,6 +319,9 @@ or go back to just one window (by deleting all but the selected window)."
 #+end_src
 
 **** general
+:PROPERTIES:
+:ID:       B92999FC-7131-4823-97C9-1D3300E96E5C
+:END:
 https://github.com/noctuid/general.el
 걍력한 기능의 키바인딩 패키지
 #+begin_src emacs-lisp :tangle yes
@@ -323,7 +331,7 @@ https://github.com/noctuid/general.el
   (general-override-mode)
   (general-evil-setup t)
   (general-unbind 'global
-    ;; "s-q"
+    "s-q"
     "s-z"
     "s-Z"
     "s-f"
@@ -351,8 +359,11 @@ https://github.com/noctuid/general.el
 #+end_src
 
 **** transient
+:PROPERTIES:
+:ID:       E4B8D460-0025-4043-9F5D-4D421369BC4B
+:END:
 https://github.com/magit/transient
-대표적으로 magit에서 사용하는 일시적인 키 매핑&GUI.
+주로 magit에서 사용하는 일시적인 키 매핑&GUI.
 #+begin_src emacs-lisp :tangle yes
 (use-package transient
   :defer t
@@ -361,6 +372,9 @@ https://github.com/magit/transient
 #+end_src
 
 **** ligature
+:PROPERTIES:
+:ID:       E19D2990-DF29-49C0-BE37-3759AB7E022A
+:END:
 https://github.com/mickeynp/ligature.el
 합자(리가추어) 지원
 #+begin_src emacs-lisp :tangle yes
@@ -395,11 +409,6 @@ https://github.com/mickeynp/ligature.el
   ;; Enables ligature checks globally in all buffers. You can also do it
   ;; per mode with `ligature-mode'.
   (global-ligature-mode t))
-#+end_src
-
-**** diminish
-#+begin_src emacs-lisp :tangle yes
-(use-package diminish)
 #+end_src
 
 **** all-the-icons
@@ -508,10 +517,9 @@ and style elements ARGS."
 설정이 쉽고 사용자가 많은 ​=ivy=​, 거대하고 복잡한 ​=Helm=​, 새로 인기를 끌어가고 있는 ​=Vertico=​ 등이 있다.
 **** ivy
 :PROPERTIES:
-:ID:       67D8A07D-D19A-44EA-9062-9B249B88A18B
+:ID:       79DD75F9-B79C-4CDE-AE3A-7EF466801BBF
 :END:
-***** ivy
-****** ivy, counsel, swiper
+***** ivy, counsel, swiper
 :PROPERTIES:
 :ID:       DDC4D737-89A3-4E75-BC29-E116ED60A7EF
 :END:
@@ -561,7 +569,7 @@ https://github.com/abo-abo/swiper
 #+end_src
 - counsel-buffer-or-recentf-candidates 패치는 https://github.com/zzamboni/dot-doom/blob/master/doom.org 에서 가지고 왔다. 
 
-****** ivy-rich - ivy, counsel에 더 풍부한 정보를 표시
+***** ivy-rich - ivy, counsel에 더 풍부한 정보를 표시
 https://github.com/seagle0128/all-the-icons-ivy-rich
 ivy-rich 전에 활성화해야 한다.
 counsel-projectile 같은 패키지는 이 패키지 이전에 활성화해야 한다.
@@ -605,6 +613,8 @@ https://github.com/Yevgnen/ivy-rich
 :PROPERTIES:
 :ID:       9E3FA906-6CFE-47EF-A6ED-D302FD2D314E
 :END:
+auto-complete, company, corfu
+auto-complete는 오래되고 느린데다 메인테이너도 없는 상태.
 company를 주로 쓴다. 관련 생태계가 company를 중심으로 돌아가는 것이 대부분이다.
 ***** company
 ****** company
@@ -1073,6 +1083,8 @@ https://xenodium.com/emacs-org-block-company-completion/
 :ID:       D58D0A72-6B52-4B1C-9ED2-A1FF106DEA72
 :END:
 company의 대체제.
+company와 다르게 SPC를 눌러도 자동완성이 종료되지 않는다. 퍼지 검색에 유용함.
+company와 비교하면 서드파티 패키지 지원이 부족한 편이다.(capf만 사용)
 [[*yasnippet][yasnippet]]은 capf를 지원하지 않기 때문에 corfu에서 사용하기 위해서는 cousult-yasnippet 같은 yasnippet capf backend를 구성해야 한다.
 ****** corfu
 :PROPERTIES:
@@ -1134,7 +1146,7 @@ counsel과 통합
 :PROPERTIES:
 :ID:       7FA6EFE1-D9E9-49CF-8538-E704C07C84E0
 :END:
-탭과 비슷한 느낌으로 한 프레임에 여러 프레임을 갈아끼우며 작업 공간을 확장하는 패키지
+가상 데스크탑처럼 한 프레임에 여러 프레임을 갈아끼우며 작업 공간을 확장하는 패키지
 https://github.com/Bad-ptr/persp-mode.el
 #+begin_src emacs-lisp :tangle yes
 (use-package persp-mode
@@ -1233,7 +1245,7 @@ https://github.com/Bad-ptr/persp-mode.el
               t)))
 
 #+end_src
-- [ ] transient keymap 만들기
+
 *** completion sorting
 **** smex
 history 기반 M-x 정렬
@@ -1296,6 +1308,9 @@ company와 통합
 #+end_src
 
 *** undo-tree
+:PROPERTIES:
+:ID:       20704DF1-2D01-4ED4-A54D-58EDB736FD1D
+:END:
 https://emacs.stackexchange.com/questions/61512/
 https://www.dr-qubit.org/Lost_undo-tree_history.html
 #+begin_src emacs-lisp :tangle yes
@@ -1325,6 +1340,8 @@ https://www.dr-qubit.org/Lost_undo-tree_history.html
 #+end_src
 - undo-tree-auto-save-history :: undo 내역을 저장하고 다음 세션에서도 쓸 수 있게 함.
 - undo-tree-enable-undo-in-region :: 선택 region 내에서만 undo를 할 수 있는 기능
+
+undo-tree는 강력하지만 히스토리 저장이 자주 꺠진다. 가바지 콜렉터가 elisp 인터프리터 외부에서 실행되고, 그에 따라 실행 취소 기록이 손상될 수 있는 것이 문제라고 함. 
 
 *** 텍스트 편집
 :PROPERTIES:
@@ -1414,7 +1431,7 @@ evil 키바인딩 모음집.
 :END:
 ***** expand-region
 https://github.com/magnars/expand-region.el
-선택 영역을 확대해나가는 기능
+선택 영역을 확장해나가는 기능
 #+begin_src emacs-lisp :tangle yes
 (use-package expand-region
   :defer t
@@ -1477,9 +1494,13 @@ http://github.com/Dewdrops/evil-exchange
 #+end_src
 
 **** 다중 편집 기능
+:PROPERTIES:
+:ID:       7BC8300C-123D-4166-835B-C4D226DB85AF
+:END:
 - evil과의 호환성에서 evil-mc가 더 좋다.
 - multiple-cursors의 가장 큰 문제는 너무 잦은 run once/or all 프롬프트와 "file:./var/mc-list.el" 파일 수정이 불가피하다는 점
 - 설정 측면에서 evil-mc 또한 좋은 편은 아니지만 multiple-cursors보다는 쉬운 편
+- 하지만 multiple-cursors의 기능을 사용하는 좋은 패키지들이 꽤 있다 
 
 ***** evil-mc
 https://github.com/gabesoft/evil-mc
@@ -1888,8 +1909,10 @@ https://github.com/redguardtoo/evil-matchit
 #+end_src
 
 ***** anzu
+:PROPERTIES:
+:ID:       E34BBAE5-A5C7-496F-8F85-C8E6D20E7A53
+:END:
 https://github.com/emacsorphanage/anzu
-
 ​=M-%=​
 #+begin_src emacs-lisp :tangle yes
 (use-package anzu
@@ -1897,7 +1920,10 @@ https://github.com/emacsorphanage/anzu
   ([remap query-replace] . anzu-query-replace-regexp))
 
 #+end_src
-***** ctrlf
+***** COMMENT ctrlf
+:PROPERTIES:
+:ID:       1B51B20B-AED6-4F9C-A645-6D50A7DEBAD7
+:END:
 https://github.com/raxod502/ctrlf
 isearch와 비슷하지만 더 나은 검색 기능
 #+begin_src emacs-lisp :tangle yes
@@ -2090,6 +2116,9 @@ https://github.com/honmaple/emacs-maple-minibuffer
 
 #+end_src
 ***** ivy-posframe
+:PROPERTIES:
+:ID:       1B53E8CF-8CC4-4B0E-8EA7-5F7AFEE49BEE
+:END:
 https://github.com/tumashu/ivy-posframe
 #+begin_src emacs-lisp :tangle yes
 (use-package ivy-posframe
@@ -2159,6 +2188,7 @@ https://github.com/emacs-dashboard/emacs-dashboard
 :ID:       1013B3C7-6C34-4083-A94E-F18A504D6057
 :END:
 https://github.com/greduan/emacs-theme-gruvbox
+개인적으로 수정한 gruvbox 테마를 사용
 #+begin_src emacs-lisp :tangle yes
 (use-package gruvbox-theme
   :straight (gruvbox-theme
@@ -2184,9 +2214,14 @@ https://github.com/greduan/emacs-theme-gruvbox
 
 #+end_src
 - [[file:straight/repos/emacs-theme-gruvbox/gruvbox.el][gruvbox.el]]
+ 
 ***** solaire
+:PROPERTIES:
+:ID:       7196F580-4288-4A4E-8CDD-EA54BA29B3EB
+:END:
 https://github.com/hlissner/emacs-solaire-mode
 파일 버퍼와 기타 버퍼를 테마 컬러로 구분할 수 있게 함
+몇 몇 지원되는 테마를 제외하면 테마에 관련 face를 추가해야 한다. 
 #+begin_src emacs-lisp :tangle yes
 (use-package solaire-mode
   :config
@@ -2194,7 +2229,7 @@ https://github.com/hlissner/emacs-solaire-mode
 
 #+end_src
 **** indicators
-***** paren
+***** TODO paren [0/1]
 괄호의 양 끝을 강조표시한다.
 #+begin_src emacs-lisp :tangle yes
 (use-package paren
@@ -2208,8 +2243,11 @@ https://github.com/hlissner/emacs-solaire-mode
   :config
   (set-face-attribute 'show-paren-match-expression nil :background "#363e4a")
   (show-paren-mode 1))
-
 #+end_src
+
+- [ ] 커서 위치가 헷갈리는 문제
+
+
 ***** COMMENT whitespace
 :PROPERTIES:
 :ID:       30DEFACA-0125-4C26-9362-852E25605D44
@@ -2286,7 +2324,7 @@ https://github.com/k-talo/volatile-highlights.el
   (volatile-highlights-mode t))
 
 #+end_src
-***** TODO highlight-thing
+***** TODO highlight-thing [0/1]
 :PROPERTIES:
 :ID:       F5AE411B-FFA9-44D9-8EEA-0A002AA07855
 :END:
@@ -2308,7 +2346,10 @@ https://github.com/fgeller/highlight-thing.el
   )
 
 #+end_src
-***** TODO region-occurrences-highlighter
+
+- [ ] on/off 키 추가 
+
+***** TODO region-occurrences-highlighter [0/1]
 :PROPERTIES:
 :ID:       00283B73-B2B8-4E90-AB1B-A15742C83152
 :END:
@@ -2343,8 +2384,12 @@ https://github.com/alvarogonzalezsotillo/region-occurrences-highlighter
             (region-occurrences-highlighter-nav-mode 1))))))))
 #+end_src
 - 긴 org-mode에서 퍼포먼스 저하를 발견함.(fold 때문인 듯)
+- [ ] on/off 키 추가 
 
 ***** hl-block-mode
+:PROPERTIES:
+:ID:       5A79ED5F-C2D1-4A63-A21A-289F87C24ED7
+:END:
 https://gitlab.com/ideasman42/emacs-hl-block-mode
 커서가 위치한 블럭을 강조 표시함
 #+begin_src emacs-lisp :tangle yes
@@ -2362,14 +2407,13 @@ https://gitlab.com/ideasman42/emacs-hl-block-mode
 #+end_src
 color-tint와 bracket 두가지 모드가 있다.
 
-- color-tint는 rainbow-mode 등 몇가지 background face를 사용하는 모드와 충돌이 있다.
+- color-tint는 rainbow-mode 등 몇가지 background face를 사용하는 모드를 덮어쓴다.
 - bracket은 t라는 face를 찾지 못한다는 에러를 띄우고, 의도와는 반대로 커서 위치가 헷갈리는 문제가 있다.
 
-*****
-*****
 ***** highlight-indent-guides
 :PROPERTIES:
 :ID:       4CBD3996-76FE-42D5-80BE-44E1E776E20D
+:CUSTOM_ID: highlight-indent-guides
 :END:
 https://github.com/darthfennec/highlight-indent-guides
 indent 레벨을 라인으로 표시해줌
@@ -2419,6 +2463,16 @@ https://github.com/Fanael/rainbow-delimiters
 
 #+end_src
 **** modeline
+***** diminish
+:PROPERTIES:
+:ID:       E1EBBC1E-C394-47A2-BE8B-24CEAF97EAAB
+:END:
+https://github.com/emacsmirror/diminish
+모드 라인에서 minor 모드를 가리는 패키지
+#+begin_src emacs-lisp :tangle yes
+(use-package diminish)
+#+end_src
+
 ***** minions
 :PROPERTIES:
 :ID:       EC485605-3264-473D-9C48-D8A86911B932
@@ -2473,7 +2527,7 @@ modeline 대신 minibuffer에 모드라인을 표시하는 기능.
       (_ (format "%s" awesome-tray-input-method-en-style)))))
 
 #+end_src
-***** mini-modeline
+***** COMMENT mini-modeline
 :PROPERTIES:
 :ID:       9A54A041-C719-4D7E-AB23-B47CC5BB4E95
 :END:
@@ -2487,6 +2541,7 @@ modeline 대신 minibuffer에 모드라인을 표시하는 기능.
 #+end_src
 ***** ace-window
 https://github.com/abo-abo/ace-window
+단축키로 윈도우를 조작하는 패키지
 #+begin_src emacs-lisp :tangle yes
 (use-package ace-window
   :init/el-patch
@@ -2544,6 +2599,7 @@ or
 **** font
 ***** COMMENT mixed-pitch
 https://gitlab.com/jabranham/mixed-pitch
+variable-pitch, fixed-pitch의 간격을 적당하게 조절
 #+begin_src emacs-lisp :tangle yes
 (use-package mixed-pitch
   :hook
@@ -2559,6 +2615,7 @@ https://gitlab.com/thomasluquet/font-lock-plus
 #+end_src
 **** which-key
 https://github.com/justbur/emacs-which-key
+키 치트시트
 #+begin_src emacs-lisp :tangle yes
 (use-package which-key
   :init (which-key-mode)
@@ -2576,6 +2633,7 @@ https://github.com/justbur/emacs-which-key
 :ID:       64A3948C-13EA-4A5D-ABFE-617627E2C547
 :END:
 https://github.com/joostkremers/visual-fill-column
+​=visual-line-mode=​와 비슷하지만 window 경계가 아닌 ​=fill-column=​에 맞춰서 글자를 자른다.
 #+begin_src emacs-lisp :tangle yes
 (use-package visual-fill-column
   ;; :disabled
@@ -2589,10 +2647,9 @@ https://github.com/joostkremers/visual-fill-column
 
 #+end_src
 
-​=visual-line-mode=​와 비슷하지만 window 경계가 아닌 ​=fill-column=​에 맞춰서 글자를 자른다.
-
 **** origami
 https://github.com/gregsexton/origami.el
+fold/unfold
 #+begin_src emacs-lisp :tangle yes
 (use-package origami
   ;; :disabled
@@ -2639,21 +2696,25 @@ https://github.com/alphapapa/dogears.el
          :timeout 0.5
          "n" 'dogears-forward
          "p" 'dogears-back
-         "`" 'dogears-sidebar))
+         ;; "`" 'dogears-sidebar 
+         ))
   :config
-  (defun toggle-dogears (orig-fun &rest args)
-    (unless (ignore-errors (kill-buffer "*Dogears List*"))
-      (apply orig-fun args)))
-  (advice-add 'dogears-sidebar :around #'toggle-dogears)
+  ;; (defun toggle-dogears (orig-fun &rest args)
+  ;;   (unless (ignore-errors (kill-buffer "*Dogears List*"))
+  ;;     (apply orig-fun args)))
+  ;; (advice-add 'dogears-sidebar :around #'toggle-dogears)
   (dogears-mode 1))
 
 #+end_src
+
+- dogears-sidebar는 의미가 있는 기능인가 싶다.
 
 **** helpful
 :PROPERTIES:
 :ID:       9C7CB170-288C-4EDC-8D5C-74D19B80D0E4
 :END:
 https://github.com/Wilfred/helpful
+help-mode를 더 유용하게 바꿈
 #+begin_src emacs-lisp :tangle yes
 (use-package helpful
   :custom
@@ -2782,7 +2843,8 @@ https://github.com/stsquad/dired-rsync/
 :ID:       02901F61-1B1C-478B-BE86-DE96AF438206
 :END:
 https://github.com/joodland/bm
-북마크를 버퍼에 표시함
+북마크를 버퍼에 표시함.
+emacs 내장 북마크 기능을 사용하지 않음.
 #+begin_src emacs-lisp :tangle yes
 (use-package bm
   :demand t
@@ -2982,6 +3044,7 @@ https://github.com/Fanael/persistent-scratch
 #+end_src
 **** osx-trash
 https://github.com/emacsorphanage/osx-trash/
+osx의 휴지통을 사용 
 #+begin_src emacs-lisp :tangle yes
 (use-package osx-trash
   :if (eq system-type 'darwin)
@@ -3123,6 +3186,7 @@ https://github.com/jtamagnan/magit-reviewboard
 :ID:       B7B5B4B2-538B-492C-96DF-59C5DF7FB41F
 :END:
 https://github.com/emacsorphanage/git-gutter
+git 변경 내용을 표시하는 패키지 
 #+begin_src emacs-lisp :tangle yes
 (use-package git-gutter
   :defer t
@@ -3196,6 +3260,7 @@ https://github.com/emacsorphanage/git-gutter
 :ID:       B49933AE-1A4C-479B-A4F2-4596EDC08AB5
 :END:
 https://github.com/Fanael/highlight-defined
+emacs lisp의 문법 강조
 #+begin_src emacs-lisp :tangle yes
 (use-package highlight-defined
   :defer t
@@ -3321,7 +3386,7 @@ https://github.com/meain/evil-textobj-tree-sitter
 
 #+end_src
 - Rust
-**** TODO COMMENT counsel-etags
+**** TODO counsel-etags
 :PROPERTIES:
 :ID:       9A2A9C17-44BD-466F-A48C-5340B8C1566E
 :END:
@@ -3753,6 +3818,9 @@ HTTP REST API 테스트용
 #+end_src
 
 ***** emmet-mode
+:PROPERTIES:
+:ID:       B3A02BB3-E68B-4F5E-87AD-2A8626CB1FCA
+:END:
 https://github.com/smihica/emmet-mode
 #+begin_src emacs-lisp :tangle yes
 (use-package emmet-mode
@@ -3788,6 +3856,7 @@ https://github.com/smihica/emmet-mode
 :ID:       27517D93-C940-4314-827E-D341DEF14EC9
 :END:
 https://github.com/lewang/ws-butler
+공백 문자를 제거함
 #+BEGIN_SRC emacs-lisp :tangle yes
 (use-package ws-butler
   :diminish
@@ -4279,6 +4348,7 @@ org heading을 이맥스 내장 북마크로 저장할 수 있는 기능
 :ID:       87CFE711-61FD-4B65-AB22-E70D0441C3E5
 :END:
 https://github.com/alphapapa/org-sticky-header
+headline에 헤더를 표시함
 #+begin_src emacs-lisp :tangle yes
 (use-package org-sticky-header
     :custom
@@ -4326,7 +4396,8 @@ https://github.com/alphapapa/org-sticky-header
 :PROPERTIES:
 :ID:       679FE824-E0DB-4BB1-9A59-C7CBA6CB60DB
 :END:
-프리뷰에 커서를 가져다 대면 원본을 토글하는 기능
+https://github.com/io12/org-fragtog
+latex 프리뷰에 커서를 가져다 대면 원본을 토글하는 기능
 #+begin_src emacs-lisp :tangle yes
   (use-package org-fragtog
     :hook (org-mode . org-fragtog-mode))
@@ -4532,7 +4603,7 @@ org 파일의 properties 설정에 따라 자동적으로 heading을 확장하�
 :ID:       1A3F717B-789D-47E1-82D0-8DDB9276B77B
 :END:
 https://github.com/tonyaldon/org-bars
-highlight-indent처럼 org의 아웃라인을 표시한다.
+[[highlight-indent-guides][highlight-indent]]처럼 org의 아웃라인을 표시한다.
 #+begin_src emacs-lisp :tangle yes
   (use-package org-bars
     :straight (org-bars
@@ -4556,6 +4627,7 @@ highlight-indent처럼 org의 아웃라인을 표시한다.
 
 ****** org-superstar
 https://github.com/integral-dw/org-superstar-mode
+heading, bullet을 prettify-symbols 처럼 꾸미는 패키지 
 #+begin_src emacs-lisp :tangle yes
 (use-package org-superstar
   :hook (org-mode . org-superstar-mode)
@@ -4619,6 +4691,7 @@ https://github.com/Somelauw/evil-org-mode
 :ID:       D7AC8D50-A4D8-44A9-B771-3431EB062262
 :END:
 https://github.com/awth13/org-appear
+org의 강조 구문에 커서를 올리면 원본 텍스트를 표시함
 #+begin_src emacs-lisp :tangle yes
 (use-package org-appear
   :hook (org-mode . (lambda () (org-appear-mode t)))
@@ -4831,6 +4904,9 @@ e​=mac=​s
 
 #+end_src
 ******* 관련 패키지
+:PROPERTIES:
+:ID:       C9F9AB7C-8DE7-49BB-A05A-5438FAD25E4E
+:END:
 [[*embrace][embrace]]
 [[*org-emphasize][org-emphasize]]
 ****** dw/search-org-files
@@ -4933,6 +5009,9 @@ not appropriate in some cases like terminals."
   (add-hook 'vterm-mode-hook #'evil-collection-vterm-escape-stay))
 #+end_src
 **** TODO vterm-toggle
+:PROPERTIES:
+:ID:       A02462BA-F34B-4A1C-91A6-FF21E4DE5BC8
+:END:
 https://github.com/jixiuf/vterm-toggle
 **** comint
 :PROPERTIES:
@@ -5049,7 +5128,7 @@ https://www.emacswiki.org/emacs/DuplicateLines
   (interactive "*p")
   (insert (last-message num)))
 #+end_src
-**** TODO toggle-window-dedicated [0/1]
+**** TODO toggle-window-dedicated [0/2]
 https://emacs.stackexchange.com/a/2198
 #+begin_src emacs-lisp :tangle yes
 (defun toggle-window-dedicated ()
@@ -5063,6 +5142,7 @@ https://emacs.stackexchange.com/a/2198
    (current-buffer)))
 #+end_src
 - [ ] ace-window와 통합
+
 **** tail message buffer
 #+begin_src emacs-lisp :tangle yes
 (advice-add 'message :after
@@ -5075,7 +5155,7 @@ https://emacs.stackexchange.com/a/2198
             (goto-char (point-max))))))))
 
 #+end_src
-**** enlarge window
+**** COMMENT enlarge window
 https://www.reddit.com/r/emacs/comments/qgxz43/allow_use_of_to_repeat_emacs_command_aliased_as/
 #+begin_src emacs-lisp :tangle yes
 (defun my-enlarge-window ()
@@ -5122,12 +5202,17 @@ Saves to a temp file and puts the filename in the kill ring."
 #+end_src
 - cario가 필요함
 - cario를 사용하는 MacOS 빌드는 없음
+
 **** open-scratch
+:PROPERTIES:
+:ID:       14748309-39C1-4FD5-97B3-940AB41AA693
+:END:
+scratch 버퍼를 여는 함수
 #+begin_src emacs-lisp :tangle yes
 (defun open-scratch ()
   (interactive)
-  (unless (get-buffer "*scratch*")
-    (get-buffer-create "*scratch*"))
+  ;; (unless (get-buffer "*scratch*")
+  ;;   (get-buffer-create "*scratch*"))
   (switch-to-buffer "*scratch*"))
 #+end_src
 **** measure-time
@@ -5142,6 +5227,7 @@ https://stackoverflow.com/questions/23622296/emacs-timing-execution-of-function-
      ,@body
      (message "%.06f" (float-time (time-since time)))))
 #+end_src
+
 ** keybinding
 :PROPERTIES:
 :ID:       4C33B0B2-73B1-4C4E-9B00-E57B2EBE00BE
@@ -5181,6 +5267,7 @@ https://stackoverflow.com/questions/23622296/emacs-timing-execution-of-function-
 
 *** gcmh
 https://github.com/emacsmirror/gcmh
+가비지 콜렉션을 사용자에게 느껴지지 않도록 조절
 #+begin_src emacs-lisp :tangle yes
 (use-package gcmh
   :init
@@ -5203,6 +5290,3 @@ https://github.com/emacsmirror/gcmh
 (provide 'init)
 ;;; init.el ends here
 #+end_src
-
-
-asdqewr
