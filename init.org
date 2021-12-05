@@ -2553,7 +2553,7 @@ https://github.com/jdtsmith/mlscroll
   :config
   (mlscroll-mode 1)
   (advice-add 'my/apply-theme
-      :after #'(lambda ()
+      :after #'(lambda (&rest _)
                  (progn
                    (setq mlscroll-in-color (face-attribute 'region :background nil t))
                    (setq mlscroll-out-color (face-attribute 'region :background))
@@ -5414,20 +5414,26 @@ https://stackoverflow.com/questions/23622296/emacs-timing-execution-of-function-
 #+end_src
 
 *** gcmh
+:PROPERTIES:
+:ID:       6B1DE534-225F-4D9F-B0EA-28A3F136F29D
+:END:
 https://github.com/emacsmirror/gcmh
 가비지 콜렉션을 사용자에게 느껴지지 않도록 조절
 #+begin_src emacs-lisp :tangle yes
 (use-package gcmh
-  :init
-  (gcmh-mode 1)
   ;; :custom
   ;; (gcmh-vervose t)
-  )
+  :init
+  (gcmh-mode 1))
 #+end_src
 
 *** restore file-name-handler-alist
+:PROPERTIES:
+:ID:       B2F93BBC-8B4F-407D-8130-611217010D8C
+:END:
 #+begin_src emacs-lisp :tangle yes
 (setq file-name-handler-alist file-name-handler-alist-var)
+(makunbound 'file-name-handler-alist-var)
 #+end_src
 
 *** ends here
