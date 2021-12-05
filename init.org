@@ -2683,28 +2683,28 @@ https://gitlab.com/thomasluquet/font-lock-plus
 https://github.com/joostkremers/visual-fill-column
 ​=visual-line-mode=​와 비슷하지만 window 경계가 아닌 ​=fill-column=​에 맞춰서 글자를 자른다.
 #+begin_src emacs-lisp :tangle yes
-(use-package visual-fill-column
-  :hook ((visual-line-mode . visual-fill-column-mode)
-         ;; (visual-fill-column-mode . (lambda () (toggle-truncate-lines -1)))
-  ;;       )
-  :config
-  ;; (add-hook 'visual-fill-column-mode-hook #'visual-line-mode)
-  ;; (add-hook 'visual-line-mode-hook #'visual-fill-column-mode)
-  (advice-add 'text-scale-adjust :after #'visual-fill-column-adjust)
-  ;; (setq visual-fill-column-width 80)
-  ;; (setq visual-fill-column-extra-text-width '(10 . 10))
+  (use-package visual-fill-column
+    ;; :hook ((visual-line-mode . visual-fill-column-mode)
+           ;; (visual-fill-column-mode . (lambda () (toggle-truncate-lines -1)))
+    ;;       )
+    :config
+    ;; (add-hook 'visual-fill-column-mode-hook #'visual-line-mode)
+    ;; (add-hook 'visual-line-mode-hook #'visual-fill-column-mode)
+    (advice-add 'text-scale-adjust :after #'visual-fill-column-adjust)
+    ;; (setq visual-fill-column-width 80)
+    ;; (setq visual-fill-column-extra-text-width '(10 . 10))
 
-  (when evil-respect-visual-line-mode
-    (evil-define-minor-mode-key 'motion 'visual-fill-column-mode
-      "j" 'evil-next-visual-line
-      "gj" 'evil-next-line
-      "k" 'evil-previous-visual-line
-      "gk" 'evil-previous-line
-      "0" 'evil-beginning-of-visual-line
-      "g0" 'evil-beginning-of-line
-      "$" 'evil-end-of-visual-line
-      "g$" 'evil-end-of-line
-      "V" 'evil-visual-screen-line)))
+    (when evil-respect-visual-line-mode
+      (evil-define-minor-mode-key 'motion 'visual-fill-column-mode
+        "j" 'evil-next-visual-line
+        "gj" 'evil-next-line
+        "k" 'evil-previous-visual-line
+        "gk" 'evil-previous-line
+        "0" 'evil-beginning-of-visual-line
+        "g0" 'evil-beginning-of-line
+        "$" 'evil-end-of-visual-line
+        "g$" 'evil-end-of-line
+        "V" 'evil-visual-screen-line)))
 #+end_src
 
 - [[git-gutter][git-gutter]]의 버퍼 표시를 덮어쓴다.
