@@ -71,6 +71,9 @@ init 파일 디버그 용도
 #+end_src
 
 *** variable
+:PROPERTIES:
+:ID:       90953AC8-DA01-4BEC-886E-DE39A4CB9DC8
+:END:
 이맥스 기본 설정들의 묶음
 #+begin_src emacs-lisp :tangle yes
 (setq-default
@@ -1122,6 +1125,25 @@ https://github.com/minad/corfu
 ****** kind-icon
 https://github.com/jdtsmith/kind-icon
 company에서 company-box가 그러하듯 corfu에서 아이콘을 표시하는 패키지.
+**** which-key
+:PROPERTIES:
+:ID:       06F4C962-D8EF-4BA9-B3D0-696EAB26BA45
+:END:
+https://github.com/justbur/emacs-which-key
+키 치트시트
+#+begin_src emacs-lisp :tangle yes
+(use-package which-key
+  :init (which-key-mode)
+  :diminish which-key-mode
+  :custom
+  (which-key-idle-delay 0.3)
+  :config
+  ;; (which-key-setup-minibuffer) ;; paging is not work in minibuffer mode
+  ;; (setq which-key-use-c-h-commands nil)
+  (which-key-setup-side-window-right-bottom))
+
+#+end_src
+
 *** project
 :PROPERTIES:
 :ID:       F30AA3BC-2687-434A-98C5-970902E681FE
@@ -2519,6 +2541,7 @@ https://github.com/tarsius/minions
 ***** mlscroll
 :PROPERTIES:
 :CUSTOM_ID: mlscroll
+:ID:       118778CD-F8F1-4235-90C7-CA2A87FB7661
 :END:
 https://github.com/jdtsmith/mlscroll
 #+begin_src emacs-lisp :tangle yes
@@ -2528,7 +2551,13 @@ https://github.com/jdtsmith/mlscroll
   (mlscroll-width-chars 7)
   ;; (mlscroll-shortfun-min-width 11) ; truncate which-func, for default mode-line-format's
   :config
-  (mlscroll-mode 1))
+  (mlscroll-mode 1)
+  (advice-add 'my/apply-theme
+      :after #'(lambda ()
+                 (progn
+                   (setq mlscroll-in-color (face-attribute 'region :background nil t))
+                   (setq mlscroll-out-color (face-attribute 'region :background))
+                   (mlscroll-mode 1)))))
 #+end_src
 ***** COMMENT awesome-tray
 :PROPERTIES:
@@ -2646,27 +2675,10 @@ https://gitlab.com/thomasluquet/font-lock-plus
 (use-package font-lock+)
 
 #+end_src
-**** which-key
-:PROPERTIES:
-:ID:       06F4C962-D8EF-4BA9-B3D0-696EAB26BA45
-:END:
-https://github.com/justbur/emacs-which-key
-키 치트시트
-#+begin_src emacs-lisp :tangle yes
-(use-package which-key
-  :init (which-key-mode)
-  :diminish which-key-mode
-  :custom
-  (which-key-idle-delay 0.3)
-  :config
-  ;; (which-key-setup-minibuffer) ;; paging is not work in minibuffer mode
-  ;; (setq which-key-use-c-h-commands nil)
-  (which-key-setup-side-window-right-bottom))
-
-#+end_src
 **** visual-fill-column
 :PROPERTIES:
 :ID:       64A3948C-13EA-4A5D-ABFE-617627E2C547
+:CUSTOM_ID: visual-fill-column
 :END:
 https://github.com/joostkremers/visual-fill-column
 ​=visual-line-mode=​와 비슷하지만 window 경계가 아닌 ​=fill-column=​에 맞춰서 글자를 자른다.
@@ -2674,7 +2686,7 @@ https://github.com/joostkremers/visual-fill-column
   (use-package visual-fill-column
     ;; :hook ((visual-line-mode . visual-fill-column-mode)
            ;; (visual-fill-column-mode . (lambda () (toggle-truncate-lines -1)))
-           )
+    ;;       )
     :config
     ;; (add-hook 'visual-fill-column-mode-hook #'visual-line-mode)
     ;; (add-hook 'visual-line-mode-hook #'visual-fill-column-mode)
@@ -2811,6 +2823,58 @@ help-mode를 더 유용하게 바꿈
   )
 
 #+end_src
+**** writeroom-mode 
+:PROPERTIES:
+:ID:       A11CEC84-6AAC-4225-9C29-339C40E37701
+:END:
+https://github.com/joostkremers/writeroom-mode
+
+글쓰기에 집중하도록 윈도우 배치를 변경하는 모드
+#+begin_src emacs-lisp :tangle yes
+(use-package writeroom-mode
+  :defer t
+  :straight '(writeroom-mode
+              :type git
+              :host github
+              :repo "joostkremers/writeroom-mode")
+  :custom
+  (writeroom-restore-window-config t)
+  (writeroom-mode-line t)
+  (writeroom-header-line t)
+  (writeroom-fullscreen-effect 'maximized)
+  :config
+  (transient-define-prefix writeroom-transient ()
+    "transient map for writeroom mode"
+    [:description
+     (lambda () (if writeroom-mode
+                    "Turn OFF Writeroom Mode"
+                  "Turn ON Writeroom Mode"))
+     ("RET" "Toggle Writeroom Mode" writeroom-mode)]
+
+    ["Adjust writeroom width"
+     :if writeroom-mode-p
+     [("-" "Decrease Width" writeroom-decrease-width :transient t)]
+     [("=" "Increase Width" writeroom-increase-width :transient t)]
+     [(writeroom-transient-adjust-width)]])
+
+  (defun writeroom-mode-p () writeroom-mode)
+
+  ;; (defun writeroom-mode-width-modified-p ()
+  ;;   (and visual-fill-column-width (not (eq fill-column visual-fill-column-width))))
+
+  (transient-define-suffix writeroom-transient-adjust-width ()
+    "Reset writeroom width to fill-column"
+    :transient nil
+    :key "0"
+    :description (concat "Reset Width : " (number-to-string fill-column))
+    (interactive)
+    (setq visual-fill-column-width fill-column)))
+#+end_src
+
+- 패키지가 내부적으로 [[visual-fill-column][visual-fill-column-mode]]를 사용함
+- 하지만 [[git-gutter][git-gutter]]도 정상 작동함
+
+
 *** 파일 관리
 **** auto-revert
 파일의 변경을 버퍼에 반영한다.
@@ -3306,6 +3370,12 @@ git 변경 내용을 표시하는 패키지
     [[("j" "next-hunk" git-gutter:next-hunk :transient t)]
      [("k" "previous-hunk" git-gutter:previous-hunk :transient t)]]))
 #+end_src
+
+**** TODO diff-hl
+:PROPERTIES:
+:ID:       261E2AC2-0D8C-43C1-ABA8-C1555443F2EE
+:END:
+https://github.com/dgutov/diff-hl
 
 *** programming
 :PROPERTIES:
@@ -4024,6 +4094,7 @@ auto code formatter
 ;;  "gcc" 'org-toggle-comment)
 
 (org-src-mode-map
+ ;; "s-s" 'org-edit-src-save
  "s-s" 'org-edit-src-save
  "s-k" 'org-edit-src-exit)
 
@@ -4048,6 +4119,9 @@ auto code formatter
 - [X] org-block 진입시 insert 대신 normal 모드로
 
 **** el-patch
+:PROPERTIES:
+:ID:       43012DD8-79D3-4BD1-80AC-F5E00B91F11D
+:END:
 #+begin_src emacs-lisp :tangle yes
 :config/el-patch
 #+end_src
@@ -4291,17 +4365,23 @@ org-src-block의 기타 파라미터를 숨기는 기능
 :END:
 done 시에 헤드라인의 이름에도 색상을 적용함.
 #+begin_src emacs-lisp :tangle yes
-  (font-lock-add-keywords
-   'org-mode
-   `(("^[ \t]*\\(?:[-+*]\\|[0-9]+[).]\\)[ \t]+\\(\\(?:\\[@\\(?:start:\\)?[0-9]+\\][ \t]*\\)?\\[\\(?:X\\|\\([0-9]+\\)/\\2\\)\\][^\n]*\n\\)"
-      1 'org-checkbox-done-text prepend))
-   'append)
+(font-lock-add-keywords
+ 'org-mode
+ `(("^[ \t]*\\(?:[-+*]\\|[0-9]+[).]\\)[ \t]+\\(\\(?:\\[@\\(?:start:\\)?[0-9]+\\][ \t]*\\)?\\[\\(?:X\\|\\([0-9]+\\)/\\2\\)\\][^\n]*\n\\)"
+    ;; 1 'org-checkbox-done-text prepend
+    1 'org-done))
+'append)
 #+end_src
+
 ******** DONE 이렇게
 CLOSED: [2021-11-30 Tue 19:28]
+
 ****** COMMENT 리스트 표시
+:PROPERTIES:
+:ID:       243F886D-5B88-470B-A14A-E60EB46A8864
+:END:
 #+begin_src emacs-lisp :tangle no
-  (font-lock-add-keywords 'org-mode '(("^ *\\([-]\\) " (0 (prog1 () (compose-region (match-beginning 1) (match-end 1) "•"))))))
+(font-lock-add-keywords 'org-mode '(("^ *\\([-]\\) " (0 (prog1 () (compose-region (match-beginning 1) (match-end 1) "•"))))))
 #+end_src
 - org-superstar나 org-bars 때문인지 작동하지 않는다.
 - org-superstart가 대체
@@ -4757,6 +4837,12 @@ org의 강조 구문에 커서를 올리면 원본 텍스트를 표시함
   :custom
   (org-appear-autolinks t))
 #+end_src
+
+- 가끔씩 ​=org-appear=​가 죽는 문제가 발생함
+- 죽는건지 초기 설정에 실패한건지 모르겠음. variable은 설정됨
+- [X] hook을 org-appear-mode t로 변경
+  - 해결되지 않음
+- [ ] 명확한 조건을 찾아보기
 
 ****** org-auto-tangle
 :PROPERTIES:
