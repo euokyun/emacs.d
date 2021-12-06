@@ -3159,7 +3159,7 @@ https://github.com/Fanael/persistent-scratch
   (persistent-scratch-setup-default))
 
 #+end_src
-**** osx-trash
+**** COMMENT osx-trash
 https://github.com/emacsorphanage/osx-trash/
 osx의 휴지통을 사용 
 #+begin_src emacs-lisp :tangle yes
@@ -4460,6 +4460,97 @@ CLOSED: [2021-11-30 Tue 19:28]
 :PROPERTIES:
 :ID:       95AC3B12-9644-4F46-9F7A-B3AF833C1215
 :END:
+****** UI
+******* org-bars
+:PROPERTIES:
+:ID:       1A3F717B-789D-47E1-82D0-8DDB9276B77B
+:END:
+https://github.com/tonyaldon/org-bars
+[[highlight-indent-guides][highlight-indent]]처럼 org의 아웃라인을 표시한다.
+#+begin_src emacs-lisp :tangle yes
+  (use-package org-bars
+    :straight (org-bars
+               :type git
+               :host github
+               :repo "tonyaldon/org-bars")
+    :hook (org-mode . org-bars-mode)
+    ;; (org-bars-extra-pixels-height 7)
+    ;; :custom-face
+    ;; (org-bars-star-empty ((t (:weight bold))))
+    ;; (org-bars-star-invisible ((t (:weight bold))))
+    ;; (org-bars-star-visible ((t (:weight bold))))
+    :config
+    (setq org-bars-stars '(:empty ""
+                           :invisible ""
+                           :visible ""))
+    ;; (setq org-bars-with-dynamic-stars-p nil)
+    (setq org-bars-color-options '(:desaturate-level-faces 30
+                                   :darken-level-faces 15)))
+#+end_src
+
+******* org-superstar
+https://github.com/integral-dw/org-superstar-mode
+heading, bullet을 prettify-symbols 처럼 꾸미는 패키지 
+#+begin_src emacs-lisp :tangle yes
+(use-package org-superstar
+  :hook (org-mode . org-superstar-mode)
+  :custom
+  (org-superstar-prettify-item-bullets t)
+  (org-superstar-item-bullet-alist '((?+ . ?•)
+                                     ;; (?+ . ?‣)
+                                     (?- . ?•)))
+  (org-superstar-headline-bullets-list '("◉" "●" "○" "◆"))
+  ;; (org-superstar-headline-bullets-list nil)
+  (org-superstar-remove-leading-stars t)
+  :config/el-patch
+  (defun org-superstar--prettify-main-hbullet ()
+    "Prettify the trailing star in a headline.
+
+This function uses ‘org-superstar-headline-or-inlinetask-p’ to avoid
+prettifying bullets in (for example) source blocks."
+    (el-patch-swap
+      (when (org-superstar-headline-or-inlinetask-p)
+        (let ((bullet (org-superstar--hbullet (org-superstar--heading-level))))
+          (if bullet
+              (compose-region (match-beginning 1) (match-end 1)
+                              bullet)
+            (org-superstar--make-invisible 1)))
+        'org-superstar-header-bullet) nil)))
+
+#+end_src
+
+******* org-appear
+:PROPERTIES:
+:ID:       D7AC8D50-A4D8-44A9-B771-3431EB062262
+:END:
+https://github.com/awth13/org-appear
+org의 강조 구문에 커서를 올리면 원본 텍스트를 표시함
+#+begin_src emacs-lisp :tangle yes
+(use-package org-appear
+  :hook (org-mode . (lambda () (org-appear-mode t)))
+  :custom
+  (org-appear-autolinks t))
+#+end_src
+
+- 가끔씩 ​=org-appear=​가 죽는 문제가 발생함
+- 죽는건지 초기 설정에 실패한건지 모르겠음. variable은 설정됨
+- [X] hook을 org-appear-mode t로 변경
+  - 해결되지 않음
+- [ ] 명확한 조건을 찾아보기
+
+******* org-sticky-header
+:PROPERTIES:
+:ID:       87CFE711-61FD-4B65-AB22-E70D0441C3E5
+:END:
+https://github.com/alphapapa/org-sticky-header
+headline에 헤더를 표시함
+#+begin_src emacs-lisp :tangle yes
+(use-package org-sticky-header
+    :custom
+    (org-sticky-header-full-path 'full)
+    (org-sticky-header-show-keyword nil) ; todo keyword
+    :hook (org-mode . org-sticky-header-mode))
+#+end_src
 ****** org-indent
 #+begin_src emacs-lisp :tangle yes
   (use-package org-indent
@@ -4468,6 +4559,13 @@ CLOSED: [2021-11-30 Tue 19:28]
     :diminish
     :custom
     (org-indent-indentation-per-level 1))
+#+end_src
+****** org-download
+https://github.com/abo-abo/org-download
+
+이미지를 drag&drop으로 삽입할 수 있게 해준다.
+#+begin_src emacs-lisp :tangle yes
+(use-package org-download)
 #+end_src
 
 ****** org-bookmark-heading
@@ -4482,20 +4580,6 @@ org heading을 이맥스 내장 북마크로 저장할 수 있는 기능
     (org-bookmark-jump-indirect t))
 
 #+end_src
-****** org-sticky-header
-:PROPERTIES:
-:ID:       87CFE711-61FD-4B65-AB22-E70D0441C3E5
-:END:
-https://github.com/alphapapa/org-sticky-header
-headline에 헤더를 표시함
-#+begin_src emacs-lisp :tangle yes
-(use-package org-sticky-header
-    :custom
-    (org-sticky-header-full-path 'full)
-    (org-sticky-header-show-keyword nil) ; todo keyword
-    :hook (org-mode . org-sticky-header-mode))
-#+end_src
-
 ****** TODO org-src [1/2]
 :PROPERTIES:
 :ID:       5199CA35-4768-42B0-AF8A-D9E186E2F912
@@ -4713,6 +4797,15 @@ https://github.com/nobiot/org-transclusion
                :host github
                :repo "nobiot/org-transclusion"))
 #+end_src
+****** COMMENT org-pomodoro
+:PROPERTIES:
+:ID:       F14734B4-167E-4DD4-AF51-3C7BCA563AAF
+:END:
+#+begin_src emacs-lisp :tangle yes
+  (use-package org-pomodoro
+    :after org)
+#+end_src
+
 ****** org-auto-expand
 :PROPERTIES:
 :ID:       F99EC594-1880-4E3F-99BB-F043B7802A24
@@ -4737,73 +4830,6 @@ org 파일의 properties 설정에 따라 자동적으로 heading을 확장하�
     - children :: 헤딩과 하위 헤딩을 표시하지만 본문은 표시하지 않음
     - 숫자 :: 하위 헤딩을 숫자만큼의 깊이까지 표시
 
-****** org-bars
-:PROPERTIES:
-:ID:       1A3F717B-789D-47E1-82D0-8DDB9276B77B
-:END:
-https://github.com/tonyaldon/org-bars
-[[highlight-indent-guides][highlight-indent]]처럼 org의 아웃라인을 표시한다.
-#+begin_src emacs-lisp :tangle yes
-  (use-package org-bars
-    :straight (org-bars
-               :type git
-               :host github
-               :repo "tonyaldon/org-bars")
-    :hook (org-mode . org-bars-mode)
-    ;; (org-bars-extra-pixels-height 7)
-    ;; :custom-face
-    ;; (org-bars-star-empty ((t (:weight bold))))
-    ;; (org-bars-star-invisible ((t (:weight bold))))
-    ;; (org-bars-star-visible ((t (:weight bold))))
-    :config
-    (setq org-bars-stars '(:empty ""
-                           :invisible ""
-                           :visible ""))
-    ;; (setq org-bars-with-dynamic-stars-p nil)
-    (setq org-bars-color-options '(:desaturate-level-faces 30
-                                   :darken-level-faces 15)))
-#+end_src
-
-****** org-superstar
-https://github.com/integral-dw/org-superstar-mode
-heading, bullet을 prettify-symbols 처럼 꾸미는 패키지 
-#+begin_src emacs-lisp :tangle yes
-(use-package org-superstar
-  :hook (org-mode . org-superstar-mode)
-  :custom
-  (org-superstar-prettify-item-bullets t)
-  (org-superstar-item-bullet-alist '((?+ . ?•)
-                                     ;; (?+ . ?‣)
-                                     (?- . ?•)))
-  (org-superstar-headline-bullets-list '("◉" "●" "○" "◆"))
-  ;; (org-superstar-headline-bullets-list nil)
-  (org-superstar-remove-leading-stars t)
-  :config/el-patch
-  (defun org-superstar--prettify-main-hbullet ()
-    "Prettify the trailing star in a headline.
-
-This function uses ‘org-superstar-headline-or-inlinetask-p’ to avoid
-prettifying bullets in (for example) source blocks."
-    (el-patch-swap
-      (when (org-superstar-headline-or-inlinetask-p)
-        (let ((bullet (org-superstar--hbullet (org-superstar--heading-level))))
-          (if bullet
-              (compose-region (match-beginning 1) (match-end 1)
-                              bullet)
-            (org-superstar--make-invisible 1)))
-        'org-superstar-header-bullet) nil)))
-
-#+end_src
-
-****** COMMENT org-pomodoro
-:PROPERTIES:
-:ID:       F14734B4-167E-4DD4-AF51-3C7BCA563AAF
-:END:
-#+begin_src emacs-lisp :tangle yes
-  (use-package org-pomodoro
-    :after org)
-#+end_src
-
 ****** evil-org-mode
 https://github.com/Somelauw/evil-org-mode
 #+begin_src emacs-lisp :tangle yes
@@ -4824,25 +4850,6 @@ https://github.com/Somelauw/evil-org-mode
   (require 'evil-org-agenda)
   (evil-org-agenda-set-keys))
 #+end_src
-
-****** org-appear
-:PROPERTIES:
-:ID:       D7AC8D50-A4D8-44A9-B771-3431EB062262
-:END:
-https://github.com/awth13/org-appear
-org의 강조 구문에 커서를 올리면 원본 텍스트를 표시함
-#+begin_src emacs-lisp :tangle yes
-(use-package org-appear
-  :hook (org-mode . (lambda () (org-appear-mode t)))
-  :custom
-  (org-appear-autolinks t))
-#+end_src
-
-- 가끔씩 ​=org-appear=​가 죽는 문제가 발생함
-- 죽는건지 초기 설정에 실패한건지 모르겠음. variable은 설정됨
-- [X] hook을 org-appear-mode t로 변경
-  - 해결되지 않음
-- [ ] 명확한 조건을 찾아보기
 
 ****** org-auto-tangle
 :PROPERTIES:
