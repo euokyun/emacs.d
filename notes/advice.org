@@ -1,4 +1,7 @@
 * advice
+:PROPERTIES:
+:ID:       A1CFA86E-4D2B-41C3-8EB7-87C5E6F9EE2A
+:END:
 다른 라이브러리에 정의된 함수의 기능을 수정
 advice는 강력한 기능이고, 원본 소스 코드를 수정하기 전의 마지막 수단으로만 사용해야 한다.
 
@@ -9,11 +12,17 @@ advice 시스템은 두가지 set을 제공한다.
 ** where
 advice의 함수와 원본 함수가 어떻게 합성되어야 하는지 명시한다.
 *** :before
+:PROPERTIES:
+:ID:       265AC23D-4EBB-4597-A615-606A63B567A1
+:END:
 - 원본 함수 이전에 호출한다.
 - 두 함수는 같은 인자를 받는다. 반환값은 원본 함수의 반환값을 따른다.
 - ​~(lambda (&rest r) (apply advice-fun r) (apply orig-fun r))~​
 
 *** :after
+:PROPERTIES:
+:ID:       B6AC0D54-3F60-4D57-8EF8-222D63BA35F9
+:END:
 - 원본 함수 이후에 호출한다.
 - 두 함수는 같은 인자를 받는다. 반환값은 원본 함수의 반환값을 따른다.
 - ​~(lambda (&rest r) (prog1 (apply orig-fun r) (apply advice-fun r)))~​
@@ -60,13 +69,15 @@ advice의 함수와 원본 함수가 어떻게 합성되어야 하는지 명시�
 
 ** 예시
 *** 추가advice-add
+:PROPERTIES:
+:ID:       E5E22BFB-91C8-4039-902B-41D730D09917
+:END:
 호출시마다 반환값을 수정하는 ​~advice~​를 추가한다.
+다음 코드는 ​~my-double~​에 ​~my-increase~​ 함수를 ​~advice~​로 추가한다.
 #+NAME:filter-return
 #+begin_src emacs-lisp
 (defun my-double (x) (* x 2))
-
 (defun my-increase (x) (+ x 1))
-
 (advice-add 'my-double :filter-return #'my-increase)
 #+end_src
 
@@ -78,6 +89,9 @@ advice의 함수와 원본 함수가 어떻게 합성되어야 하는지 명시�
 : 7
 
 *** 제거advice-remove
+:PROPERTIES:
+:ID:       D88F9BEC-FA71-47AB-A6A7-1859F3966928
+:END:
 ​~my-increase~​ advice를 제거한다.
 #+begin_src emacs-lisp :include filter-return
 (advice-remove 'my-double #'my-increase)
