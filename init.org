@@ -168,7 +168,7 @@ init 파일 디버그 용도
 :END:
 https://200ok.ch/posts/2020-09-29_comprehensive_guide_on_handling_long_lines_in_emacs.html
 
-*****  양방향 편집
+***** 양방향 편집
 :PROPERTIES:
 :ID:       6F8DB037-DCB4-42DD-846B-F2B600EAF9E5
 :END:
@@ -732,6 +732,9 @@ https://github.com/tumashu/ivy-posframe/issues/105
 
 **** DONE vertico
 CLOSED: [2021-12-15 Wed 10:53]
+:PROPERTIES:
+:ID:       006C0F3D-4763-4E23-B8E9-BE157A0B1E9D
+:END:
 ***** vertico
 :PROPERTIES:
 :ID:       F22FB258-EA13-45A8-8476-243FB6EDB535
@@ -753,13 +756,38 @@ https://github.com/minad/vertico
    "<escape>" '(lambda ()
                  (interactive)
                  (evil-normal-state)
-                 (forward-char 1)))
+                 (ignore-error (forward-char 1))))
+  (vertico-map
+   :states 'normal
+   "q" 'minibuffer-keyboard-quit)
+  ("M-n" 'down-from-outside
+   "M-p" 'up-from-outside
+   "M-TAB" 'to-and-from-minibuffer)
   :config
   ;; Add prompt indicator to `completing-read-multiple'.
   ;; Alternatively try `consult-completing-read-multiple'.
   (defun crm-indicator (args)
     (cons (concat "[CRM] " (car args)) (cdr args)))
   (advice-add #'completing-read-multiple :filter-args #'crm-indicator)
+
+  ;; do something outside minibuffer
+  (defun down-from-outside ()
+    "Move to next candidate in minibuffer, even when minibuffer isn't selected."
+    (interactive)
+    (ignore-error (with-selected-window (active-minibuffer-window))
+      (execute-kbd-macro [down])))
+  (defun up-from-outside ()
+    "Move to previous candidate in minibuffer, even when minibuffer isn't selected."
+    (interactive)
+    (ignore-error (with-selected-window (active-minibuffer-window))
+      (execute-kbd-macro [up])))
+  (defun to-and-from-minibuffer ()
+    "Go back and forth between minibuffer and other window."
+    (interactive)
+    (ignore-error
+        (if (window-minibuffer-p (selected-window))
+            (select-window (minibuffer-selected-window))
+          (select-window (active-minibuffer-window)))))
 
   ;; Emacs 28: Hide commands in M-x which do not work in the current mode.
   ;; Vertico commands are hidden in normal buffers.
@@ -771,6 +799,7 @@ https://github.com/minad/vertico
          (minibuffer-exit . (lambda ()
                               (setq-local evil-move-beyond-eol nil)))))
 #+end_src
+
 ***** vertico-directory
 #+begin_src emacs-lisp :tangle yes
 (use-package vertico-directory
@@ -839,6 +868,9 @@ https://github.com/iyefrat/all-the-icons-completion
 #+end_src
 
 ***** consult
+:PROPERTIES:
+:ID:       7D87AEFA-7AE5-4B15-8ED0-1DA07C0847D0
+:END:
 ****** consult
 :PROPERTIES:
 :ID:       F5B0D8A5-34AE-4BC9-BA58-39972734F2AA
@@ -848,55 +880,56 @@ https://github.com/minad/consult
 (use-package consult
   ;; Replace bindings. Lazily loaded due by `use-package'.
   :general (;; C-c bindings (mode-specific-map)
-         "C-c h" 'consult-history
-         "C-c m" 'consult-mode-command
-         "C-c b" 'consult-bookmark
-         "C-c k" 'consult-kmacro
-         ;; C-x bindings (ctl-x-map)
-         "C-x M-:" 'consult-complex-command     ;; orig. repeat-complex-command
-         "C-x b" 'consult-buffer                ;; orig. switch-to-buffer
-         "s-o" '(lambda (arg) (interactive "P") (with-persp-buffer-list () (consult-buffer)))
-         ;; "s-o" (lambda () (with-persp-buffer-list () (consult-buffer arg)))
-         "s-O" 'find-file
-         "C-x 4 b" 'consult-buffer-other-window ;; orig. switch-to-buffer-other-window
-         "C-x 5 b" 'consult-buffer-other-frame  ;; orig. switch-to-buffer-other-frame
-         ;; Custom M-# bindings for fast register access
-         "M-#" 'consult-register-load
-         "M-'" 'consult-register-store          ;; orig. abbrev-prefix-mark (unrelated)
-         "C-M-#" 'consult-register
-         ;; Other custom bindings
-         "M-y" 'consult-yank-pop                ;; orig. yank-pop
-         "<help> a" 'consult-apropos            ;; orig. apropos-command
-         ;; M-g bindings (goto-map)
-         "M-g e" 'consult-compile-error
-         ;; ("M-g f" 'consult-flymake)               ;; Alternative: consult-flycheck
-         "M-g f" 'consult-flycheck               ;; Alternative: consult-flycheck
-         "M-g g" 'consult-goto-line             ;; orig. goto-line
-         "M-g M-g" 'consult-goto-line           ;; orig. goto-line
-         "M-g o" 'consult-outline               ;; Alternative: consult-org-heading
-         "M-g m" 'consult-mark
-         "M-g k" 'consult-global-mark
-         "M-g i" 'consult-imenu
-         "M-g I" 'consult-imenu-multi
-         ;; M-s bindings (search-map)
-         "M-s f" 'consult-find
-         "M-s F" 'consult-locate
-         "M-s g" 'consult-grep
-         "M-s G" 'consult-git-grep
-         "M-s r" 'consult-ripgrep
-         "M-s l" 'consult-line
-         "s-f" 'consult-line
-         "M-s L" 'consult-line-multi
-         "M-s m" 'consult-multi-occur
-         "M-s k" 'consult-keep-lines
-         "M-s u" 'consult-focus-lines
-         ;; Isearch integration
-         "M-s e" 'consult-isearch-history
-         :map isearch-mode-map
-         "M-e" 'consult-isearch-history         ;; orig. isearch-edit-string
-         "M-s e" 'consult-isearch-history       ;; orig. isearch-edit-string
-         "M-s l" 'consult-line                  ;; needed by consult-line to detect isearch
-         "M-s L" 'consult-line-multi)           ;; needed by consult-line to detect isearch
+            "C-c h" 'consult-history
+            "C-c m" 'consult-mode-command
+            "C-c b" 'consult-bookmark
+            "C-c k" 'consult-kmacro
+            ;; C-x bindings (ctl-x-map)
+            "C-x M-:" 'consult-complex-command ;; orig. repeat-complex-command
+            "C-x b" 'consult-buffer            ;; orig. switch-to-buffer
+            "s-o" '(lambda (arg) (interactive "P")
+                     (with-persp-buffer-list () (consult-buffer)))
+            ;; "s-o" (lambda () (with-persp-buffer-list () (consult-buffer arg)))
+            "s-O" 'find-file
+            "C-x 4 b" 'consult-buffer-other-window ;; orig. switch-to-buffer-other-window
+            "C-x 5 b" 'consult-buffer-other-frame ;; orig. switch-to-buffer-other-frame
+            ;; Custom M-# bindings for fast register access
+            "M-#" 'consult-register-load
+            "M-'" 'consult-register-store ;; orig. abbrev-prefix-mark (unrelated)
+            "C-M-#" 'consult-register
+            ;; Other custom bindings
+            "M-y" 'consult-yank-pop ;; orig. yank-pop
+            "<help> a" 'consult-apropos ;; orig. apropos-command
+            ;; M-g bindings (goto-map)
+            "M-g e" 'consult-compile-error
+            ;; ("M-g f" 'consult-flymake)               ;; Alternative: consult-flycheck
+            "M-g f" 'consult-flycheck ;; Alternative: consult-flycheck
+            "M-g g" 'consult-goto-line ;; orig. goto-line
+            "M-g M-g" 'consult-goto-line ;; orig. goto-line
+            "M-g o" 'consult-outline     ;; Alternative: consult-org-heading
+            "M-g m" 'consult-mark
+            "M-g k" 'consult-global-mark
+            "M-g i" 'consult-imenu
+            "M-g I" 'consult-imenu-multi
+            ;; M-s bindings (search-map)
+            "M-s f" 'consult-find
+            "M-s F" 'consult-locate
+            "M-s g" 'consult-grep
+            "M-s G" 'consult-git-grep
+            "M-s r" 'consult-ripgrep
+            "M-s l" 'consult-line
+            "s-f" 'consult-line
+            "M-s L" 'consult-line-multi
+            "M-s m" 'consult-multi-occur
+            "M-s k" 'consult-keep-lines
+            "M-s u" 'consult-focus-lines
+            ;; Isearch integration
+            "M-s e" 'consult-isearch-history
+            :map isearch-mode-map
+            "M-e" 'consult-isearch-history ;; orig. isearch-edit-string
+            "M-s e" 'consult-isearch-history ;; orig. isearch-edit-string
+            "M-s l" 'consult-line ;; needed by consult-line to detect isearch
+            "M-s L" 'consult-line-multi) ;; needed by consult-line to detect isearch
 
   ;; Enable automatic preview at point in the *Completions* buffer. This is
   ;; relevant when you use the default completion UI. You may want to also
@@ -945,6 +978,12 @@ https://github.com/minad/consult
    ;; :preview-key (kbd "M-.")
    :preview-key (kbd "S-SPC"))
 
+  ;; add command-local keybind
+  (defvar consult-line-map
+    (let ((map (make-sparse-keymap)))
+      (define-key map [(super f)] #'previous-history-element)
+      map))
+  (consult-customize consult-line :keymap consult-line-map)
 
   ;; Optionally configure the narrowing key.
   ;; Both < and C-+ work reasonably well.
@@ -956,19 +995,19 @@ https://github.com/minad/consult
 
   ;; Optionally configure a function which returns the project root directory.
   ;; There are multiple reasonable alternatives to chose from.
-  ;;;; 1. project.el (project-roots)
+;;;; 1. project.el (project-roots)
   ;; (setq consult-project-root-function
   ;;       (lambda ()
   ;;         (when-let (project (project-current))
   ;;           (car (project-roots project)))))
-  ;;;; 2. projectile.el (projectile-project-root)
+;;;; 2. projectile.el (projectile-project-root)
   (autoload 'projectile-project-root "projectile")
   (setq consult-project-root-function #'projectile-project-root)
-  ;;;; 3. vc.el (vc-root-dir)
+;;;; 3. vc.el (vc-root-dir)
   ;; (setq consult-project-root-function #'vc-root-dir)
-  ;;;; 4. locate-dominating-file
+;;;; 4. locate-dominating-file
   ;; (setq consult-project-root-function (lambda () (locate-dominating-file "." ".git")))
-)
+  )
 #+end_src
 
 ****** consult-dir
@@ -1029,7 +1068,7 @@ https://gitlab.com/OlMon/consult-projectile/
              :branch "master"))
 #+end_src
 
-****** COMMENT consult-yasnippet
+****** consult-yasnippet
 https://github.com/mohkale/consult-yasnippet
 
 #+begin_src emacs-lisp :tangle yes
@@ -1046,6 +1085,13 @@ https://github.com/tumashu/vertico-posframe
 auto-complete, company, corfu
 auto-complete는 오래되고 느린데다 메인테이너도 없는 상태.
 company를 주로 쓴다. 관련 생태계가 company를 중심으로 돌아가는 것이 대부분이다.
+
+corfu의 한 가지 큰 장점이라면 completion에 대한 설정이 자세하다는 것이다. 그 중에서도 언제 완료될지 결정할 수 있다는 것인데​=corfu-quit-at-boundary=​ orderless 완성 스타일을 적용하게 되면 스페이스를 포함한 임의의 문자를 검색어로 쓸 수 있다. 드디어 다른 모든 emacs 완성 기능들과 같은 통일된 완성 스타일을 사용할 수 있게 된 것이다.
+
+backend 부족은 같은 제작자의 cape가 해결한다. cape는 company 백엔드를 capfs로 바꾸고 여러 capfs를 병합하는 기능을 제공한다.
+
+예를 들자면 yasnippet은 company에서 제공하는 company-yasnippet을 제외하고는 어떤 capfs를 제공하지 않는다. cape를 사용하면 company-yasnippet을 capfs로 변경하고 corfu에서 백엔드로 추가하면 corfu에서도 yasnippet의 완성 후보 목록을 확인할 수 있다.
+
 ***** COMMENT company
 # :PROPERTIES:
 # :ID:       02968554-15E9-45EA-A244-58AF5E8DC12E
@@ -1534,7 +1580,7 @@ https://github.com/minad/corfu
   :custom
   (corfu-cycle t) ;; Enable cycling for `corfu-next/previous'
   (corfu-auto t)  ;; Enable auto completion
-  (corfu-auto-prefix 1)
+  (corfu-auto-prefix 3)
   ;; (corfu-commit-predicate nil)   ;; Do not commit selected candidates on next input
   ;; (corfu-quit-at-boundary t)     ;; Automatically quit at word boundary
   ;; (corfu-quit-no-match t)        ;; Automatically quit if there is no match
@@ -1563,15 +1609,21 @@ https://github.com/minad/corfu
   :general
   ("C-SPC" 'completion-at-point)
   (corfu-map
+   ;; :states 'insert
     ;; "C-n" 'corfu-next
     ;; "C-p" 'corfu-previous
-    ;; [remap evil-complete-next] 'corfu-next
-    ;; [remap evil-complete-previous] 'corfu-previous
+    [remap evil-complete-next] 'corfu-next
+    [remap evil-complete-previous] 'corfu-previous
     ;; "C-h" 'corfu-show-documentation
     ;; [remap evil-beginning-of-line] 'corfu-beginning-of-prompt
     ;; [remap evil-end-of-line] 'corfu-end-of-prompt
    ;; [remap evil-undo] 'corfu-reset
-    "C-SPC" 'corfu-quit)
+    ;; "<escape>" 'corfu-quit
+    
+    ;; [remap evil-normal-state] 'corfu-quit
+    [remap completion-at-point] 'corfu-quit
+    [remap evil-force-normal-state] 'corfu-quit
+    [remap evil-mc-undo-all-cursors] 'corfu-quit)
   ;; (corfu-map
   ;;  :states 'insert
   ;;  "C-SPC" 'corfu-quit)
@@ -1640,21 +1692,63 @@ company의 backend를 corfu에서도 사용할 수 있도록 함
   ;;        ("C-c p &" . cape-sgml)
   ;;        ("C-c p r" . cape-rfc1345))
   :init
-  (use-package company)                 ; load company backends
+  ;; (use-package company)                 ; load company backends
   ;; Add `completion-at-point-functions', used by `completion-at-point'.
-  (add-to-list 'completion-at-point-functions #'cape-file)
-  ;; (add-to-list 'completion-at-point-functions #'cape-tex)
-  (add-to-list 'completion-at-point-functions #'cape-dabbrev)
-  (add-to-list 'completion-at-point-functions #'cape-keyword)
-  ;;(add-to-list 'completion-at-point-functions #'cape-sgml)
-  ;;(add-to-list 'completion-at-point-functions #'cape-rfc1345)
-  (add-to-list 'completion-at-point-functions #'cape-abbrev)
-  ;;(add-to-list 'completion-at-point-functions #'cape-ispell)
-  ;;(add-to-list 'completion-at-point-functions #'cape-dict)
-  (add-to-list 'completion-at-point-functions #'cape-symbol)
-  ;;(add-to-list 'completion-at-point-functions #'cape-line)
-  (add-to-list 'completion-at-point-functions
-               (cape-company-to-capf #'company-yasnippet)))
+  ;; (setq completion-at-point-functions '(elisp-completion-at-point t))
+  ;; (add-to-list 'completion-at-point-functions #'cape-file)
+  ;; (add-to-list 'completion-at-point-functions
+  ;;              (cape-company-to-capf #'cape-yasnippet))
+  ;; ;; (add-to-list 'completion-at-point-functions #'cape-tex)
+  ;; (add-to-list 'completion-at-point-functions #'cape-dabbrev)
+  ;; (add-to-list 'completion-at-point-functions #'cape-keyword)
+  ;; ;;(add-to-list 'completion-at-point-functions #'cape-sgml)
+  ;; ;;(add-to-list 'completion-at-point-functions #'cape-rfc1345)
+  ;; (add-to-list 'completion-at-point-functions #'cape-abbrev)
+  ;; ;;(add-to-list 'completion-at-point-functions #'cape-ispell)
+  ;; ;;(add-to-list 'completion-at-point-functions #'cape-dict)
+  ;; (add-to-list 'completion-at-point-functions #'cape-symbol)
+  ;; ;;(add-to-list 'completion-at-point-functions #'cape-line)
+
+
+  (setq completion-at-point-functions
+        `(,(cape-company-to-capf #'cape-yasnippet)
+          cape-symbol
+          ;; ,(cape-super-capf
+          ;;   #'cape-symbol
+          ;; ;; (cape-company-to-capf #'cape-yasnippet)
+          ;;   #'cape-abbrev
+          ;;   #'cape-keyword
+          ;;   #'cape-dabbrev
+          ;;   #'cape-file
+          ;;   ;; #'elisp-completion-at-point
+          ;;   )
+          ;; ,(cape-company-to-capf #'cape-yasnippet)
+          cape-abbrev
+          cape-keyword
+          cape-dabbrev
+          cape-file
+          t))
+
+  :config
+;;;###autoload
+  (defun cape-yasnippet (command &optional arg &rest ignore)
+    "Cape version of `company-yasnippet'"
+    ;; (interactive (list 'interactive))
+    (let* ((templates (yas--all-templates (yas--get-snippet-tables)))
+           (cands (mapcar (lambda (template)
+                            (cons (yas--template-key template)
+                                  (yas--template-name template)))
+                          templates)))
+      (cl-case command
+        (prefix
+         (and (bound-and-true-p yas-minor-mode)
+              (let ((bounds (cons (point) (save-excursion (skip-syntax-backward "w_") (point)))))
+                (buffer-substring (car bounds) (cdr bounds)))))
+        (annotation
+         (concat " -> " (cdr (assoc arg cands))))
+        (candidates cands)
+        (no-cache t)
+        (kind 'snippet)))))
 #+end_src
 
 **** which-key
@@ -1828,7 +1922,15 @@ https://github.com/Bad-ptr/persp-mode.el
                     (persp-frame-switch . nil))))))
 
 ;; (setq persp-interactive-completion-function #'ivy-completing-read)
+#+end_src
+
+***** end
+:PROPERTIES:
+:ID:       014E95A4-8291-4FC5-81FF-A8BDC2C54E55
+:END:
+#+begin_src emacs-lisp :tangle yes
 (persp-mode 1)
+)
 #+end_src
 
 ***** transient map
@@ -1958,6 +2060,7 @@ https://github.com/Bad-ptr/persp-mode.el
 ;;   (persp-add-buffer (current-buffer) (get-current-persp) nil nil))
 
 (transient-define-prefix hfj/switch-tabs
+;; (define-transient-command hfj/switch-tabs
   "Modify tabs."
   ["Tabs"
    [("1" hfj/persp-name-1 hfj/persp-switch-to-1 :transient nil)]
@@ -2000,14 +2103,6 @@ https://github.com/Bad-ptr/persp-mode.el
    [:if-not persp-is-nil-persp-p
             ("a" "add buffer" persp-add-buffer)
             ("d" "remove buffer" persp-remove-buffer)]])
-#+end_src
-
-***** end
-:PROPERTIES:
-:ID:       014E95A4-8291-4FC5-81FF-A8BDC2C54E55
-:END:
-#+begin_src emacs-lisp :tangle yes
-)
 #+end_src
 
 ***** projectile과 통합
@@ -2292,6 +2387,9 @@ https://github.com/cute-jumper/evil-embrace.el
   (evil-embrace-enable-evil-surround-integration))
 #+end_src
 ***** evil-exchange
+:PROPERTIES:
+:ID:       4EFE6B57-8D24-46F2-B0EF-F7323DF269AE
+:END:
 http://github.com/Dewdrops/evil-exchange
 ​=gx=​로 영역을 선택해서 맞바꾸는 기능.
 ​=gX=​로 선택을 취소할 수 있다.
@@ -2862,16 +2960,18 @@ https://github.com/joaotavora/yasnippet
   (yas-reload-all)
   ;; Add yasnippet support for all company backends
   ;; https://github.com/syl20bnr/spacemacs/pull/179
-  (defvar company-mode/enable-yas t
-    "Enable yasnippet for all backends.")
-  (defun company-mode/backend-with-yas (backend)
-    (if (or (not company-mode/enable-yas) (and (listp backend) (member 'company-yasnippet backend)))
-        backend
-      (append (if (consp backend) backend (list backend))
-              '(:with company-yasnippet)))))
+  ;; (defvar company-mode/enable-yas t
+  ;;   "Enable yasnippet for all backends.")
+  ;; (defun company-mode/backend-with-yas (backend)
+  ;;   (if (or (not company-mode/enable-yas) (and (listp backend) (member 'company-yasnippet backend)))
+  ;;       backend
+  ;;     (append (if (consp backend) backend (list backend))
+  ;;             '(:with company-yasnippet))))
+  )
 #+end_src
-
+***** yasnippet-snippets
 https://github.com/AndreaCrotti/yasnippet-snippets
+
 #+begin_src emacs-lisp :tangle yes
 (use-package yasnippet-snippets
   :after yasnippet)
@@ -3403,7 +3503,7 @@ https://github.com/tarsius/minions
 https://github.com/jdtsmith/mlscroll
 #+begin_src emacs-lisp :tangle yes
 (use-package mlscroll
-  :defer 3
+  ;; :defer t
   :custom
   (mlscroll-width-chars 7)
   ;; (mlscroll-shortfun-min-width 11) ; truncate which-func, for default mode-line-format's
@@ -3411,9 +3511,9 @@ https://github.com/jdtsmith/mlscroll
   ;; (mlscroll-mode 1)
   (defun mlscroll-apply-theme (orig &rest args)
     (mlscroll-mode -1)
+    (apply orig args)
     (setq mlscroll-in-color (face-attribute 'region :background nil t))
     (setq mlscroll-out-color (face-attribute 'default :background))
-    (apply orig args)
     (mlscroll-mode 1))
   (advice-add 'my/apply-theme :around #'mlscroll-apply-theme))
 #+end_src
@@ -3493,6 +3593,18 @@ each action is a list of either:
   (char function description) where function takes a single window argument
 or
   (char function) where function takes no argument and the description is omitted.")
+
+  :config/el-patch
+  (defun aw--switch-buffer ()
+    (cond ((bound-and-true-p ivy-mode)
+           (ivy-switch-buffer))
+          ((bound-and-true-p ido-mode)
+           (ido-switch-buffer))
+          (el-patch-add ((featurep 'consult)
+                         (with-persp-buffer-list () (consult-buffer))))
+          (t
+           (call-interactively 'switch-to-buffer))))
+
   ;; :custom-face
   ;; (aw-leading-char-face ((t (:height 400 :background "darkorange1" :foreground gruvbox-dark1 :weight bold))))
   ;; (aw-mode-line-face ((t (:background "darkorange1" :foreground "#3c3836" :weight bold))))
@@ -3612,20 +3724,36 @@ https://github.com/alphapapa/dogears.el
   :general
   (spc
     :states '(normal insert visual emacs motion)
-   "`" (general-key-dispatch 'dogears-go
-         :which-key "dogears"
-         :timeout 0.5
-         "n" 'dogears-forward
-         "p" 'dogears-back
-         ;; "`" 'dogears-sidebar 
-         ))
+    "`" (general-key-dispatch 'dogears-go
+          :which-key "dogears"
+          :timeout 0.5
+          "n" 'dogears-forward
+          "p" 'dogears-back
+          ;; "`" 'dogears-sidebar
+          ))
   :config
   ;; (defun toggle-dogears (orig-fun &rest args)
   ;;   (unless (ignore-errors (kill-buffer "*Dogears List*"))
   ;;     (apply orig-fun args)))
   ;; (advice-add 'dogears-sidebar :around #'toggle-dogears)
-  (dogears-mode 1))
+  (dogears-mode 1)
+  (with-eval-after-load 'consult
+    (defvar consult--source-dogears
+      (list :name "Dogears"
+            :narrow ?d
+            :category 'dogears
+            :items (lambda ()
+                     (mapcar
+                      (lambda (place)
+                        (propertize (dogears--format-record place)
+                                    'consult--candidate place))
+                      dogears-list))
+            :action (lambda (cand)
+                      (dogears-go (get-text-property 0 'consult--candidate cand)))))
 
+    (defun consult-dogears ()
+      (interactive)
+      (consult--multi '(consult--source-dogears)))))
 #+end_src
 
 - dogears-sidebar는 의미가 있는 기능인가 싶다.
@@ -4214,8 +4342,8 @@ https://github.com/Fanael/persistent-scratch
 (use-package persistent-scratch
   :config
   (persistent-scratch-setup-default))
-
 #+end_src
+
 **** COMMENT osx-trash
 https://github.com/emacsorphanage/osx-trash/
 osx의 휴지통을 사용 
@@ -4409,15 +4537,29 @@ git 변경 내용을 표시하는 패키지
                     target-linenum target-line)
             target-linenum)))
 
+  ;; ivy-version
+  ;; (defun my/goto-git-gutter ()
+  ;;   (interactive)
+  ;;   (if git-gutter:diffinfos
+  ;;       (ivy-read "git-gutters:"
+  ;;                 (mapcar 'my-reshape-git-gutter git-gutter:diffinfos)
+  ;;                 :action (lambda (e)
+  ;;                           (unless (numberp e) (setq e (cdr e)))
+  ;;                           (goto-line e)))
+  ;;     (message "NO git-gutters!")))
+
   (defun my/goto-git-gutter ()
     (interactive)
     (if git-gutter:diffinfos
-        (ivy-read "git-gutters:"
-                  (mapcar 'my-reshape-git-gutter git-gutter:diffinfos)
-                  :action (lambda (e)
-                            (unless (numberp e) (setq e (cdr e)))
-                            (goto-line e)))
-      (message "NO git-gutters!")))
+     (consult--read
+      (mapcar 'my-reshape-git-gutter git-gutter:diffinfos)
+      :prompt "git-gutters:"
+      :lookup (lambda (_ _ e)
+                (goto-line (string-to-number
+                            (string-remove-suffix
+                             ":" (cadr (split-string e))))))
+      :state (consult--jump-state))
+     (user-error "NO git-gutters!")))
 
   (transient-define-prefix my/git-gutters ()
     [:description
@@ -4513,9 +4655,10 @@ https://github.com/flycheck/flycheck
 https://github.com/flycheck/flycheck-inline
 #+begin_src emacs-lisp :tangle yes
 (use-package flycheck-inline
-  :hook (flycheck-mode #'flycheck-inline-mode)
-  ;; :config
+  ;; :hook (flycheck-mode . flycheck-inline-mode)
+  :config
   ;; (add-hook 'flycheck-mode-hook #'flycheck-inline-mode)
+  (global-flycheck-inline-mode)
   )
 #+end_src
 **** TODO COMMENT tree-sitter
@@ -4609,7 +4752,7 @@ https://github.com/emacs-lsp/lsp-mode
   ;;             ("C-c C-f" . lsp-format-buffer))
   :general
   (lsp-mode-map
-    :states '(normal insert visual emacs motion)
+    :states 'normal
     "SPC l" '(:ignore t :which-key "lsp")
     ;; "ld" 'xref-find-definitions
     ;; "lr" 'xref-find-references
@@ -4617,7 +4760,7 @@ https://github.com/emacs-lsp/lsp-mode
     "SPC lr" 'lsp-ui-peek-find-references
     "SPC ln" 'lsp-ui-find-next-reference
     "SPC lp" 'lsp-ui-find-prev-reference
-    "SPC ls" 'counsel-imenu
+    ;; "SPC ls" 'counsel-imenu
     "SPC le" 'lsp-ui-flycheck-list
     "SPC lS" 'lsp-ui-sideline-mode
     "SPC lX" 'lsp-execute-code-action
@@ -5157,21 +5300,19 @@ auto code formatter
 ;;  "gcc" 'org-toggle-comment)
 
 (org-src-mode-map
- ;; "s-s" 'org-edit-src-save
  "s-s" 'org-edit-src-save
  "s-k" 'org-edit-src-exit)
 
 (org-mode-map
  :states '(normal visual emacs motion)
  "SPC ee" '(my/org-edit-this :which-key "edit-this")
- "SPC ex" '(org-babel-execute-src-block :which-key "execute this block"))
+ "SPC eb" '(org-babel-execute-src-block :which-key "execute this block"))
 
 (org-mode-map
  :states '(normal motion visual)
  "$" (general-key-dispatch '(lambda () (interactive) (evil-org-end-of-line))
        :timeout 0.25
        "$" 'evil-end-of-line))
-
 #+end_src
 
 - [X] org-toggle-comment
@@ -5180,7 +5321,7 @@ auto code formatter
 - [ ] 체크박스 생성
 - [ ] fold - unfold는 불편하지 않음
 - [X] org-block 진입시 insert 대신 normal 모드로
-
+  
 **** el-patch
 :PROPERTIES:
 :ID:       43012DD8-79D3-4BD1-80AC-F5E00B91F11D
@@ -5241,7 +5382,7 @@ prompted for."
 :END:
 #+begin_src emacs-lisp :tangle yes
 :custom
-(org-id-link-to-org-use-id t)    ; create ID if need to make link.
+(org-id-link-to-org-use-id 'create-if-interactive-and-no-custom-id)    ; create ID if need to make link.
 (org-startup-indented t)         ; Keep the indentation
 (org-src-tab-acts-natively t)    ; indentation setting
 (org-log-done t)                 ; Automatically log done times in todo items.
@@ -5664,9 +5805,12 @@ org heading을 이맥스 내장 북마크로 저장할 수 있는 기능
   :init/el-patch
   (defvar org-src-mode-map
     (let ((map (make-sparse-keymap)))
-      (define-key map (el-patch-swap "\C-c'" "s-s") 'org-edit-src-exit)
-      (define-key map (el-patch-swap "\C-c\C-k" "s-k") 'org-edit-src-abort)
-      (define-key map (el-patch-swap "\C-x\C-s" "\C-x\C-s") 'org-edit-src-save)
+      (define-key map (el-patch-swap "\C-c'" [(super s)]) 'org-edit-src-exit)
+      (define-key map
+        ;; (el-patch-swap "\C-c\C-k" [(super k)])
+        "\C-c\C-k"
+        'org-edit-src-abort)
+      (define-key map (el-patch-swap "\C-x\C-s" [(super s)]) 'org-edit-src-save)
       map))
   ;; :config
   ;; (defvar org-src-mode-map
@@ -6050,7 +6194,7 @@ https://github.com/yilkalargaw/org-auto-tangle
 
 #+end_src
 
-****** org-link-complete-at-point
+****** TODO org-link-complete-at-point
 :PROPERTIES:
 :ID:       1E4E2596-72CB-4BBE-9347-59FF5E686EC2
 :END:
@@ -6148,65 +6292,64 @@ https://config.daviwil.com/
     (counsel-rg "" "~/Notes" nil "Search Notes: ")))
 #+end_src
 
-****** create human readable CUSTOM_ID
+****** TODO COMMENT create human readable CUSTOM_ID
 :PROPERTIES:
 :ID:       0CB44A1C-5290-4A1A-9CB2-BFEBB9043166
 :END:
 https://zzamboni.org/post/how-to-easily-create-and-use-human-readable-ids-in-org-mode-and-doom-emacs/
 #+begin_src emacs-lisp :tangle yes
 ;; 추가 : `org-comment-string'과 `org-todo-keyword'를 id에 넣지 않게 변경
-(with-eval-after-load 'counsel
-  (defun zz/make-id-for-title (title)
-    "Return an ID based on TITLE."
-    (let* ((new-id (replace-regexp-in-string
-                    (concat
-                     "^\\(" (mapconcat 'concat (cdar org-todo-keywords) "\\|") "\\) ")
-                    "" title))
-           (new-id (replace-regexp-in-string
-                    (concat "^" org-comment-string " ")
-                    "" new-id))
-           (new-id (replace-regexp-in-string "[^[:alnum:]]" "-" (downcase new-id))))
-      new-id))
+(defun zz/make-id-for-title (title)
+  "Return an ID based on TITLE."
+  (let* ((new-id (replace-regexp-in-string
+                  (concat
+                   "^\\(" (mapconcat 'concat (cdar org-todo-keywords) "\\|") "\\) ")
+                  "" title))
+         (new-id (replace-regexp-in-string
+                  (concat "^" org-comment-string " ")
+                  "" new-id))
+         (new-id (replace-regexp-in-string "[^[:alnum:]]" "-" (downcase new-id))))
+    new-id))
 
-  (defun zz/org-custom-id-create ()
-    "Create and store CUSTOM_ID for current heading."
-    (let* ((title (or (nth 4 (org-heading-components)) ""))
-           (new-id (zz/make-id-for-title title)))
-      (org-entry-put nil "CUSTOM_ID" new-id)
-      (org-id-add-location new-id (buffer-file-name (buffer-base-buffer)))
-      new-id))
+(defun zz/org-custom-id-create ()
+  "Create and store CUSTOM_ID for current heading."
+  (let* ((title (or (nth 4 (org-heading-components)) ""))
+         (new-id (zz/make-id-for-title title)))
+    (org-entry-put nil "CUSTOM_ID" new-id)
+    (org-id-add-location new-id (buffer-file-name (buffer-base-buffer)))
+    new-id))
 
-  (defun zz/org-custom-id-get-create (&optional where force)
-    "Get or create CUSTOM_ID for heading at WHERE.
+(defun zz/org-custom-id-get-create (&optional where force)
+  "Get or create CUSTOM_ID for heading at WHERE.
 
 If FORCE is t, always recreate the property."
-    (org-with-point-at where
-      (let ((old-id (org-entry-get nil "CUSTOM_ID")))
-        ;; If CUSTOM_ID exists and FORCE is false, return it
-        (if (and (not force) old-id (stringp old-id))
-            old-id
-          ;; otherwise, create it
-          (zz/org-custom-id-create)))))
+  (org-with-point-at where
+    (let ((old-id (org-entry-get nil "CUSTOM_ID")))
+      ;; If CUSTOM_ID exists and FORCE is false, return it
+      (if (and (not force) old-id (stringp old-id))
+          old-id
+        ;; otherwise, create it
+        (zz/org-custom-id-create)))))
 
   ;; Now override counsel-org-link-action
   ;; 추가 : 선택 영역이 있을 경우 선택 영역을 링크 텍스트로 쓰도록 변경함
-  (defun counsel-org-link-action (x)
-    "Insert a link to X.
+(defun counsel-org-link-action (x)
+  "Insert a link to X.
 
 X is expected to be a cons of the form (title . point), as passed
 by `counsel-org-link'.
 
 If X does not have a CUSTOM_ID, create it based on the headline
 title."
-    (let* ((id (zz/org-custom-id-get-create (cdr x))))
-      (org-insert-link nil id
-                       (if (use-region-p)
-                           (buffer-substring (region-beginning) (region-end))
-                         (car x)))))
-  (general-define-key
-   :keymaps 'org-mode-map
-   :states '(normal visual emacs motion)
-   "SPC oih" '(counsel-org-link :which-key "insert heading")))
+  (let* ((id (zz/org-custom-id-get-create (cdr x))))
+    (org-insert-link nil id
+                     (if (use-region-p)
+                         (buffer-substring (region-beginning) (region-end))
+                       (car x)))))
+(general-define-key
+ :keymaps 'org-mode-map
+ :states '(normal visual emacs motion)
+ "SPC oih" '(counsel-org-link :which-key "insert heading"))
 #+end_src
 
 **** end org
@@ -6462,6 +6605,7 @@ https://github.com/pascalfleury/emacs-config
 **** COMMENT svg screenshot
 :PROPERTIES:
 :CUSTOM_ID: svg-screenshot
+:ID:       32BF92A6-70D3-4164-AC2B-C9CC2FAD59DA
 :END:
 #+begin_src emacs-lisp :tangle yes
 (defun screenshot-svg ()
@@ -6514,14 +6658,16 @@ https://stackoverflow.com/questions/23622296/emacs-timing-execution-of-function-
  "s-n f" 'make-frame
  "s-n b" '(clone-indirect-buffer-other-window :which-key "clone indirect buffer - other window")
  "s-n B" '(make-indirect-buffer :which-key "make indirect buffer")
- "C-h '" 'describe-char
- )
+ "C-h '" 'describe-char)
 
 (spc-e
   :states '(normal visual)
   "" '(nil :which-key "eval")
   "b" '(eval-buffer :which-key "eval buffer")
-  "x" '(eval-last-sexp :which-key "eval sexp"))
+  "x" '(eval-last-sexp :which-key "eval sexp")
+  "j" '(eval-print-last-sexp :which-key "eval print")
+  "d" '(eval-defun :which-key "eval defun"))
+
 (spc-e
   :keymaps '(visual)
   "r" '(eval-region :which-key "eval region"))
