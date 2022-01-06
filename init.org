@@ -94,7 +94,7 @@ init 파일 디버그 용도
 :END:
 #+begin_src emacs-lisp :tangle yes
 ad-redefinition-action 'accept         ; silent warning for redifinition.
-auto-save-default nil                  ; do not make temporary auto-save files. now i use `super-save' instead.
+;; auto-save-default nil                  ; do not make temporary auto-save files. now i use `super-save' instead.
 byte-compile-warnings '(cl-functions)  ; silent old cl-functions warning.
 comp-async-report-warnings-errors nil  ; silent gccemacs native comp warning.
 cursor-in-non-selected-windows nil     ; only shows the cursor of focus buffer.
@@ -147,12 +147,10 @@ display-buffer-base-action '((display-buffer-reuse-window display-buffer-same-wi
 ;; tab-bar-format '(tab-bar-format-global) ; global modeline using emacs28 tab-bar
 ;; tab-bar-mode t                         ; http://ruzkuku.com/texts/emacs-global.html
 ;; tab-line-mode t
+
 use-default-font-for-symbols nil
 require-final-newline t ; according to POSIX, every text file should end with newline.
-;; completion-styles '(basic partial-completion initials flex)
-;; completion-category-overrides '((file (styles . (partial-completion))))
 imenu-auto-rescan t
-
 mouse-wheel-scroll-amount '(1 ((shift) . 1)) ;; one line at a time
 mouse-wheel-progressive-speed nil            ; don't accelerate scrolling
 mouse-wheel-follow-mouse 't                ; scroll window under mouse
@@ -167,6 +165,19 @@ display-time-format "%R"
 display-time-default-load-average nil
 ns-pop-up-frames nil                       ; macos specific
 blink-cursor-mode nil
+create-lockfiles nil                    ; .#foo.txt 등의 lockfile을 생성하지 않음
+disabled-command-function nil           ; 어려운 기능 경고 해제
+async-bytecomp-package-mode t
+#+end_src
+
+***** COMMENT 버퍼 범위를 보여줌.
+#+begin_src emacs-lisp :tangle yes
+indicate-buffer-boundaries 'left
+#+end_src
+
+***** 문장의 끝을 "  "가 아니라 " "로 변경
+#+begin_src emacs-lisp :tangle yes
+sentence-end-double-space nil
 #+end_src
 
 **** long-line 최적화
@@ -201,15 +212,17 @@ bidi-inhibit-bpa t
 :PROPERTIES:
 :ID:       61B70326-3139-4DBA-9A61-0717562110EC
 :END:
-
-- 사용이 어려운 기능 경고
+****  COMMENT 사용이 어려운 기능 경고
 #+begin_src emacs-lisp :tangle yes
 (put 'narrow-to-region 'disabled nil)
 (put 'narrow-to-defun 'disabled nil)
 (put 'narrow-to-page 'disabled nil)
 #+end_src
 
-- 자잘한 설정들
+**** 자잘한 설정들
+:PROPERTIES:
+:ID:       DB530F2B-6C89-4E44-866C-19377DE7F3F7
+:END:
 #+begin_src emacs-lisp :tangle yes
 (fset 'yes-or-no-p 'y-or-n-p)           ; Replace yes/no prompts with y/n
 (put 'add-function 'lisp-indent-function 2)
@@ -308,35 +321,13 @@ use-package에 통합해서 사용하는게 편하다
 :ID:       892EEE33-1CB2-4734-8F1B-21CE4DE75D59
 :END:
 #+begin_example emacs-lisp :tangle no
-(use-package ace-window
+(use-package some-package
   :init/el-patch
-  (defvar aw-dispatch-alist
-    '(((el-patch-swap ?x ?k) aw-delete-window "delete Window")
-      (?m aw-swap-window "Swap Windows")
-      (?M aw-move-window "Move Window")
-      (?c aw-copy-window "Copy Window")
-      ((el-patch-swap ?j ?o) aw-switch-buffer-in-window "Select Buffer")
-      ((el-patch-swap ?n ?`) aw-flip-window)
-      ((el-patch-swap ?u ?O) aw-switch-buffer-other-window "Switch Buffer Other Window")
-      (?e aw-execute-command-other-window "Execute Command Other Window")
-      ((el-patch-swap ?F ?f) aw-split-window-fair "Split Fair Window")
-      ((el-patch-swap ?v ?j) aw-split-window-vert "Split Vert Window")
-      ((el-patch-swap ?b ?l) aw-split-window-horz "Split Horz Window")
-      ((el-patch-swap ?o ?K) delete-other-windows "Delete Other Windows")
-      ((el-patch-swap ?T ?t) aw-transpose-frame "Transpose Frame")
-      ;; (el-patch-add (?r my/aw-winner-redo))
-      ;; (el-patch-add (?u my/aw-winner-undo))
-      ;; (el-patch-add (?! my/aw-vterm))
-      (el-patch-add (?! my/aw-vterm "open vTerm"))
-      ;; (el-patch-add (27 aw--done "exit"))
-      (el-patch-add (27 aw--done))
-      ;; ?i ?r ?t are used by hyperbole.el
-      (?? aw-show-dispatch-help))
-    "List of actions for `aw-dispatch-default'.
-each action is a list of either:
-  (char function description) where function takes a single window argument
-or
-  (char function) where function takes no argument and the description is omitted."))
+  (defvar some-var
+    '(((el-patch-swap ?x ?k) aaaaaaaaaaaaaaa "bbbbbbbbbbbbb")
+      (?m aw-swap-window "aaaaaaa")
+      (el-patch-add (?! aaaa "bbbbbb"))
+      (?? aw-show-dispatch-help))))
 #+end_example
 :init나 :config에 /el-patch를 더해서 쓰면 된다.
 
@@ -427,6 +418,44 @@ https://github.com/noctuid/general.el
     :prefix "SPC e"
     :global-prefix "M-SPC e"))
 #+end_src
+
+**** undo-tree
+:PROPERTIES:
+:ID:       20704DF1-2D01-4ED4-A54D-58EDB736FD1D
+:END:
+https://emacs.stackexchange.com/questions/61512/
+https://www.dr-qubit.org/Lost_undo-tree_history.html
+#+begin_src emacs-lisp :tangle yes
+(use-package undo-tree
+  :diminish
+  :demand t
+  :custom
+  (undo-tree-auto-save-history t)
+  (undo-tree-enable-undo-in-region t)
+  :general
+  (spc
+    :states '(normal insert visual emacs motion)
+    "u" '(undo-tree-visualize :which-key "undo-tree"))
+  ("s-z" 'undo-tree-undo
+   "s-Z" 'undo-tree-redo)
+  (undo-tree-map
+   "C-/" nil)
+  (:states '(visual)
+   "u" 'undo-tree-undo)
+  (undo-tree-visualizer-mode-map
+   :override t
+   :states '(normal motion)
+   "t" 'undo-tree-visualizer-toggle-timestamps)
+  :config
+  ;; (defadvice undo-tree-make-history-save-file-name
+  ;;     (after undo-tree activate)
+  ;;   (setq ad-return-value (concat ad-return-value ".gz")))
+  (global-undo-tree-mode t))
+#+end_src
+- undo-tree-auto-save-history :: undo 내역을 저장하고 다음 세션에서도 쓸 수 있게 함.
+- undo-tree-enable-undo-in-region :: 선택 region 내에서만 undo를 할 수 있는 기능
+
+undo-tree는 강력하지만 히스토리 저장이 자주 꺠진다. 가바지 콜렉터가 elisp 인터프리터 외부에서 실행되고, 그에 따라 실행 취소 기록이 손상될 수 있는 것이 문제라고 함.
 
 **** transient
 :PROPERTIES:
@@ -519,7 +548,11 @@ https://github.com/sebastiencs/icons-in-terminal
 #+end_example
 
 **** svg-lib
+:PROPERTIES:
+:ID:       DC77F587-E837-49E5-A268-E5D012F6C5B6
+:END:
 https://github.com/rougier/svg-lib
+
 #+begin_src emacs-lisp :tangle yes
 (use-package svg-lib
   :config/el-patch
@@ -674,6 +707,7 @@ https://github.com/abo-abo/swiper
   (counsel-mode t))
 #+end_src
 - counsel-buffer-or-recentf-candidates 패치는 https://github.com/zzamboni/dot-doom/blob/master/doom.org 에서 가지고 왔다.
+- [ ] https://gitlab.com/ideasman42/emacs-counsel-at-point
 
 ***** ivy-rich - ivy, counsel에 더 풍부한 정보를 표시
 :PROPERTIES:
@@ -767,8 +801,9 @@ https://github.com/minad/vertico
   :hook ((minibuffer-setup . (lambda ()
                                (setq-local evil-move-beyond-eol t)
                                (cursor-intangible-mode)))
-         (minibuffer-exit . (lambda ()
-                              (setq-local evil-move-beyond-eol nil))))
+         ;; (minibuffer-exit . (lambda ()
+         ;;                      (setq-local evil-move-beyond-eol nil)))
+         )
   :custom
   (vertico-scroll-margin 0)
   (vertico-resize t)
@@ -787,14 +822,14 @@ https://github.com/minad/vertico
                  (forward-char 1)))
   (vertico-map
    :states 'normal
-   "q" 'minibuffer-keyboard-quit
-   "C-d" 'vertico-scroll-up)
-  ("M-n" 'down-from-outside
-   "M-p" 'up-from-outside
-   ;; "M-TAB" 'to-and-from-minibuffer
-   )
+   "q" 'minibuffer-keyboard-quit)
+  ;; ("M-n" 'down-from-outside
+  ;;  "M-p" 'up-from-outside
+  ;;  ;; "M-TAB" 'to-and-from-minibuffer
+  ;;  )
   (vertico-map
    :states '(normal insert)
+   "C-d" 'vertico-scroll-up
    "C-u" 'vertico-scroll-down)
 
   :config
@@ -833,7 +868,30 @@ https://github.com/minad/vertico
   ;; (setq read-extended-command-predicate
   ;;       #'command-completion-default-include-p)
 
-  (advice-add #'tmm-add-prompt :after #'minibuffer-hide-completions))
+  (advice-add #'tmm-add-prompt :after #'minibuffer-hide-completions)
+
+  ;; adjust number of visible candidates when resizing
+  ;; 작아지기만 하고 다시 커지지는 않는다..
+  ;; (defun vertico-resize--minibuffer ()
+  ;;   (add-hook 'window-size-change-functions
+  ;;             (lambda (win)
+  ;;               (let ((height (window-height win)))
+  ;;                 (when (/= (1- height) vertico-count)
+  ;;                   (setq-local vertico-count (1- height))
+  ;;                   (vertico--exhibit))))
+  ;;             t t))
+  ;; (advice-add #'vertico--setup :before #'vertico-resize--minibuffer)
+
+  ;; add » current prefix
+  (advice-add #'vertico--format-candidate :around
+    (lambda (orig cand prefix suffix index _start)
+      (setq cand (funcall orig cand prefix suffix index _start))
+      (concat
+       (if (= vertico--index index)
+           (propertize "»" 'face 'vertico-current)
+         " ")
+       cand)))
+  )
 #+end_src
 
 ***** COMMENT vertico-directory
@@ -844,15 +902,30 @@ https://github.com/minad/vertico
 (use-package vertico-directory
   :after vertico
   :ensure nil
+  :load-path "~/.config/emacs/straight/build/vertico/extensions/"
   :straight nil
   ;; More convenient directory navigation commands
   :general
   (vertico-map
    "RET" 'vertico-directory-enter
    "DEL" 'vertico-directory-delete-char
-   "M-DEL" 'vertico-directory-delete-word)
+   "M-DEL" 'vertico-directory-delete-entry
+   ;; "M-DEL" 'vertico-directory-delete-word
+   )
   ;; Tidy shadowed file names
-  :hook (rfn-eshadow-update-overlay . vertico-directory-tidy))
+  :hook (rfn-eshadow-update-overlay . vertico-directory-tidy)
+  :config
+  ;; ivy처럼 del 키 한번에 상위 폴더까지 경로를 지워줌
+  (defun vertico-directory-delete-entry ()
+    "Delete directory or entire entry before point."
+    (interactive)
+    (when (and (> (point) (minibuffer-prompt-end))
+               (vertico-directory--completing-file-p))
+      (save-excursion
+        (goto-char (1- (point)))
+        (when (search-backward "/" (minibuffer-prompt-end) t)
+          (delete-region (1+ (point)) (point-max))
+          t)))))
 #+end_src
 
 ***** maginalia
@@ -929,7 +1002,6 @@ https://github.com/minad/consult
             "s-o" '(lambda (arg) (interactive "P")
                      (with-persp-buffer-list () (consult-buffer)))
             "M-s-o" 'consult-buffer
-            ;; "s-o" (lambda () (with-persp-buffer-list () (consult-buffer arg)))
             "s-O" 'find-file
             "C-x 4 b" 'consult-buffer-other-window ;; orig. switch-to-buffer-other-window
             "C-x 5 b" 'consult-buffer-other-frame ;; orig. switch-to-buffer-other-frame
@@ -1015,16 +1087,41 @@ https://github.com/minad/consult
    consult-bookmark consult-recent-file consult-xref
    consult--source-recent-file consult--source-project-recent-file consult--source-bookmark
    consult-buffer
-   ;; :preview-key (kbd "M-.")
    :preview-key (kbd "S-SPC"))
 
   ;; add command-local keybind
-  (defvar consult-line-map
-    (let ((map (make-sparse-keymap)))
-      (define-key map [(super f)] #'previous-history-element)
-      map))
-  (consult-customize consult-line :keymap consult-line-map)
+  (defun define-minibuffer-key (key &rest defs)
+    "Define KEY conditionally in the minibuffer.
+DEFS is a plist associating completion categories to commands."
+    (define-key minibuffer-local-map key
+      (list 'menu-item nil defs :filter
+            (lambda (d)
+              (plist-get d (completion-metadata-get
+                            (completion-metadata (minibuffer-contents)
+                                                 minibuffer-completion-table
+                                                 minibuffer-completion-predicate)
+                            'category))))))
+  
+  (defun consult-find-for-minibuffer ()
+    "Search file with find, enter the result in the minibuffer."
+    (interactive)
+    (let* ((enable-recursive-minibuffers t)
+           (default-directory (file-name-directory (minibuffer-contents)))
+           (file (consult--find
+                  (replace-regexp-in-string
+                   "\\s-*[:([].*"
+                   (format " (via find in %s): " default-directory)
+                   (minibuffer-prompt))
+                  #'consult--find-builder
+                  (file-name-nondirectory (minibuffer-contents)))))
+      (delete-minibuffer-contents)
+      (insert (expand-file-name file default-directory))
+      (exit-minibuffer)))
 
+  (define-minibuffer-key [(super f)]
+    'consult-location #'previous-history-element
+    'file #'consult-find-for-minibuffer)
+  
   ;; Optionally configure the narrowing key.
   ;; Both < and C-+ work reasonably well.
   (setq consult-narrow-key "<") ;; (kbd "C-+")
@@ -1109,13 +1206,21 @@ https://gitlab.com/OlMon/consult-projectile/
 #+end_src
 
 ****** consult-yasnippet
+:PROPERTIES:
+:ID:       0A6A96BF-A325-4784-9CA9-D349F1E3BB17
+:END:
 https://github.com/mohkale/consult-yasnippet
 
 #+begin_src emacs-lisp :tangle yes
-(use-package consult-yasnippet)
+(use-package consult-yasnippet
+  :after (consult yasnippet)
+  )
 #+end_src
 
 ***** vertico-posframe
+:PROPERTIES:
+:ID:       2E990CBF-51BC-40ED-87D2-A28959C5EB67
+:END:
 https://github.com/tumashu/vertico-posframe
 
 **** TODO complete-at-point [0/0]
@@ -1628,17 +1733,17 @@ https://github.com/minad/corfu
   :straight (:host github
              :repo "minad/corfu")
   :custom
-  (corfu-cycle t) ;; Enable cycling for `corfu-next/previous'
+  (corfu-cycle t)                     ; Enable cycling for `corfu-next/previous'
   (completion-cycle-threshold 3)
-  (corfu-auto t)  ;; Enable auto completion
+  (corfu-auto t)                        ; Enable auto completion
   (corfu-auto-prefix 3)
-  ;; (corfu-commit-predicate nil)   ;; Do not commit selected candidates on next input
-  ;; (corfu-quit-at-boundary t)     ;; Automatically quit at word boundary
-  (corfu-quit-no-match t)        ;; Automatically quit if there is no match
-  ;; (corfu-preview-current nil)    ;; Disable current candidate preview
-  ;; (corfu-preselect-first nil)    ;; Disable candidate preselection
-  ;; (corfu-echo-documentation nil) ;; Disable documentation in the echo area
-  ;; (corfu-scroll-margin 5)        ;; Use scroll margin
+  ;; (corfu-commit-predicate nil) ; Do not commit selected candidates on next input
+  ;; (corfu-quit-at-boundary t)           ; Automatically quit at word boundary
+  (corfu-quit-no-match t)              ; Automatically quit if there is no match
+  ;; (corfu-preview-current nil)          ; Disable current candidate preview
+  ;; (corfu-preselect-first nil)           ; Disable candidate preselection
+  ;; (corfu-echo-documentation nil)        ; Disable documentation in the echo area
+  ;; (corfu-scroll-margin 5)               ; Use scroll margin
   (tab-always-indent 'complete)
 
   ;; You may want to enable Corfu only for certain modes.
@@ -1647,10 +1752,11 @@ https://github.com/minad/corfu
   ;;        (eshell-mode . corfu-mode))
   ;; :hook (minibuffer-setup . corfu-mode)
   :hook ((minibuffer-setup . (lambda ()
-                               (setq-local corfu-auto nil)
-                               (corfu-mode)))
-         (minibuffer-exit . (lambda ()
-                              (setq-local corfu-auto t))))
+                               (let ((corfu-auto nil))
+                                 (corfu-mode))))
+         ;; (minibuffer-exit . (lambda ()
+         ;;                      (setq-local corfu-auto t)))
+         )
 
   ;; Recommended: Enable Corfu globally.
   ;; This is recommended since dabbrev can be used globally (M-/).
@@ -1660,23 +1766,37 @@ https://github.com/minad/corfu
   ("C-SPC" 'completion-at-point)
   (corfu-map
    ;; :states 'insert
-    ;; "C-n" 'corfu-next
-    ;; "C-p" 'corfu-previous
-    [remap evil-complete-next] 'corfu-next
-    [remap evil-complete-previous] 'corfu-previous
-    ;; "C-h" 'corfu-show-documentation
-    ;; [remap evil-beginning-of-line] 'corfu-beginning-of-prompt
-    ;; [remap evil-end-of-line] 'corfu-end-of-prompt
+   ;; "C-n" 'corfu-next
+   ;; "C-p" 'corfu-previous
+   [remap evil-complete-next] 'corfu-next
+   [remap evil-complete-previous] 'corfu-previous
+   ;; "C-h" 'corfu-show-documentation
+   ;; [remap evil-beginning-of-line] 'corfu-beginning-of-prompt
+   ;; [remap evil-end-of-line] 'corfu-end-of-prompt
    ;; [remap evil-undo] 'corfu-reset
-    ;; "<escape>" 'corfu-quit
-    [remap evil-insert] '(lambda (&optional args)
-                            (interactive)
-                            (evil-insert args)
-                            (completion-at-point))
+   ;; "<escape>" 'corfu-quit
+   [remap evil-insert] '(lambda (&optional args)
+                          (interactive)
+                          (evil-insert args)
+                          (completion-at-point))
 
-    [remap completion-at-point] 'corfu-quit
-    [remap evil-force-normal-state] 'corfu-quit
-    [remap evil-mc-undo-all-cursors] 'corfu-quit)
+   [remap completion-at-point] 'corfu-quit
+   [remap evil-force-normal-state] '(lambda () (interactive)
+                                      (corfu-quit)
+                                      (evil-force-normal-state))
+   [remap evil-mc-undo-all-cursors] 'corfu-quit)
+
+  (corfu-map
+   :states 'motion
+   "j" 'corfu-next
+   "k" 'corfu-previous
+   ;; [remap evil-next-line] 'corfu-next
+   ;; [remap evil-previous-line] 'corfu-previous
+   "q" 'corfu-quit)
+
+  (corfu-map
+   :states 'normal
+   "DEL" 'corfu-reset)
 
   ;; (corfu-map
   ;;  :states 'insert
@@ -1777,9 +1897,9 @@ company의 backend를 corfu에서도 사용할 수 있도록 함
           ;;   ;; #'elisp-completion-at-point
           ;;   )
           ;; ,(cape-company-to-capf #'cape-yasnippet)
+          cape-dabbrev
           cape-abbrev
           cape-keyword
-          cape-dabbrev
           cape-file
           t))
 
@@ -1847,6 +1967,108 @@ https://github.com/justbur/emacs-which-key
   ;; (setq which-key-use-c-h-commands nil)
   (which-key-setup-side-window-right-bottom))
 
+#+end_src
+
+**** embark
+***** embark
+:PROPERTIES:
+:ID:       2099A93A-13A1-4513-828D-F2411EB91D0E
+:END:
+https://github.com/oantolin/embark
+
+#+begin_src emacs-lisp :tangle yes
+(use-package embark
+  :bind
+  (("C-." . embark-act)                 ; pick some comfortable binding
+   ("C-;" . embark-dwim)                ; good alternative: M-.
+   ("C-h B" . embark-bindings))         ; alternative for `describe-bindings'
+  :custom
+  ;; 왠지 이게 없으면 `embark--confirm'이 작동하지 않는다.
+  (y-or-n-p-use-read-key t)             ; `read-key' instead of `read-from-minibuffer'
+
+  :init
+  ;; Optionally replace the key help with a completing-read interface
+  (setq prefix-help-command #'embark-prefix-help-command)
+#+end_src
+
+****** config
+#+begin_src emacs-lisp :tangle yes
+  :config
+  ;; Hide the mode line of the Embark live/completions buffers
+  (add-to-list 'display-buffer-alist
+               '("\\`\\*Embark Collect \\(Live\\|Completions\\)\\*"
+                 nil
+                 (window-parameters (mode-line-format . none))))
+#+end_src
+
+****** embark-ace-window
+:PROPERTIES:
+:ID:       95AC42D0-4C4D-4708-B505-1F4C86BBE36D
+:END:
+#+begin_src emacs-lisp :tangle yes
+(eval-when-compile
+  (defmacro my/embark-ace-action (fn)
+    `(defun ,(intern (concat "my/embark-ace-" (symbol-name fn))) ()
+       (interactive)
+       (with-demoted-errors "%s"
+         (require 'ace-window)
+         (let ((aw-dispatch-always t))
+           (aw-switch-to-window (aw-select nil))
+           (call-interactively (symbol-function ',fn)))))))
+
+(define-key embark-file-map     (kbd "o") (my/embark-ace-action find-file))
+(define-key embark-buffer-map   (kbd "o") (my/embark-ace-action switch-to-buffer))
+(define-key embark-bookmark-map (kbd "o") (my/embark-ace-action bookmark-jump))
+#+end_src
+
+****** automatically shrink vertico
+:PROPERTIES:
+:ID:       52CFB476-7312-4063-9A51-ABDE27397118
+:END:
+#+begin_src emacs-lisp :tangle yes
+(defun +embark-collect-hook ()
+  (when (eq embark-collect--kind :live)
+    (with-selected-window (active-minibuffer-window)
+      (setq-local vertico-resize t vertico-count 0)
+      (vertico--exhibit))))
+(add-hook 'embark-collect-mode-hook #'+embark-collect-hook)
+#+end_src
+
+****** end
+:PROPERTIES:
+:ID:       A6FAFC1D-2D9D-451E-9EF1-BA39D55C5A0F
+:END:
+#+begin_src emacs-lisp :tangle yes
+)
+#+end_src
+
+***** embark-consult
+:PROPERTIES:
+:ID:       9084A9E0-3B3C-4FFF-8FAE-72EAFABD3339
+:END:
+#+begin_src emacs-lisp :tangle yes
+(use-package embark-consult
+  :after (embark consult)
+  :demand t ; only necessary if you have the hook below
+  ;; if you want to have consult previews as you move around an
+  ;; auto-updating embark collect buffer
+  :hook
+  (embark-collect-mode . consult-preview-at-point-mode))
+#+end_src
+
+***** embark-vc
+:PROPERTIES:
+:ID:       BA392E3F-75D5-478E-8510-7D39EA3F3B0B
+:END:
+https://github.com/elken/embark-vc/
+
+Magit, code-review와 같은 version control 패키지에 대한 지원
+#+begin_src emacs-lisp :tangle yes
+(use-package embark-vc
+  :straight (embark-vc
+             :type git
+              :host github
+              :repo "elken/embark-vc"))
 #+end_src
 
 *** project
@@ -1981,26 +2203,25 @@ https://github.com/Bad-ptr/persp-mode.el
 (add-hook 'persp-before-deactivate-functions #'+workspaces-load-winner-data-h)
 (add-hook 'persp-activated-functions #'+workspaces-save-winner-data-h)
 
-(with-eval-after-load "persp-mode"
-  (with-eval-after-load "ivy"
-    (add-hook 'ivy-ignore-buffers
-              #'(lambda (b)
-                  (when persp-mode
-                    (let ((persp (get-current-persp)))
-                      (if persp
-                          (not (persp-contain-buffer-p b persp))
-                        nil)))))
+(with-eval-after-load "ivy"
+  (add-hook 'ivy-ignore-buffers
+            #'(lambda (b)
+                (when persp-mode
+                  (let ((persp (get-current-persp)))
+                    (if persp
+                        (not (persp-contain-buffer-p b persp))
+                      nil)))))
 
-    (setq ivy-sort-functions-alist
-          (append ivy-sort-functions-alist
-                  '((persp-kill-buffer . nil)
-                    (persp-remove-buffer . nil)
-                    (persp-add-buffer . nil)
-                    (persp-switch . nil)
-                    (persp-window-switch . nil)
-                    (persp-frame-switch . nil))))))
-
-;; (setq persp-interactive-completion-function #'ivy-completing-read)
+  (setq ivy-sort-functions-alist
+        (append ivy-sort-functions-alist
+                '((persp-kill-buffer . nil)
+                  (persp-remove-buffer . nil)
+                  (persp-add-buffer . nil)
+                  (persp-switch . nil)
+                  (persp-window-switch . nil)
+                  (persp-frame-switch . nil))))
+  ;; (setq persp-interactive-completion-function #'ivy-completing-read)
+  )
 #+end_src
 
 ***** end
@@ -2301,42 +2522,6 @@ https://github.com/oantolin/orderless
       (advice-add 'company-capf--candidates :around #'just-one-face))))
 #+end_src
 
-*** undo-tree
-:PROPERTIES:
-:ID:       20704DF1-2D01-4ED4-A54D-58EDB736FD1D
-:END:
-https://emacs.stackexchange.com/questions/61512/
-https://www.dr-qubit.org/Lost_undo-tree_history.html
-#+begin_src emacs-lisp :tangle yes
-(use-package undo-tree
-  :diminish
-  :demand t
-  :custom
-  (undo-tree-auto-save-history t)
-  (undo-tree-enable-undo-in-region t)
-  :general
-  (spc
-    :states '(normal insert visual emacs motion)
-    "u" '(undo-tree-visualize :which-key "undo-tree"))
-  ("s-z" 'undo-tree-undo
-   "s-Z" 'undo-tree-redo)
-  (:states '(visual)
-   "u" 'undo-tree-undo)
-  (undo-tree-visualizer-mode-map
-   :override t
-   :states '(normal motion)
-   "t" 'undo-tree-visualizer-toggle-timestamps)
-  :config
-  ;; (defadvice undo-tree-make-history-save-file-name
-  ;;     (after undo-tree activate)
-  ;;   (setq ad-return-value (concat ad-return-value ".gz")))
-  (global-undo-tree-mode t))
-#+end_src
-- undo-tree-auto-save-history :: undo 내역을 저장하고 다음 세션에서도 쓸 수 있게 함.
-- undo-tree-enable-undo-in-region :: 선택 region 내에서만 undo를 할 수 있는 기능
-
-undo-tree는 강력하지만 히스토리 저장이 자주 꺠진다. 가바지 콜렉터가 elisp 인터프리터 외부에서 실행되고, 그에 따라 실행 취소 기록이 손상될 수 있는 것이 문제라고 함.
-
 *** 텍스트 편집
 :PROPERTIES:
 :ID:       E1AE2301-5561-4AA6-B601-316606B4DEAB
@@ -2359,9 +2544,30 @@ vim 키바인딩 레이어
   (evil-shift-width tab-width)    ; tab option for evil
   (evil-want-C-u-scroll t)        ; set `C-u' to scroll up. not for insert mode.
   (evil-want-C-i-jump nil)        ; set `C-i' to insert `TAB' key.
+  (evil-echo-state nil)           ; mute echo area
   :general
   ;; ("M-u" 'universal-argument)
   ("C-M-u" 'universal-argument)
+  ("C-S-s" 'isearch-backward)           ; C-r is Redo
+  (:states 'normal
+   "C-n" nil
+   "C-p" nil
+   "C-." nil
+   "M-." nil)
+  (:states 'normal
+   :predicate '(memq last-command
+                     '(evil-paste-after
+                       evil-paste-before
+                       evil-visual-paste))
+   "C-n" 'evil-paste-pop-next
+   "C-p" 'evil-paste-pop)
+  (:states 'normal
+   :predicate '(memq last-command
+                     '(evil-repeat
+                       evil-repeat-pop
+                       evil-repeat-pop-next))
+   "M-." 'evil-repeat-pop-next
+   "C-." 'evil-repeat-pop)
 #+end_src
 
 ***** config
@@ -2408,12 +2614,13 @@ https://github.com/emacs-evil/evil-collection
 evil 키바인딩 모음집.
 #+begin_src emacs-lisp :tangle yes
 (use-package evil-collection
-  ;; :after evil
+  :after evil
   ;; :init
   ;; (setq evil-collection-company-use-tng nil)
   :custom
   (evil-collection-setup-minibuffer t)
   (evil-collection-outline-bind-tab-p nil)
+  (forge-add-default-bindings nil)
   :config
   (setq evil-collection-mode-list
         (remove 'lispy evil-collection-mode-list))
@@ -2524,7 +2731,7 @@ https://github.com/gabesoft/evil-mc
    "M-s-h" '(evil-mc-skip-and-goto-prev-cursor :which-key "prev cursor")
    "M-s-l" '(evil-mc-skip-and-goto-next-cursor :which-key "next cursor")
    "M-s-u" '(evil-mc-undo-last-added-cursor :which-key "undo cursor")
-   "M-s-m" '(evil-mc-toggle-frozen :which-key "pause/resume cursor"))
+   "M-s-s" '(evil-mc-toggle-frozen :which-key "pause/resume cursor"))
   (:states 'normal
    "<escape>" (general-predicate-dispatch 'evil-force-normal-state
                 (and (bound-and-true-p evil-mc-mode) (evil-mc-has-cursors-p)) 'evil-mc-undo-all-cursors
@@ -2585,11 +2792,11 @@ https://github.com/gabesoft/evil-mc
 - evil-mc의 기능은 'evil-mc-known-commands의 목록으로 화이트리스트로 돌아간다.
 - [ ] evil-org-open-below
 
-****** TODO el-patch [/]
+****** TODO el-patch [1/2]
 :PROPERTIES:
 :ID:       7BA6FF9C-6264-4B3C-BDCE-CF6606157F72
 :END:
-- 커서 토글 기능을 추가했다.
+- [X] 커서 토글 기능을 추가했다.
 - [ ] substitute 커서 위치 문제를 해결했다.
 
 #+begin_src emacs-lisp :tangle yes
@@ -3044,6 +3251,10 @@ https://github.com/abo-abo/ace-link
 **** snippet
 ***** yasnippet
 :PROPERTIES:
+:ID:       8AB07E8C-E91E-49BA-BBF5-9641FB9BC029
+:END:
+****** yasnippet
+:PROPERTIES:
 :ID:       3E8740EC-E273-42BE-889A-8B52ABE28392
 :END:
 https://github.com/joaotavora/yasnippet
@@ -3069,7 +3280,7 @@ https://github.com/joaotavora/yasnippet
                 '(:with company-yasnippet))))))
 #+end_src
 
-***** yasnippet-snippets
+****** yasnippet-snippets
 https://github.com/AndreaCrotti/yasnippet-snippets
 
 #+begin_src emacs-lisp :tangle yes
@@ -3077,8 +3288,63 @@ https://github.com/AndreaCrotti/yasnippet-snippets
   :after yasnippet)
 #+end_src
 
-***** TODO auto-yasnippet
+****** TODO auto-yasnippet
 https://github.com/abo-abo/auto-yasnippet
+
+***** COMMENT skempo
+:PROPERTIES:
+:ID:       033BF532-929E-42E1-8CF3-B7D6F3FE14D3
+:END:
+https://github.com/xFA25E/skempo
+
+이맥스 내장 기능인 skeleton과 tempo 탬플릿을 사용하는 스니펫 패키지.
+abbrev를 사용해서 스니펫을 입력할 수 있고, 템플릿을 elisp로 정의할 수 있다.
+
+#+begin_src emacs-lisp :tangle yes
+(use-package skempo
+  :straight (skempo
+             :type git
+             :host github
+             :repo "xFA25E/skempo")
+  :hook ((emacs-lisp-mode lisp-interaction-mode) . skempo-mode)
+  :custom
+  (skempo-completing-read t)
+  (skempo-delete-duplicate-marks t)
+  (skempo-update-identical-tags t)
+  (skempo-skeleton-marks-support t)
+  (skempo-always-create-tag t)
+  (skempo-always-create-abbrev t)
+  (skempo-mode-lighter " Sk")
+  :bind
+  (:map skempo-mode-map
+   ("C-z" . skempo-complete-tag-or-call-on-region)
+   ("M-g M-e" . skempo-forward-mark)
+   ("M-g M-a" . skempo-backward-mark))
+  :config
+  ;; Multiple modes!
+  (skempo-define-tempo (let :tag t :abbrev t :mode (emacs-lisp-mode lisp-mode))
+    "(let ((" p "))" n> r> ")")
+
+  ;; Skeletons too! With mark jumping!
+  (skempo-define-skeleton (defun :tag t :abbrev t :mode emacs-lisp-mode)
+    "Name: "
+    "(defun " str " (" @ - ")" n
+    @ _ ")" n)
+
+  ;; Clever tempo templates!
+  (skempo-define-tempo (defvar :tag t :abbrev t :mode emacs-lisp-mode)
+    "(defvar " (string-trim-right (buffer-name) (rx ".el" eos)) "-" p n>
+    r> ")")
+
+  ;; Define tags and abbrevs for existing skeletons and tempo templates!
+  (skempo-define-function (shcase :tag t :abbrev t :mode sh-mode)
+    sh-case)
+
+  ;; This will override emacs-lisp's "defvar", but you can always call it by
+  ;; function name (or by tag/abbrev if they were defined).
+  (skempo-define-tempo (defvar :tag t :mode lisp-interaction-mode)
+    "(defvar var" p n> r> ")"))
+#+end_src
 
 *** UI
 **** minibuffer
@@ -3280,6 +3546,7 @@ doom-themes에서 가져옴
 :END:
 #+begin_src emacs-lisp :tangle yes
 (defun refresh-theme (&optional appearance)
+  (interactive)
   "Load theme, taking current system APPEARANCE into consideration."
   (mapc #'disable-theme custom-enabled-themes)
   (pcase (or appearance ns-system-appearance)
@@ -3345,7 +3612,7 @@ CLOSED: [2021-12-21 Tue 23:31]
   (show-paren-style 'parenthesis)
   ;; (show-paren-style 'expression)
   (show-paren-delay 0)
-  (flash-matching-paren nil)
+  ;; (flash-matching-paren nil)
   (show-paren-when-point-inside-paren t)
   :config
   ;; (set-face-attribute 'show-paren-match-expression nil :background (gruvbox-color 'gruvbox-gray))
@@ -3665,50 +3932,23 @@ modeline 대신 minibuffer에 모드라인을 표시하는 기능.
 (use-package transpose-frame
   :defer t)
 #+end_src
-***** TODO ace-window [2/4]
+***** TODO ace-window [3/5]
 :PROPERTIES:
 :ID:       C7AF82D9-BD0C-4081-A1BF-92D5CEA14296
 :END:
 https://github.com/abo-abo/ace-window
+
 단축키로 윈도우를 조작하는 패키지
 #+begin_src emacs-lisp :tangle yes
 (use-package ace-window
   :straight (ace-window
              :type git
              :host github
-             :repo "rdiaz02/ace-window"
-             :branch "origin/posframe-notmgsk"
-             :files ("*.el"))
-
-  ;;   :init/el-patch
-  ;;   (defvar aw-dispatch-alist
-  ;;     '(((el-patch-swap ?x ?k) aw-delete-window "delete Window")
-  ;;       (?m aw-swap-window "Swap Windows")
-  ;;       (?M aw-move-window "Move Window")
-  ;;       (?c aw-copy-window "Copy Window")
-  ;;       ((el-patch-swap ?j ?o) aw-switch-buffer-in-window "Select Buffer")
-  ;;       ((el-patch-swap ?n ?`) aw-flip-window)
-  ;;       ((el-patch-swap ?u ?O) aw-switch-buffer-other-window "Switch Buffer Other Window")
-  ;;       (?e aw-execute-command-other-window "Execute Command Other Window")
-  ;;       ((el-patch-swap ?F ?f) aw-split-window-fair "Split Fair Window")
-  ;;       ((el-patch-swap ?v ?j) aw-split-window-vert "Split Vert Window")
-  ;;       ((el-patch-swap ?b ?l) aw-split-window-horz "Split Horz Window")
-  ;;       ((el-patch-swap ?o ?K) delete-other-windows "Delete Other Windows")
-  ;;       ((el-patch-swap ?T ?t) aw-transpose-frame "Transpose Frame")
-  ;;       ;; (el-patch-add (?r my/aw-winner-redo))
-  ;;       ;; (el-patch-add (?u my/aw-winner-undo))
-  ;;       ;; (el-patch-add (?! my/aw-vterm))
-  ;;       (el-patch-add (?! my/aw-vterm "open vTerm"))
-  ;;       ;; (el-patch-add (27 aw--done "exit"))
-  ;;       (el-patch-add (27 aw--done))
-  ;;       ;; ?i ?r ?t are used by hyperbole.el
-  ;;       (?? aw-show-dispatch-help))
-  ;;     "List of actions for `aw-dispatch-default'.
-  ;; each action is a list of either:
-  ;;   (char function description) where function takes a single window argument
-  ;; or
-  ;;   (char function) where function takes no argument and the description is omitted.")
-
+             :reop "abo-abo/ace-window"
+             :fork (:host github
+                    :repo "rdiaz02/ace-window"
+                    :branch "posframe-notmgsk"
+                    :files ("*.el")))
   :config/el-patch
   (defun aw--switch-buffer ()
     (cond ((bound-and-true-p ivy-mode)
@@ -3720,23 +3960,25 @@ https://github.com/abo-abo/ace-window
           (t (call-interactively 'switch-to-buffer))))
 
   :general
-  (spc
-    :states '(normal insert visual)
-    "w" '(ace-window :which-key "ace-window"))
-
+  ;; (spc
+  ;;   :states '(normal insert visual)
+  ;;   "w" '(ace-window :which-key "ace-window"))
+  ("s-`" 'ace-window)
   :custom
-  (aw-minibuffer-flag t)
+  (aw-minibuffer-flag t)                ; minibuffer도 표시함
   (aw-dispatch-always t)
+  (aw-background nil)                   ; disable dim background
 
   :config
-  (setq aw-keys '(?a ?s ?d ?g ?h ?i ?n ?p ?w ?x ?y ?z ?b))
+  (setq aw-keys '(?a ?s ?d ?g ?h ?i ?n ?p ?w ?y ?z ?b))
   (setq aw-dispatch-alist
         '((?k aw-delete-window "delete Window")
           (?m aw-swap-window "Swap Windows")
           (?M aw-move-window "Move Window")
           (?c aw-copy-window "Copy Window")
           (?o aw-switch-buffer-in-window "Select Buffer")
-          (?` aw-flip-window)
+          ;; (?` aw-flip-window)
+          (?` switch-between-minibuffer)
           (?O aw-switch-buffer-other-window "Switch Buffer Other Window")
           (?e aw-execute-command-other-window "Execute Command Other Window")
           ;; (?f aw-split-window-fair "Split Fair Window")
@@ -3748,9 +3990,16 @@ https://github.com/abo-abo/ace-window
           (?v hydra-window-scroll/body)
           (?u aw--winner-undo)
           (?r winner-redo)
+          ;; (?x )
           (27 aw--done)
           (?q aw--done)
           (?? aw-show-dispatch-help)))
+
+  (defun switch-between-minibuffer (&rest _)
+    (when (active-minibuffer-window)
+      (if (minibufferp)
+          (select-window (minibuffer-selected-window))
+        (select-window (active-minibuffer-window)))))
 
   (defun joe-scroll-other-window ()
     (interactive)
@@ -3773,15 +4022,26 @@ https://github.com/abo-abo/ace-window
 
   ;; (setq aw-ignore-current t) ; 이러면 split이 현재 윈도우에서 작동하지 않는다.
   (ace-window-display-mode t)           ; showing window identifier on modeline.
-  (ace-window-posframe-mode t))
+  (ace-window-posframe-mode t)
+
+  ;; 테마 변경시 망가지는 ace-window-posframe 재설정
+  (define-advice refresh-theme
+      (:after (&optional _))
+    (if ace-window-posframe-mode
+        (kill-matching-buffers "*aw-posframe-buffer-*" t t))))
 #+end_src
 
 - [X] posframe 추가
 - [X] posframe face 변경
-- [ ] window size, scroll-other-window의 transient map 만들기.
-- [ ] display-buffer-base-action 설정
-  + [ ] display-buffer-alist 설정
-
+- [-] window size, scroll-other-window의 transient map 만들기.
+  왠지 transient로는 scroll-other-window가 작동하지 않는다. 
+  - [X] scroll-other-window
+  - [ ] window size
+- [X] display-buffer-base-action 설정
+  + [X] display-buffer-alist 설정
+  + embark로 대체
+- [ ] x에 kill-buffer-and-window 추가하기 
+    
 **** font
 :PROPERTIES:
 :ID:       39EB7FC4-28EA-425B-AC20-4A8C05C71B19
@@ -3908,13 +4168,14 @@ https://github.com/alphapapa/dogears.el
   :general
   (spc
     :states '(normal insert visual emacs motion)
-    "`" (general-key-dispatch 'dogears-go
-          :which-key "dogears"
-          :timeout 0.5
-          "n" 'dogears-forward
-          "p" 'dogears-back
-          ;; "`" 'dogears-sidebar
-          ))
+    "`" (;; general-key-dispatch 'dogears-go
+         general-key-dispatch 'consult-dogears
+         :which-key "dogears"
+         :timeout 0.5
+         "n" 'dogears-forward
+         "p" 'dogears-back
+         ;; "`" 'dogears-sidebar
+         ))
   :config
   ;; (defun toggle-dogears (orig-fun &rest args)
   ;;   (unless (ignore-errors (kill-buffer "*Dogears List*"))
@@ -3934,10 +4195,13 @@ https://github.com/alphapapa/dogears.el
                       dogears-list))
             :action (lambda (cand)
                       (dogears-go (get-text-property 0 'consult--candidate cand)))))
+    )
 
-    (defun consult-dogears ()
-      (interactive)
-      (consult--multi '(consult--source-dogears)))))
+  (defun consult-dogears ()
+    (interactive)
+    (consult--multi '(consult--source-dogears)))
+  ;; 아직 preview-key가 지원되지 않음 -- https://github.com/minad/consult/wiki#dogears
+  )
 #+end_src
 
 - dogears-sidebar는 의미가 있는 기능인가 싶다.
@@ -4059,7 +4323,7 @@ https://github.com/joostkremers/writeroom-mode
 :END:
 dired는 이맥스 내장 파일 관리자다.(DIRectory EDit)
 
-***** all-the-icons-dired
+***** COMMENT all-the-icons-dired
 :PROPERTIES:
 :ID:       10960888-1206-4556-8D73-6615A8A79888
 :END:
@@ -4079,44 +4343,95 @@ https://github.com/jtbm37/all-the-icons-dired
   :defer 1
   :commands (dired dired-jump)
   :hook ((dired-load-hook . (lambda () (interactive) (dired-collapse)))
-         (dired-mode-hook . (lambda ()
-                              (interactive)
-                              (dired-omit-mode 1)
-                              (dired-hide-details-mode 1)
-                              (all-the-icons-dired-mode 1)
-                              (hl-line-mode 1)))
+         ;; (dired-mode-hook . (lambda ()
+         ;;                      (interactive)
+         ;;                      (dired-omit-mode 1)
+         ;;                      (dired-hide-details-mode 1)
+         ;;                      (all-the-icons-dired-mode 1)
+         ;;                      (hl-line-mode 1)))
          (dired-mode-hook . auto-revert-mode))
   :general
   (dired-mode-map
    :states 'normal
    "SPC" nil
    "SPC d" '(nil :which-key "dired")
-   "SPC dh" '(dired-omit-mode :which-key "omit mode(hide)")
+   "SPC do" '(dired-omit-mode :which-key "omit mode(hide)")
    ;; "h" 'dired-single-up-directory
    "h" 'evil-backward-char
-   "H" 'dired-single-up-directory
-   ;; "H" 'dired-omit-mode
+   ;; "H" 'dired-single-up-directory
    ;; "l" 'dired-single-buffer
    "l" 'evil-forward-char
-   "L" 'dired-single-buffer
-   "y" 'dired-ranger-copy
-   "X" 'dired-ranger-move
-   "p" 'dired-ranger-paste
-   "r" 'dired-rsync)
+   ;; "L" 'dired-single-buffer
+   ;; "y" 'dired-ranger-copy
+   ;; "X" 'dired-ranger-move
+   ;; "p" 'dired-ranger-paste
+   ;; "r" 'dired-rsync
+   )
   :custom
   (dired-listing-switches "-agho --group-directories-first")
-  (dired-omit-files "^\\.[^.].*")
+  ;; (dired-omit-files "^\\.[^.].*")
   (dired-omit-verbose nil)
   (dired-hide-details-hide-symlink-targets nil)
-  (delete-by-moving-to-trash t)
+  (dired-recursive-deletes 'always)
+  (dired-dwim-target t)
+  (dired-listing-switches "-AGhlv --group-directories-first --time-style=long-iso")
   :config
   (when (string= system-type "darwin")
     (setq dired-use-ls-dired t
           insert-directory-program "/usr/local/bin/gls"
-          dired-listing-switches "-aBhl --group-directories-first")))
+          ;; dired-listing-switches "-aBhl --group-directories-first"
+          )))
 #+end_src
 
-***** dired-single
+***** dired-x
+:PROPERTIES:
+:ID:       4A5FD459-B438-4714-85D3-88B34F3C9558
+:END:
+#+begin_src emacs-lisp :tangle yes
+(use-package dired-x
+  :straight nil
+  :ensure nil
+  ;; Enable dired-omit-mode by default
+  ;; :hook
+  ;; (dired-mode . dired-omit-mode)
+  :config
+  ;; Make dired-omit-mode hide all "dotfiles"
+  (setq dired-omit-files
+        (concat dired-omit-files "\\|^\\..*$")))
+#+end_src
+
+***** dirvish
+:PROPERTIES:
+:ID:       1CFD91CC-BEB4-4EDC-AEBF-4696C85A2A13
+:END:
+https://github.com/alexluigit/dirvish
+
+#+begin_src emacs-lisp :tangle yes
+(use-package dirvish
+  :general
+  (dirvish-mode-map
+   :states 'normal
+   "H" 'dirvish-up-directory
+   [remap dired-do-copy] 'dirvish-yank
+   "SPC dh" 'dirvish-show-history)
+  :config
+  ;; (require 'dirvish-minibuffer-preview)
+  ;; (dirvish-minibuf-preview-mode)
+  (require 'dirvish-yank)
+  (dirvish-override-dired-mode))
+#+end_src
+
+***** dirvish의 외부 의존성
+:PROPERTIES:
+:ID:       718255B1-676C-428B-8318-D296D0CA1679
+:END:
+#+begin_src emacs-lisp :tangle yes
+(use-package exa                        ; 디렉토리 프리뷰 생성
+  :straight nil
+  :ensure-system-package exa)
+#+end_src
+
+***** COMMENT dired-single
 :PROPERTIES:
 :ID:       52BBA10B-614F-4FEA-9FF6-BD377C0CB9FD
 :END:
@@ -4128,7 +4443,7 @@ dired가 디렉토리별로 새 버퍼를 열지 않고 현재 버퍼를 재사�
     :defer t)
 #+end_src
 
-***** dired-hacks
+***** COMMENT dired-hacks
 :PROPERTIES:
 :ID:       E33901A6-7CAE-483C-BA0B-2EB2D25191EA
 :END:
@@ -4147,7 +4462,7 @@ https://github.com/Fuco1/dired-hacks
     :defer t)
 #+end_src
 
-***** dired-rsync
+***** COMMENT dired-rsync
 https://github.com/stsquad/dired-rsync/
 
 #+begin_src emacs-lisp :tangle yes
@@ -4562,16 +4877,26 @@ https://github.com/Fanael/persistent-scratch
   (persistent-scratch-setup-default))
 #+end_src
 
-**** COMMENT osx-trash
+**** osx-trash
+:PROPERTIES:
+:ID:       EBA9857C-06A3-4DE4-93B3-6763A9CD57FD
+:END:
 https://github.com/emacsorphanage/osx-trash/
 osx의 휴지통을 사용
 #+begin_src emacs-lisp :tangle yes
 (use-package osx-trash
   :if (eq system-type 'darwin)
-  :custom
-  (delete-by-moving-to-trash t)
   :config
   (osx-trash-setup))
+#+end_src
+
+https://github.com/ali-rantakari/trash
+
+#+begin_src emacs-lisp :tangle yes
+(use-package trash
+  :straight nil
+  :if (eq system-type 'darwin)
+  :ensure-system-package trash)
 #+end_src
 
 **** super-save
@@ -4586,6 +4911,7 @@ https://github.com/bbatsov/super-save
   :defer 1
   :diminish super-save-mode
   :custom
+  (auto-save-default nil)
   (super-save-auto-save-when-idle t)   ; save when idle.
   (auto-save-visited-mode t)
   (super-save-remote-files nil)        ; do not autosave remote files.
@@ -4597,6 +4923,7 @@ https://github.com/bbatsov/super-save
   (add-to-list 'super-save-hook-triggers 'find-file-hook)
   (super-save-mode +1))
 #+end_src
+
 *** version control
 **** ediff
 :PROPERTIES:
@@ -4644,6 +4971,7 @@ https://magit.vc/manual/magit/
     "gF" 'magit-fetch-all
     "gr" 'magit-rebase))
 #+end_src
+
 ***** git-mode
 :PROPERTIES:
 :ID:       55E63570-92A1-4B84-AE5B-03BDE24D1AD0
@@ -4654,6 +4982,7 @@ Major modes for git files.
 (use-package git-modes
   :defer t)
 #+end_src
+
 ***** magit-todos
 :PROPERTIES:
 :ID:       76EFFC60-3C90-4538-BF02-2A6A306D0E6D
@@ -4678,18 +5007,23 @@ https://github.com/magit/ghub
 (use-package ghub
   :custom
   (epg-pinentry-mode 'loopback))
-
 #+end_src
-***** magithub
+
+***** COMMENT magithub
+:PROPERTIES:
+:ID:       22F5FF5A-2480-445D-A9AB-4D1822734F29
+:END:
 https://github.com/vermiculus/magithub
+
+forge 패키지에 마이그레이션됨.
 #+begin_src emacs-lisp :tangle yes
 (use-package magithub
   :after magit
   :config
   (magithub-feature-autoinject t)
   (setq magithub-clone-default-directory "~/git"))
-
 #+end_src
+
 ***** COMMENT magit-reviewboard
 :PROPERTIES:
 :ID:       EC3A662F-04B8-445A-BB39-005978FCD79D
@@ -4702,7 +5036,6 @@ https://github.com/jtamagnan/magit-reviewboard
   (magit-reviewboard-base-uri
    "https://reviews.reviewboard.org/api"
    "Set Reviewboard api to point to official reviewboard server"))
-
 #+end_src
 
 **** git-gutter
@@ -5175,13 +5508,13 @@ https://github.com/emacs-lsp/lsp-java
 ****** lsp-latex
 #+begin_src emacs-lisp :tangle yes
 (use-package lsp-latex
-  :after company
+  :after lsp
   :config
   (with-eval-after-load "tex-mode"
     (add-hook 'tex-mode-hook 'lsp)
     (add-hook 'latex-mode-hook 'lsp)))
-
 #+end_src
+
 ****** TODO listex
 https://github.com/alejandrogallo/listex
 s-expression to latex
@@ -5202,6 +5535,8 @@ s-expression to latex
 :PROPERTIES:
 :ID:       55D3C92B-C1CE-4C52-87FB-A9CBE3EB323A
 :END:
+https://github.com/greghendershott/racket-mode/
+
 #+begin_src emacs-lisp :tangle yes
 (use-package racket-mode
   :defer t
@@ -5222,8 +5557,12 @@ s-expression to latex
   (advice-add 'racket-send-definition :before #'my/move-forward-char))
 #+end_src
 
-****** lsp-racket
+****** COMMENT lsp-racket
+:PROPERTIES:
+:ID:       58E9D2E8-E5DF-4D15-A0AB-BFD0112224CE
+:END:
 https://mullikine.github.io/posts/setting-up-lsp-with-emacs-attempt-2/
+
 #+begin_src emacs-lisp :tangle yes
 (use-package lsp-racket
   :after (lsp-mode racket-mode)
@@ -5231,8 +5570,13 @@ https://mullikine.github.io/posts/setting-up-lsp-with-emacs-attempt-2/
              :type git
              :host github
              :repo "mullikine/lsp-racket-el"))
-
 #+end_src
+
+****** racket-langserver
+:PROPERTIES:
+:ID:       84CBE2B5-85F8-4529-8A6B-897BAD05BF3D
+:END:
+https://github.com/jeapostrophe/racket-langserver
 
 ****** geiser
 :PROPERTIES:
@@ -5436,6 +5780,8 @@ https://github.com/lewang/ws-butler
   (ws-butler-mode))
 #+end_src
 
+- 또는 ​=delete-trailing-whitespace=​
+
 ***** apheleia
 :PROPERTIES:
 :ID:       AFFD7462-28C1-4F12-BA1D-45E29BC8EBA6
@@ -5590,6 +5936,9 @@ auto code formatter
 :config/el-patch
 #+end_src
 ***** org-emphasize
+:PROPERTIES:
+:ID:       DDF2E6F6-3147-4859-AD24-0AF071CD772B
+:END:
 #+begin_src emacs-lisp :tangle yes
   (defun org-emphasize (&optional char)
     "Insert or change an emphasis, i.e. a font like bold or italic.
@@ -5676,7 +6025,6 @@ prompted for."
 ;; (org-startup-with-latex-preview t)                ; start with latex preview
 (org-latex-create-formula-image-program 'dvisvgm) ; latex to svg
 (org-agenda-restore-windows-after-quit t)
-;; "
 (org-list-demote-modify-bullet '(("+" . "-") ("-" . "+")))
 #+end_src
 
@@ -5702,6 +6050,7 @@ prompted for."
 #+begin_src emacs-lisp :tangle yes
 :config
 #+end_src
+
 ***** org 키워드 아이콘화
 :PROPERTIES:
 :ID:       C87F5E88-5E5D-4ADE-A242-CD73E6A2BA0A
@@ -6026,6 +6375,7 @@ org의 강조 구문에 커서를 올리면 원본 텍스트를 표시함
 :ID:       87CFE711-61FD-4B65-AB22-E70D0441C3E5
 :END:
 https://github.com/alphapapa/org-sticky-header
+
 headline에 헤더를 표시함
 #+begin_src emacs-lisp :tangle yes
 (use-package org-sticky-header
@@ -6034,6 +6384,7 @@ headline에 헤더를 표시함
     (org-sticky-header-show-keyword nil) ; todo keyword
     :hook (org-mode . org-sticky-header-mode))
 #+end_src
+
 ****** org-indent
 #+begin_src emacs-lisp :tangle yes
 (use-package org-indent
@@ -6043,6 +6394,7 @@ headline에 헤더를 표시함
   :custom
   (org-indent-indentation-per-level 1))
 #+end_src
+
 ****** TODO org-download
 https://github.com/abo-abo/org-download
 
@@ -6061,8 +6413,8 @@ org heading을 이맥스 내장 북마크로 저장할 수 있는 기능
   (use-package org-bookmark-heading
     :custom
     (org-bookmark-jump-indirect t))
-
 #+end_src
+
 ****** TODO org-src [1/2]
 :PROPERTIES:
 :ID:       5199CA35-4768-42B0-AF8A-D9E186E2F912
@@ -6111,6 +6463,7 @@ latex 프리뷰에 커서를 가져다 대면 원본을 토글하는 기능
   (use-package org-fragtog
     :hook (org-mode . org-fragtog-mode))
 #+end_src
+
 ****** org-babel
 :PROPERTIES:
 :ID:       6FB92E61-75D2-4072-9075-29D29B39E384
@@ -6118,28 +6471,11 @@ latex 프리뷰에 커서를 가져다 대면 원본을 토글하는 기능
 #+begin_src emacs-lisp :tangle yes
   (push '("conf-unix" . conf-unix) org-src-lang-modes)
 #+end_src
-******* COMMENT ob-racket
+******* ob-racket
 :PROPERTIES:
-:ID:       B9443BA7-04FD-4075-B6AA-DF1EAB8188FF
+:ID:       AC2BB7C9-AE9C-4D83-803A-1015827DB163
 :END:
-https://github.com/hasu/emacs-ob-racket
-
-#+begin_src emacs-lisp :tangle yes
-(use-package ob-racket
-  :straight (ob-racket
-             :type git
-             :host github
-             :repo "hasu/emacs-ob-racket"
-             :files ("*.el" "*.rkt"))
-  :defer t
-  :commands (org-babel-execute:racket
-             org-babel-expand-body:racket))
-#+end_src
-
-******* COMMENT ob-racket
-:PROPERTIES:
-:ID:       A37E7CC8-F441-4FF2-9183-31F5BAA8D448
-:END:
+https://github.com/DEADB17/ob-racket
 https://github.com/togakangaroo/ob-racket
 
 #+begin_src emacs-lisp :tangle yes
@@ -6147,47 +6483,31 @@ https://github.com/togakangaroo/ob-racket
   :straight (ob-racket
              :type git
              :host github
+             ;; :repo "hasu/emacs-ob-racket"
              :repo "togakangaroo/ob-racket"
+             ;; :repo "DEADB17/ob-racket"
              :files ("*.el"))
   :defer t
   :custom
-  (org-babel-command:racket "/usr/local/bin/racket")
-  :commands (org-babel-execute:racket
-             org-babel-expand-body:racket))
-#+end_src
-
-******* ob-racket
-:PROPERTIES:
-:ID:       AC2BB7C9-AE9C-4D83-803A-1015827DB163
-:END:
-https://github.com/DEADB17/ob-racket
-
-#+begin_src emacs-lisp :tangle yes
-(use-package ob-racket
-  :straight (ob-racket
-             :type git
-             :host github
-             :repo "DEADB17/ob-racket"
-             :files ("*.el"))
-  :defer t
-  :custom
+  ;; (org-babel-command:racket "/usr/local/bin/glsn/racket")
   (org-babel-command:racket "/usr/local/bin/racket")
   :commands (org-babel-execute:racket
              org-babel-expand-body:racket))
 #+end_src
 
 ******* ox-latex
+:PROPERTIES:
+:ID:       7803E2A7-0314-472C-B8D5-651E5C5A1EA8
+:END:
 #+begin_src emacs-lisp :tangle yes
   (use-package ox-latex
     :straight nil
     :ensure nil
     :config
     (setq org-format-latex-options
-          (plist-put org-format-latex-options
-              :scale 2.0)) ;; for hidpi display.
-    )
-
+          (plist-put org-format-latex-options :scale 1.75)))
 #+end_src
+
 ******* ob-shell
 #+begin_src emacs-lisp :tangle yes
   (use-package ob-shell
@@ -6214,9 +6534,10 @@ https://github.com/astahlman/ob-async
 #+begin_src emacs-lisp :tangle yes
   (use-package ob-async
     :commands 'ob-async-org-babel-execute-src-block)
-
 #+end_src
+
 ​~:async~​ 키워드를 헤더에 추가하면 된다.
+
 ******* COMMENT org-babel block chaining
 :PROPERTIES:
 :ID:       5CE268D9-6ECD-42FE-9521-183C7652667B
@@ -6328,17 +6649,19 @@ org 파일의 마지막에 다음 헤딩을 넣으면 동작한다.
 # End:
 #+end_example
 
-****** TODO org-transclusion [0/3]
+****** TODO org-transclusion [1/4]
 :PROPERTIES:
 :ID:       D96D9C66-08C6-4B7B-A626-C39031603691
 :END:
 https://github.com/nobiot/org-transclusion
+
 #+begin_src emacs-lisp :tangle yes
 (use-package org-transclusion
   :straight (org-transclusion
              :type git
              :host github
              :repo "nobiot/org-transclusion")
+  ;; :hook (org-mode . org-transclusion-mode)
   :config
   ;; org-indent-mode 호환성
   (add-to-list 'org-transclusion-extensions 'org-transclusion-indent-mode)
@@ -6347,7 +6670,8 @@ https://github.com/nobiot/org-transclusion
 
 - [ ] org-transclusion-refresh를 find-file-hook, ace-window, switch-to-buffer 등에 넣어야 할까?
 - [ ] live-sync edit 설정
-- [ ] org-transclusion-mode를 org-mode-hook에 추가해야 함
+- [X] org-transclusion-mode를 org-mode-hook에 추가해야 함
+- [ ] undo-tree의 작동을 방해하는 것 같음 Buffer has been modified; could not load undo-tree history
 
 ****** COMMENT org-pomodoro
 :PROPERTIES:
@@ -6511,8 +6835,10 @@ https://github.com/yilkalargaw/org-auto-tangle
   ;; (visual-fill-column-mode 1)
   (toggle-truncate-lines -1)
   (display-line-numbers-mode -1)
-  (setq evil-auto-indent nil))
+  ;; (setq evil-auto-indent nil)
+  )
 #+end_src
+
 ****** TODO my/org-edit-this
 :PROPERTIES:
 :ID:       1C2094F6-52F0-4A4D-961E-D52E6E5F0902
@@ -6777,6 +7103,22 @@ output instead."
       (shell-command command t nil)
       (exchange-point-and-mark))))
 #+end_src
+**** dtache
+***** dtache
+:PROPERTIES:
+:ID:       06BAE0F9-C903-4B35-BA42-B2851AE0E6CF
+:END:
+https://gitlab.com/niklaseklund/dtache
+
+shell command를 이맥스에서 완전히 분리된 상태로 실행할 수 있는 패키지.(tmux, GNU screen의 대체제로 사용할 수 있음)
+
+핵심 개념은 =dtache-session=​. 세션의 명령어, 작업 디렉토리, 시작 위치, output, socket, 프로세스 위치 등의 정보를 캡슐화하는 객체다. 
+***** dtache-consult
+:PROPERTIES:
+:ID:       3E05458E-A087-4C22-9F7C-6D805E60B929
+:END:
+https://niklaseklund.gitlab.io/blog/posts/dtache_consult/
+
 *** 유틸리티
 **** calibre
 ***** calibredb
