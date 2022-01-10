@@ -21,7 +21,7 @@
 (setq file-name-handler-alist-var file-name-handler-alist)
 #+end_src
 
-*** debug setting
+*** COMMENT debug setting
 :PROPERTIES:
 :ID:       C8621424-E58D-408A-94DD-194E57EEF3DC
 :END:
@@ -1151,6 +1151,8 @@ DEFS is a plist associating completion categories to commands."
   )
 #+end_src
 
+- [ ] describe-face 등에 history 
+
 ****** consult-dir
 :PROPERTIES:
 :ID:       0AAC584A-A6CC-4671-9CC4-7D6E66DA814F
@@ -1946,6 +1948,26 @@ company의 backend를 corfu에서도 사용할 수 있도록 함
 
 - [X] 자동으로 버퍼 따라 백엔드 활성화가 필요함.
   + setq로 설정하면 되는 듯 하다. 기본 백엔드가 자동으로 사용하나? 그럼 왜 add-to-list는 안 되는거지?
+
+****** corfu-doc
+:PROPERTIES:
+:ID:       ED976D3C-4163-44A7-A1E8-0E027E97DD37
+:END:
+https://github.com/galeo/corfu-doc
+
+corfu용 quickhelp
+#+begin_src emacs-lisp :tangle yes
+(use-package corfu-doc
+  :straight (corfu-doc
+             :type git
+             :host github
+             :repo "galeo/corfu-doc")
+  :hook (corfu-mode . corfu-doc-mode)
+  :general
+  (corfu-map
+   "M-p" 'corfu-doc-scroll-down
+   "M-n" 'corfu-doc-scroll-up))
+#+end_src
 
 ***** dabbrev
 :PROPERTIES:
@@ -3596,6 +3618,7 @@ doom-themes에서 가져옴
 (defun blend-lighten (color alpha)
   (blend-color "#ffffff" color alpha))
 #+end_src
+
 ****** 다크 모드 전환
 :PROPERTIES:
 :ID:       A4FDC7FD-FFFE-40B1-924F-21D897EC2C90
@@ -3856,6 +3879,7 @@ color-tint와 bracket 두가지 모드가 있다.
 :CUSTOM_ID: highlight-indent-guides
 :END:
 https://github.com/darthfennec/highlight-indent-guides
+
 indent 레벨을 라인으로 표시해줌
 #+begin_src emacs-lisp :tangle yes
 (use-package highlight-indent-guides
@@ -3871,12 +3895,15 @@ indent 레벨을 라인으로 표시해줌
   ;; (highlight-indent-guides-method 'column)
   (highlight-indent-guides-auto-character-face-perc 5)
   (highlight-indent-guides-delay 0)
-  ;; 테마 변경시
-  (define-advice refresh-theme (:after &optional args)
-    (when highlight-indent-guides-mode
-      (progn
-        (highlight-indent-guides-mode -1)
-        (highlight-indent-guides-mode 1)))))
+  :config
+  테마 변경시
+  (define-advice refresh-theme (:after (&rest args))
+    (mapc (lambda (b)
+            (with-current-buffer b
+              (when highlight-indent-guides-mode
+                (highlight-indent-guides-mode -1)
+                (highlight-indent-guides-mode 1))))
+          (buffer-list))))
 #+end_src
 
 ***** rainbow-delimiters
@@ -3884,7 +3911,8 @@ indent 레벨을 라인으로 표시해줌
 :ID:       07C706EC-5E53-4201-977C-32417FE72DD2
 :END:
 https://github.com/Fanael/rainbow-delimiters
-여닫는 괄호를 색상 강조함
+
+여닫는 괄호를 색상 강조함.
 #+begin_src emacs-lisp :tangle yes
 (use-package rainbow-delimiters
   :defer 3
@@ -3895,6 +3923,8 @@ https://github.com/Fanael/rainbow-delimiters
 :PROPERTIES:
 :ID:       21DFA738-5666-487C-A4E6-0AE3315B464F
 :END:
+https://elpa.gnu.org/packages/rainbow-mode.html
+
 색상 코드, 스트링의 배경색을 색상에 맞게 칠함
 #+begin_src emacs-lisp :tangle yes
 (use-package rainbow-mode
@@ -3915,6 +3945,7 @@ https://github.com/Fanael/rainbow-delimiters
 :ID:       E1EBBC1E-C394-47A2-BE8B-24CEAF97EAAB
 :END:
 https://github.com/emacsmirror/diminish
+
 모드 라인에서 minor 모드를 가리는 패키지
 #+begin_src emacs-lisp :tangle yes
 (use-package diminish)
@@ -3926,6 +3957,8 @@ https://github.com/emacsmirror/diminish
 :CUSTOM_ID: minions
 :END:
 https://github.com/tarsius/minions
+
+마이너 모드들을 묶어서 표시함
 #+begin_src emacs-lisp :tangle yes
 (use-package minions
   :defer 3
@@ -3939,6 +3972,8 @@ https://github.com/tarsius/minions
 :ID:       118778CD-F8F1-4235-90C7-CA2A87FB7661
 :END:
 https://github.com/jdtsmith/mlscroll
+
+모드라인에 화면 위치를 보여주는 스크롤 바를 생성함
 #+begin_src emacs-lisp :tangle yes
 (use-package mlscroll
   ;; :defer t
@@ -3990,11 +4025,20 @@ modeline 대신 minibuffer에 모드라인을 표시하는 기능.
 [[#awesome-tray][awesome-tray]]와 비슷하지만 mini-modeline은 모드라인을 그대로 가져다 쓴다. smart-mode-line 등의 모드라인 패키지도 사용할 수 있음.
 
 **** window management
+:PROPERTIES:
+:ID:       6C6EF484-A9F2-482A-ACF8-8B55461DCE42
+:END:
 ***** transpose-frame
+:PROPERTIES:
+:ID:       C76C1A0C-BDAD-47BB-9791-850AD31D4AD5
+:END:
+http://emacswiki.org/emacs/download/transpose-frame.el
+
 #+begin_src emacs-lisp :tangle yes
 (use-package transpose-frame
   :defer t)
 #+end_src
+
 ***** TODO ace-window [3/5]
 :PROPERTIES:
 :ID:       C7AF82D9-BD0C-4081-A1BF-92D5CEA14296
@@ -4113,6 +4157,7 @@ https://github.com/abo-abo/ace-window
 :END:
 ***** COMMENT mixed-pitch
 https://gitlab.com/jabranham/mixed-pitch
+
 variable-pitch, fixed-pitch의 간격을 적당하게 조절
 #+begin_src emacs-lisp :tangle yes
 (use-package mixed-pitch
@@ -4121,12 +4166,19 @@ variable-pitch, fixed-pitch의 간격을 적당하게 조절
   ((text-mode) . mixed-pitch-mode))
 
 #+end_src
+***** TODO fixed-pitch-mode
+:PROPERTIES:
+:ID:       2E345B98-B7FF-4F05-A18C-902395EA34BB
+:END:
+https://github.com/cstby/fixed-pitch-mode
+
 **** COMMENT visual-fill-column
 :PROPERTIES:
 :ID:       64A3948C-13EA-4A5D-ABFE-617627E2C547
 :CUSTOM_ID: visual-fill-column
 :END:
 https://github.com/joostkremers/visual-fill-column
+
 ​=visual-line-mode=​와 비슷하지만 window 경계가 아닌 ​=fill-column=​에 맞춰서 글자를 자른다.
 #+begin_src emacs-lisp :tangle yes
 (use-package visual-fill-column
@@ -4222,7 +4274,8 @@ https://github.com/alexmurray/evil-vimish-fold
 :ID:       1135283A-4C00-4103-B699-81AC0756D046
 :END:
 https://github.com/alphapapa/dogears.el
-사용자의 히스토리를 표시함
+
+커서의 히스토리를 추적하고 표시함
 #+begin_src emacs-lisp :tangle yes
 (use-package dogears
   :defer 5
@@ -4276,7 +4329,8 @@ https://github.com/alphapapa/dogears.el
 :ID:       9C7CB170-288C-4EDC-8D5C-74D19B80D0E4
 :END:
 https://github.com/Wilfred/helpful
-help-mode를 더 유용하게 바꿈
+
+help-mode 도움말을 를 더 유용하게 바꿈
 #+begin_src emacs-lisp :tangle yes
 (use-package helpful
   ;; :custom
@@ -4521,6 +4575,9 @@ https://github.com/Fuco1/dired-hacks
 #+end_src
 
 ****** dired-collapse
+:PROPERTIES:
+:ID:       8E157000-EF17-4368-ACB4-B1DFC5247F88
+:END:
 단일 자식 디렉토리만 있을 경우 함께 연결되어 표시됨
 #+begin_src emacs-lisp :tangle yes
   (use-package dired-collapse
@@ -5602,6 +5659,7 @@ https://github.com/greghendershott/racket-mode/
 #+begin_src emacs-lisp :tangle yes
 (use-package racket-mode
   :defer t
+  :hook (racket-mode . racket-xp-mode)
   :general
   (repl-mode
    :states '(normal insert)
@@ -6356,6 +6414,7 @@ CLOSED: [2021-11-30 Tue 19:28]
 :ID:       1A3F717B-789D-47E1-82D0-8DDB9276B77B
 :END:
 https://github.com/tonyaldon/org-bars
+
 [[highlight-indent-guides][highlight-indent]]처럼 org의 아웃라인을 표시한다.
 #+begin_src emacs-lisp :tangle yes
 (use-package org-bars
@@ -6374,8 +6433,14 @@ https://github.com/tonyaldon/org-bars
                          :invisible ""
                          :visible ""))
   ;; (setq org-bars-with-dynamic-stars-p nil)
-  (setq org-bars-color-options '(:desaturate-level-faces 50
-                                 :darken-level-faces 25)))
+  ;; (setq org-bars-color-options '(:desaturate-level-faces 50
+  ;;                                :darken-level-faces 25))
+  (setq org-bars-color-options `(:only-one-color t
+                                 :bar-color ,(face-foreground 'font-lock-comment-face)))
+  (define-advice refresh-theme (:after (&optional args))
+    (when org-bars-mode
+      (org-bars-mode 1)))
+  )
 #+end_src
 
 ******* COMMENT org-superstar
@@ -6502,6 +6567,8 @@ headline에 헤더를 표시함
 :END:
 https://github.com/alphapapa/org-sidebar
 
+upcoming, todo와 heading 구조를 볼 수 있는 사이드바를 추가하는 패키지.
+
 #+begin_src emacs-lisp :tangle yes
 (use-package org-sidebar
   :general
@@ -6515,9 +6582,18 @@ https://github.com/alphapapa/org-sidebar
    "j" 'org-agenda-next-line
    "k" 'org-agenda-previous-line)
   (spc
-  :states '(normal insert visual emacs motion)
-  "ob" 'org-sidebar-toggle
-  "oB" 'org-sidebar-tree-toggle))
+    :states '(normal insert visual emacs motion)
+    "oB" 'org-sidebar-toggle
+    "ob" 'org-sidebar-tree-toggle)
+  :config
+  ;; org-sidebar는 기본적으로 점프시 indirect buffer로 버퍼를 여는데 persp-mode에는 해당 indirect buffer가 추가되지 않는다. `org-sidebar-tree-jump-fn'을 변경하거나 advice로 persp-mode에 자동으로 indirect buffer를 추가하도록 바꾸면 된다. 
+  ;; https://www.reddit.com/r/emacs/comments/fnstjj/perspmode_adding_indirect_buffers/
+  (with-eval-after-load 'persp-mode
+    (defun my/add-this-buf-to-persp ()
+      "Add current buffer to current perspective."
+      (interactive)
+      (persp-add-buffer (current-buffer)))
+    (advice-add #'org-sidebar-tree-jump :after #'my/add-this-buf-to-persp)))
 #+end_src
 
 ****** org-indent
