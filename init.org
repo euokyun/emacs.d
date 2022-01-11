@@ -930,108 +930,112 @@ CLOSED: [2021-12-15 Wed 10:53]
 :END:
 https://github.com/minad/vertico
 #+begin_src emacs-lisp :tangle yes
-  (use-package vertico
+(use-package vertico
+  :init
+  (vertico-mode)
+  :hook (minibuffer-setup . (lambda ()
+                              (let ((evil-move-beyond-eol t))
+                                (cursor-intangible-mode))
+                              ;; (setq-local evil-move-beyond-eol t)
+                              ;; (cursor-intangible-mode)))
+                              ))
+  :custom
+  (vertico-scroll-margin 0)
+  (vertico-resize t)
+  (enable-recursive-minibuffers t)
+  ;; Do not allow the cursor in the minibuffer prompt
+  (minibuffer-prompt-properties
+   '(read-only t cursor-intangible t face minibuffer-prompt))
+
+  :general
+  (vertico-map
+   :states 'insert
+   "<escape>" '(lambda ()
+                 (interactive)
+                 (evil-normal-state)
+                 (forward-char 1)))
+  (vertico-map
+   :states 'normal
+   "q" 'minibuffer-keyboard-quit)
+  ;; ("M-n" 'down-from-outside
+  ;;  "M-p" 'up-from-outside
+  ;; "M-TAB" 'to-and-from-minibuffer)
+  (vertico-map
+   :states 'insert
+   "C-d" 'vertico-scroll-up)
+  ;; (vertico-map
+  ;;  [remap scroll-down-command] 'vertico-scroll-up
+  ;;  [remap scroll-up-command] 'vertico-scroll-down)
+
+  :config/el-patch
+  ;; 이거 왜 반대로 작동하게 해놓은 건지 모르겠다.
+  (defun vertico-scroll-down (&optional n)
+    "Go back by N pages."
+    (interactive "p")
+    (vertico--goto (max 0 ((el-patch-swap - +) vertico--index (* (or n 1) vertico-count)))))
+  
+  :config
+  ;; persist history
+  (use-package savehist
     :init
-    (vertico-mode)
-    :hook (minibuffer-setup . (lambda ()
-                                (let ((evil-move-beyond-eol t))
-                                  (cursor-intangible-mode))
-                                ;; (setq-local evil-move-beyond-eol t)
-                                ;; (cursor-intangible-mode)))
-                                ))
-    :custom
-    (vertico-scroll-margin 0)
-    (vertico-resize t)
-    (enable-recursive-minibuffers t)
-    ;; Do not allow the cursor in the minibuffer prompt
-    (minibuffer-prompt-properties
-     '(read-only t cursor-intangible t face minibuffer-prompt))
+    (savehist-mode))
 
-    :general
-    (vertico-map
-     :states 'insert
-     "<escape>" '(lambda ()
-                   (interactive)
-                   (evil-normal-state)
-                   (forward-char 1)
-                   ;; (evil-forward-char 1 nil t)
-                   ))
+  ;; Add prompt indicator to `completing-read-multiple'.
+  ;; Alternatively try `consult-completing-read-multiple'.
+  (defun crm-indicator (args)
+    (cons (concat "[CRM] " (car args)) (cdr args)))
+  (advice-add #'completing-read-multiple :filter-args #'crm-indicator)
 
-    (vertico-map
-     :states 'normal
-     "q" 'minibuffer-keyboard-quit)
-    ;; ("M-n" 'down-from-outside
-    ;;  "M-p" 'up-from-outside
-    ;;  ;; "M-TAB" 'to-and-from-minibuffer
-    ;;  )
-    (vertico-map
-     :states '(normal insert)
-     "C-d" 'vertico-scroll-up
-     "C-u" 'vertico-scroll-down)
+  ;; do something outside minibuffer
+  (defun down-from-outside ()
+    "Move to next candidate in minibuffer, even when minibuffer isn't selected."
+    (interactive)
+    (ignore-error (with-selected-window (active-minibuffer-window))
+      (execute-kbd-macro [down])))
+  (defun up-from-outside ()
+    "Move to previous candidate in minibuffer, even when minibuffer isn't selected."
+    (interactive)
+    (ignore-error (with-selected-window (active-minibuffer-window))
+      (execute-kbd-macro [up])))
+  (defun to-and-from-minibuffer ()
+    "Go back and forth between minibuffer and other window."
+    (interactive)
+    (ignore-error
+        (if (window-minibuffer-p (selected-window))
+            (select-window (minibuffer-selected-window))
+          (select-window (active-minibuffer-window)))))
 
-    :config
-    ;; persist history
-    (use-package savehist
-      :init
-      (savehist-mode))
+  ;; Emacs 28: Hide commands in M-x which do not work in the current mode.
+  ;; Vertico commands are hidden in normal buffers.
+  ;; (setq read-extended-command-predicate
+  ;;       #'command-completion-default-include-p)
 
-    ;; Add prompt indicator to `completing-read-multiple'.
-    ;; Alternatively try `consult-completing-read-multiple'.
-    (defun crm-indicator (args)
-      (cons (concat "[CRM] " (car args)) (cdr args)))
-    (advice-add #'completing-read-multiple :filter-args #'crm-indicator)
+  (advice-add #'tmm-add-prompt :after #'minibuffer-hide-completions)
 
-    ;; do something outside minibuffer
-    (defun down-from-outside ()
-      "Move to next candidate in minibuffer, even when minibuffer isn't selected."
-      (interactive)
-      (ignore-error (with-selected-window (active-minibuffer-window))
-        (execute-kbd-macro [down])))
-    (defun up-from-outside ()
-      "Move to previous candidate in minibuffer, even when minibuffer isn't selected."
-      (interactive)
-      (ignore-error (with-selected-window (active-minibuffer-window))
-        (execute-kbd-macro [up])))
-    (defun to-and-from-minibuffer ()
-      "Go back and forth between minibuffer and other window."
-      (interactive)
-      (ignore-error
-          (if (window-minibuffer-p (selected-window))
-              (select-window (minibuffer-selected-window))
-            (select-window (active-minibuffer-window)))))
+  ;; adjust number of visible candidates when resizing
+  ;; 작아지기만 하고 다시 커지지는 않는다..
+  ;; (defun vertico-resize--minibuffer ()
+  ;;   (add-hook 'window-size-change-functions
+  ;;             (lambda (win)
+  ;;               (let ((height (window-height win)))
+  ;;                 (when (/= (1- height) vertico-count)
+  ;;                   (setq-local vertico-count (1- height))
+  ;;                   (vertico--exhibit))))
+  ;;             t t))
+  ;; (advice-add #'vertico--setup :before #'vertico-resize--minibuffer)
 
-    ;; Emacs 28: Hide commands in M-x which do not work in the current mode.
-    ;; Vertico commands are hidden in normal buffers.
-    ;; (setq read-extended-command-predicate
-    ;;       #'command-completion-default-include-p)
-
-    (advice-add #'tmm-add-prompt :after #'minibuffer-hide-completions)
-
-    ;; adjust number of visible candidates when resizing
-    ;; 작아지기만 하고 다시 커지지는 않는다..
-    ;; (defun vertico-resize--minibuffer ()
-    ;;   (add-hook 'window-size-change-functions
-    ;;             (lambda (win)
-    ;;               (let ((height (window-height win)))
-    ;;                 (when (/= (1- height) vertico-count)
-    ;;                   (setq-local vertico-count (1- height))
-    ;;                   (vertico--exhibit))))
-    ;;             t t))
-    ;; (advice-add #'vertico--setup :before #'vertico-resize--minibuffer)
-
-    ;; add » current prefix
-    (advice-add #'vertico--format-candidate :around
-      (lambda (orig cand prefix suffix index _start)
-        (setq cand (funcall orig cand prefix suffix index _start))
-        (concat
-         (if (= vertico--index index)
-             (propertize "»" 'face 'vertico-current)
-           " ")
-         cand)))
-    )
+  ;; add » current prefix
+  (advice-add #'vertico--format-candidate :around
+    (lambda (orig cand prefix suffix index _start)
+      (setq cand (funcall orig cand prefix suffix index _start))
+      (concat
+       (if (= vertico--index index)
+           (propertize "»" 'face 'vertico-current)
+         " ")
+       cand))))
 #+end_src
 
-***** COMMENT vertico-directory
+***** vertico-directory
 :PROPERTIES:
 :ID:       B97DC145-5A85-4BBE-8128-3B8DAA5EE973
 :END:
@@ -2342,7 +2346,7 @@ https://github.com/karthink/project-x
 :END:
 https://github.com/CIAvash/persp-mode-project-bridge 
 
-**** persp-mode
+**** COMMENT persp-mode
 CLOSED: [2021-12-13 Mon 14:32]
 :PROPERTIES:
 :ID:       7FA6EFE1-D9E9-49CF-8538-E704C07C84E0
@@ -2629,6 +2633,9 @@ https://github.com/Bad-ptr/persp-mode.el
 #+end_src
 
 ***** projectile과 통합
+:PROPERTIES:
+:ID:       6C220925-CC3B-4193-9E87-1EC06EBB6F1A
+:END:
 #+begin_src emacs-lisp :tangle yes
 (use-package persp-mode-projectile-bridge
   :after (persp-mode projectile)
@@ -2646,9 +2653,33 @@ https://github.com/Bad-ptr/persp-mode.el
 #+end_src
 
 ***** treemacs와 통합
+:PROPERTIES:
+:ID:       AD83A8F0-2385-443B-9006-3DE38AA8F462
+:END:
 #+begin_src emacs-lisp :tangle yes
 (use-package treemacs-persp
   :after treemacs persp-mode
+  :config (treemacs-set-scope-type 'Perspectives))
+#+end_src
+
+**** perspective
+:PROPERTIES:
+:ID:       655B7D4D-D359-4D54-801B-EF10EC30519C
+:END:
+ https://github.com/nex3/perspective-el
+
+#+begin_src emacs-lisp :tangle yes
+(use-package perspective
+  ;; :bind
+  ;; ("C-x C-b" . persp-list-buffers)   ; or use a nicer switcher, see below
+  :config
+  (persp-mode))
+#+end_src
+
+***** treemacs-perspective
+#+begin_src emacs-lisp :tangle yes
+(use-package treemacs-perspective 
+  :after (treemacs perspective) 
   :config (treemacs-set-scope-type 'Perspectives))
 #+end_src
 
@@ -2767,7 +2798,7 @@ vim 키바인딩 레이어
   (setq evil-want-keybinding nil)
   :custom
   (evil-ex-search-vim-style-regexp t)
-  (evil-search-module 'evil-search)
+  ;; (evil-search-module 'evil-search)
   (evil-undo-system 'undo-tree)
   (evil-respect-visual-line-mode t)
   (evil-shift-width tab-width)    ; tab option for evil
@@ -2805,8 +2836,6 @@ vim 키바인딩 레이어
 :END:
 #+begin_src emacs-lisp :tangle yes
   :config
-  ;; fix non-compatiable command for evil.
-
   (evil-mode 1)
 #+end_src
 
@@ -2819,23 +2848,11 @@ evil은 insert와 normal의 커서 모양이 다르고 커서의 위치도 다�
     (if (equal evil-state 'normal) (forward-char 1)))
 #+end_src
 
-insert state일땐 일반적인 줄 번호를, 그 외에는 motion을 활용하기 편한 상대
-줄번호를 표시한다.
 #+begin_src emacs-lisp :tangle yes
-  (setq-default display-line-numbers 'visual
-                display-line-numbers-widen t
-                ;; this is the default
-                display-line-numbers-current-absolute t)
-
-  (defun noct:relative ()
-     (if display-line-numbers (setq-local display-line-numbers 'visual)))
-  (defun noct:absolute ()
-    (if display-line-numbers (setq-local display-line-numbers t)))
-
-  (add-hook 'evil-insert-state-entry-hook #'noct:absolute)
-  (add-hook 'evil-insert-state-exit-hook #'noct:relative))
+)
 #+end_src
-***** evil-collection
+
+**** evil-collection
 :PROPERTIES:
 :ID:       924A4906-0FAC-4C94-8941-D06F6CE8F548
 :END:
@@ -2851,8 +2868,16 @@ evil 키바인딩 모음집.
   (evil-collection-outline-bind-tab-p nil)
   (forge-add-default-bindings nil)
   :config
+  ;; (setq evil-collection-mode-list
+  ;;       (remove 'lispy evil-collection-mode-list))
+  (defun evil-collection-mode-use (blacklist lists)
+    (if (null blacklist) lists
+      (evil-collection-mode-use
+       (cdr blacklist)
+       (remove (car blacklist) lists))))
   (setq evil-collection-mode-list
-        (remove 'lispy evil-collection-mode-list))
+        (evil-collection-mode-use '(lispy)
+                                  evil-collection-mode-list))
   (evil-collection-init))
 #+end_src
 
@@ -2914,11 +2939,13 @@ https://github.com/cute-jumper/evil-embrace.el
   :config
   (evil-embrace-enable-evil-surround-integration))
 #+end_src
+
 ***** evil-exchange
 :PROPERTIES:
 :ID:       4EFE6B57-8D24-46F2-B0EF-F7323DF269AE
 :END:
 http://github.com/Dewdrops/evil-exchange
+
 ​=gx=​로 영역을 선택해서 맞바꾸는 기능.
 ​=gX=​로 선택을 취소할 수 있다.
 #+begin_src emacs-lisp :tangle yes
@@ -3842,6 +3869,28 @@ https://github.com/hlissner/emacs-solaire-mode
 
 #+end_src
 **** indicators
+***** display-line-numbers 
+:PROPERTIES:
+:ID:       698D2C53-85FB-480C-9EA8-644D2EB7DAF8
+:END:
+#+begin_src emacs-lisp :tangle yes
+(use-package display-line-numbers
+  :hook ((prog-mode text-mode) . (lambda ()
+                                   (setq-local display-line-numbers 'visual)))
+  :custom
+  ;; (display-line-numbers 'visual)
+  (display-line-numbers-widen t)
+  (display-line-numbers-current-absolute t)
+  :config
+;; insert state일땐 일반적인 줄 번호를, 그 외에는 motion을 활용하기 편한 상대 줄번호를 표시한다.
+  (defun noct:relative ()
+     (if display-line-numbers (setq-local display-line-numbers 'visual)))
+  (defun noct:absolute ()
+    (if display-line-numbers (setq-local display-line-numbers t)))
+  (add-hook 'evil-insert-state-entry-hook #'noct:absolute)
+  (add-hook 'evil-insert-state-exit-hook #'noct:relative))
+#+end_src
+
 ***** DONE paren [1/1]
 CLOSED: [2021-12-21 Tue 23:31]
 :PROPERTIES:
@@ -4717,7 +4766,9 @@ https://github.com/Alexander-Miller/treemacs
    "<escape>" 'treemacs
    "nf" 'treemacs-create-file
    "nd" 'treemacs-create-dir)
-
+  
+  ;; :hook (treemacs-mode . (lambda () (display-line-numbers-mode -1)))
+  
   :config/el-patch
 ;;;###autoload
   (defun treemacs-finish-edit ()
@@ -5884,8 +5935,7 @@ HTTP REST API 테스트용
          . restclient-http-send-current-stay-in-window)
         ("C-n" . restclient-jump-next)
         ("C-p" . restclient-jump-prev))
-  :hook
-  (restclient-mode . display-line-numbers-mode))
+  :hook (restclient-mode . display-line-numbers-mode))
 
 #+end_src
 
