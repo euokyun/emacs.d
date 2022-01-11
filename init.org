@@ -271,6 +271,9 @@ straight에서는 작동하지 않는다.
 #+end_src
 
 **** ensure-system-package
+:PROPERTIES:
+:ID:       8721250C-50E5-4794-85F6-EFC59B4BC608
+:END:
 MacOS의 Brew와 같은 시스템 패키지 관리자와 통합하는 기능.
 그냥 시스템 패키지 관리자를 불러오는 정도일 뿐이다.
 #+begin_src emacs-lisp :tangle yes
@@ -285,6 +288,8 @@ use-package에서 ​~:ensure-system-package~​ 키워드로 사용할 수 있�
   :ensure-system-package (ag . the_silver_searcher))
 #+end_example
 car는 바이너리 파일명, cdr는 패키지 관리자에서의 이름이다. 바이너리가 없을 경우 패키지 관리자를 실행하여 설치한다.
+
+- 몇몇 recipe가 없는 패키지들은 ​=(system-packages-ensure "패키지")=​를 쓰자.
 
 **** org
 :PROPERTIES:
@@ -476,6 +481,130 @@ https://github.com/magit/transient
   (transient-bind-q-to-quit))
 #+end_src
 
+**** window management
+:PROPERTIES:
+:ID:       6C6EF484-A9F2-482A-ACF8-8B55461DCE42
+:END:
+***** transpose-frame
+:PROPERTIES:
+:ID:       C76C1A0C-BDAD-47BB-9791-850AD31D4AD5
+:END:
+http://emacswiki.org/emacs/download/transpose-frame.el
+
+#+begin_src emacs-lisp :tangle yes
+(use-package transpose-frame
+  :defer t)
+#+end_src
+
+***** TODO ace-window [3/5]
+:PROPERTIES:
+:ID:       C7AF82D9-BD0C-4081-A1BF-92D5CEA14296
+:END:
+https://github.com/abo-abo/ace-window
+
+단축키로 윈도우를 조작하는 패키지
+#+begin_src emacs-lisp :tangle yes
+(use-package ace-window
+  :straight (ace-window
+             :type git
+             :host github
+             :repo "abo-abo/ace-window"
+             :fork (:host github
+                    :repo "rdiaz02/ace-window"
+                    :branch "posframe-notmgsk")
+             :files ("*.el"))
+  :config/el-patch
+  (defun aw--switch-buffer ()
+    (cond ((bound-and-true-p ivy-mode)
+           (ivy-switch-buffer))
+          ((bound-and-true-p ido-mode)
+           (ido-switch-buffer))
+          (el-patch-add
+            ((and (featurep 'consult) (bound-and-true-p persp-mode))
+             (with-persp-buffer-list () (consult-buffer)))
+            ((featurep 'consult)
+             (consult-buffer)))
+          (t (call-interactively 'switch-to-buffer))))
+  :general
+  ("s-`" 'ace-window)
+  :custom
+  (aw-minibuffer-flag t)                ; minibuffer도 표시함
+  (aw-dispatch-always t)
+  (aw-background nil)                   ; disable dim background
+
+  :config
+  (setq aw-keys '(?a ?s ?d ?g ?h ?i ?n ?p ?w ?y ?z ?b))
+  (setq aw-dispatch-alist
+        '((?k aw-delete-window "delete Window")
+          (?m aw-swap-window "Swap Windows")
+          (?M aw-move-window "Move Window")
+          (?c aw-copy-window "Copy Window")
+          (?o aw-switch-buffer-in-window "Select Buffer")
+          ;; (?` aw-flip-window)
+          (?` switch-between-minibuffer)
+          (?O aw-switch-buffer-other-window "Switch Buffer Other Window")
+          (?e aw-execute-command-other-window "Execute Command Other Window")
+          ;; (?f aw-split-window-fair "Split Fair Window")
+          (?j aw-split-window-vert "Split Vert Window")
+          (?l aw-split-window-horz "Split Horz Window")
+          (?K delete-other-windows "Delete Other Windows")
+          (?t aw-transpose-frame "Transpose Frame")
+          (?! aw--vterm "open vTerm")
+          (?v hydra-window-scroll/body)
+          (?u aw--winner-undo)
+          (?r winner-redo)
+          ;; (?x )
+          (27 aw--done)
+          (?q aw--done)
+          (?? aw-show-dispatch-help)))
+
+  (defun switch-between-minibuffer (&rest _)
+    (when (active-minibuffer-window)
+      (if (minibufferp)
+          (select-window (minibuffer-selected-window))
+        (select-window (active-minibuffer-window)))))
+
+  (defun joe-scroll-other-window ()
+    (interactive)
+    (scroll-other-window 1))
+  (defun joe-scroll-other-window-down ()
+    (interactive)
+    (scroll-other-window-down 1))
+  (defhydra hydra-window-scroll (:color red)
+    "Scroll other window"
+    ("j" joe-scroll-other-window "scroll")
+    ("k" joe-scroll-other-window-down "scroll down"))
+
+  (defun aw--vterm (window)
+    (select-window window)
+    (vterm))
+
+  (defun aw--winner-undo ()
+    (progn (winner-undo)
+           (setq this-command 'winner-undo)))
+
+  ;; (setq aw-ignore-current t) ; 이러면 split이 현재 윈도우에서 작동하지 않는다.
+  (ace-window-display-mode t)           ; showing window identifier on modeline.
+  (ace-window-posframe-mode t)
+
+  ;; 테마 변경시 망가지는 ace-window-posframe 재설정
+  (define-advice refresh-theme
+      (:after (&optional _))
+    (if ace-window-posframe-mode
+        (kill-matching-buffers "*aw-posframe-buffer-*" t t))))
+#+end_src
+
+- [X] posframe 추가
+- [X] posframe face 변경
+- [-] window size, scroll-other-window의 transient map 만들기.
+  왠지 transient로는 scroll-other-window가 작동하지 않는다. 
+  - [X] scroll-other-window
+  - [ ] window size
+- [X] display-buffer-base-action 설정
+  + [X] display-buffer-alist 설정
+  + embark로 대체
+- [ ] x에 kill-buffer-and-window 추가하기 
+    
 **** font-lock-plus
 https://gitlab.com/thomasluquet/font-lock-plus
 #+begin_src emacs-lisp :tangle yes
@@ -801,100 +930,105 @@ CLOSED: [2021-12-15 Wed 10:53]
 :END:
 https://github.com/minad/vertico
 #+begin_src emacs-lisp :tangle yes
-(use-package vertico
-  :init
-  (vertico-mode)
-  :hook (minibuffer-setup . (lambda ()
-                              (let ((evil-move-beyond-eol t))
-                                (cursor-intangible-mode))))
-  :custom
-  (vertico-scroll-margin 0)
-  (vertico-resize t)
-  (enable-recursive-minibuffers t)
-  ;; Do not allow the cursor in the minibuffer prompt
-  (minibuffer-prompt-properties
-   '(read-only t cursor-intangible t face minibuffer-prompt))
-
-  :general
-  (vertico-map
-   :states 'insert
-   "<escape>" '(lambda ()
-                 (interactive)
-                 (evil-normal-state)
-                 ;; (ignore-error (forward-char 1))))
-                 (forward-char 1)))
-  (vertico-map
-   :states 'normal
-   "q" 'minibuffer-keyboard-quit)
-  ;; ("M-n" 'down-from-outside
-  ;;  "M-p" 'up-from-outside
-  ;;  ;; "M-TAB" 'to-and-from-minibuffer
-  ;;  )
-  (vertico-map
-   :states '(normal insert)
-   "C-d" 'vertico-scroll-up
-   "C-u" 'vertico-scroll-down)
-
-  :config
-  ;; persist history
-  (use-package savehist
+  (use-package vertico
     :init
-    (savehist-mode))
+    (vertico-mode)
+    :hook (minibuffer-setup . (lambda ()
+                                (let ((evil-move-beyond-eol t))
+                                  (cursor-intangible-mode))
+                                ;; (setq-local evil-move-beyond-eol t)
+                                ;; (cursor-intangible-mode)))
+                                ))
+    :custom
+    (vertico-scroll-margin 0)
+    (vertico-resize t)
+    (enable-recursive-minibuffers t)
+    ;; Do not allow the cursor in the minibuffer prompt
+    (minibuffer-prompt-properties
+     '(read-only t cursor-intangible t face minibuffer-prompt))
 
-  ;; Add prompt indicator to `completing-read-multiple'.
-  ;; Alternatively try `consult-completing-read-multiple'.
-  (defun crm-indicator (args)
-    (cons (concat "[CRM] " (car args)) (cdr args)))
-  (advice-add #'completing-read-multiple :filter-args #'crm-indicator)
+    :general
+    (vertico-map
+     :states 'insert
+     "<escape>" '(lambda ()
+                   (interactive)
+                   (evil-normal-state)
+                   (forward-char 1)
+                   ;; (evil-forward-char 1 nil t)
+                   ))
 
-  ;; do something outside minibuffer
-  (defun down-from-outside ()
-    "Move to next candidate in minibuffer, even when minibuffer isn't selected."
-    (interactive)
-    (ignore-error (with-selected-window (active-minibuffer-window))
-      (execute-kbd-macro [down])))
-  (defun up-from-outside ()
-    "Move to previous candidate in minibuffer, even when minibuffer isn't selected."
-    (interactive)
-    (ignore-error (with-selected-window (active-minibuffer-window))
-      (execute-kbd-macro [up])))
-  (defun to-and-from-minibuffer ()
-    "Go back and forth between minibuffer and other window."
-    (interactive)
-    (ignore-error
-        (if (window-minibuffer-p (selected-window))
-            (select-window (minibuffer-selected-window))
-          (select-window (active-minibuffer-window)))))
+    (vertico-map
+     :states 'normal
+     "q" 'minibuffer-keyboard-quit)
+    ;; ("M-n" 'down-from-outside
+    ;;  "M-p" 'up-from-outside
+    ;;  ;; "M-TAB" 'to-and-from-minibuffer
+    ;;  )
+    (vertico-map
+     :states '(normal insert)
+     "C-d" 'vertico-scroll-up
+     "C-u" 'vertico-scroll-down)
 
-  ;; Emacs 28: Hide commands in M-x which do not work in the current mode.
-  ;; Vertico commands are hidden in normal buffers.
-  ;; (setq read-extended-command-predicate
-  ;;       #'command-completion-default-include-p)
+    :config
+    ;; persist history
+    (use-package savehist
+      :init
+      (savehist-mode))
 
-  (advice-add #'tmm-add-prompt :after #'minibuffer-hide-completions)
+    ;; Add prompt indicator to `completing-read-multiple'.
+    ;; Alternatively try `consult-completing-read-multiple'.
+    (defun crm-indicator (args)
+      (cons (concat "[CRM] " (car args)) (cdr args)))
+    (advice-add #'completing-read-multiple :filter-args #'crm-indicator)
 
-  ;; adjust number of visible candidates when resizing
-  ;; 작아지기만 하고 다시 커지지는 않는다..
-  ;; (defun vertico-resize--minibuffer ()
-  ;;   (add-hook 'window-size-change-functions
-  ;;             (lambda (win)
-  ;;               (let ((height (window-height win)))
-  ;;                 (when (/= (1- height) vertico-count)
-  ;;                   (setq-local vertico-count (1- height))
-  ;;                   (vertico--exhibit))))
-  ;;             t t))
-  ;; (advice-add #'vertico--setup :before #'vertico-resize--minibuffer)
+    ;; do something outside minibuffer
+    (defun down-from-outside ()
+      "Move to next candidate in minibuffer, even when minibuffer isn't selected."
+      (interactive)
+      (ignore-error (with-selected-window (active-minibuffer-window))
+        (execute-kbd-macro [down])))
+    (defun up-from-outside ()
+      "Move to previous candidate in minibuffer, even when minibuffer isn't selected."
+      (interactive)
+      (ignore-error (with-selected-window (active-minibuffer-window))
+        (execute-kbd-macro [up])))
+    (defun to-and-from-minibuffer ()
+      "Go back and forth between minibuffer and other window."
+      (interactive)
+      (ignore-error
+          (if (window-minibuffer-p (selected-window))
+              (select-window (minibuffer-selected-window))
+            (select-window (active-minibuffer-window)))))
 
-  ;; add » current prefix
-  (advice-add #'vertico--format-candidate :around
-    (lambda (orig cand prefix suffix index _start)
-      (setq cand (funcall orig cand prefix suffix index _start))
-      (concat
-       (if (= vertico--index index)
-           (propertize "»" 'face 'vertico-current)
-         " ")
-       cand)))
-  )
+    ;; Emacs 28: Hide commands in M-x which do not work in the current mode.
+    ;; Vertico commands are hidden in normal buffers.
+    ;; (setq read-extended-command-predicate
+    ;;       #'command-completion-default-include-p)
+
+    (advice-add #'tmm-add-prompt :after #'minibuffer-hide-completions)
+
+    ;; adjust number of visible candidates when resizing
+    ;; 작아지기만 하고 다시 커지지는 않는다..
+    ;; (defun vertico-resize--minibuffer ()
+    ;;   (add-hook 'window-size-change-functions
+    ;;             (lambda (win)
+    ;;               (let ((height (window-height win)))
+    ;;                 (when (/= (1- height) vertico-count)
+    ;;                   (setq-local vertico-count (1- height))
+    ;;                   (vertico--exhibit))))
+    ;;             t t))
+    ;; (advice-add #'vertico--setup :before #'vertico-resize--minibuffer)
+
+    ;; add » current prefix
+    (advice-add #'vertico--format-candidate :around
+      (lambda (orig cand prefix suffix index _start)
+        (setq cand (funcall orig cand prefix suffix index _start))
+        (concat
+         (if (= vertico--index index)
+             (propertize "»" 'face 'vertico-current)
+           " ")
+         cand)))
+    )
 #+end_src
 
 ***** COMMENT vertico-directory
@@ -2064,6 +2198,25 @@ https://github.com/oantolin/embark
 (add-hook 'embark-collect-mode-hook #'+embark-collect-hook)
 #+end_src
 
+****** avy-action-embark
+:PROPERTIES:
+:ID:       481C8710-5A2B-4BE0-B784-CAD65F1B29CC
+:END:
+
+#+begin_src emacs-lisp :tangle yes
+(defun avy-action-embark (pt)
+  (unwind-protect
+      (save-excursion
+        (goto-char pt)
+        (embark-act))
+    (select-window
+     (cdr (ring-ref avy-ring 0))))
+  t)
+(with-eval-after-load 'avy
+  (setf (alist-get 8388654 avy-dispatch-alist) 'avy-action-embark) ; `s-.'
+  )
+#+end_src
+
 ****** end
 :PROPERTIES:
 :ID:       A6FAFC1D-2D9D-451E-9EF1-BA39D55C5A0F
@@ -2099,6 +2252,14 @@ Magit, code-review와 같은 version control 패키지에 대한 지원
              :type git
               :host github
               :repo "elken/embark-vc"))
+#+end_src
+
+***** COMMENT avy-embark-collect
+:PROPERTIES:
+:ID:       2BFFA101-DC7F-46DD-A55E-182D91D90A49
+:END:
+#+begin_src emacs-lisp :tangle yes
+(use-package avy-embark-collect)
 #+end_src
 
 *** project
@@ -3365,6 +3526,9 @@ https://github.com/AndreaCrotti/yasnippet-snippets
 #+end_src
 
 ****** TODO auto-yasnippet
+:PROPERTIES:
+:ID:       1FA141DD-D92B-4E10-ABAC-A93E76CB4083
+:END:
 https://github.com/abo-abo/auto-yasnippet
 
 ***** COMMENT skempo
@@ -3896,7 +4060,7 @@ indent 레벨을 라인으로 표시해줌
   (highlight-indent-guides-auto-character-face-perc 5)
   (highlight-indent-guides-delay 0)
   :config
-  테마 변경시
+  ;; 테마 변경시
   (define-advice refresh-theme (:after (&rest args))
     (mapc (lambda (b)
             (with-current-buffer b
@@ -4024,133 +4188,6 @@ modeline 대신 minibuffer에 모드라인을 표시하는 기능.
 :END:
 [[#awesome-tray][awesome-tray]]와 비슷하지만 mini-modeline은 모드라인을 그대로 가져다 쓴다. smart-mode-line 등의 모드라인 패키지도 사용할 수 있음.
 
-**** window management
-:PROPERTIES:
-:ID:       6C6EF484-A9F2-482A-ACF8-8B55461DCE42
-:END:
-***** transpose-frame
-:PROPERTIES:
-:ID:       C76C1A0C-BDAD-47BB-9791-850AD31D4AD5
-:END:
-http://emacswiki.org/emacs/download/transpose-frame.el
-
-#+begin_src emacs-lisp :tangle yes
-(use-package transpose-frame
-  :defer t)
-#+end_src
-
-***** TODO ace-window [3/5]
-:PROPERTIES:
-:ID:       C7AF82D9-BD0C-4081-A1BF-92D5CEA14296
-:END:
-https://github.com/abo-abo/ace-window
-
-단축키로 윈도우를 조작하는 패키지
-#+begin_src emacs-lisp :tangle yes
-(use-package ace-window
-  :straight (ace-window
-             :type git
-             :host github
-             :reop "abo-abo/ace-window"
-             :fork (:host github
-                    :repo "rdiaz02/ace-window"
-                    :branch "posframe-notmgsk"
-                    :files ("*.el")))
-  :config/el-patch
-  (defun aw--switch-buffer ()
-    (cond ((bound-and-true-p ivy-mode)
-           (ivy-switch-buffer))
-          ((bound-and-true-p ido-mode)
-           (ido-switch-buffer))
-          (el-patch-add
-            ((and (featurep 'consult) (bound-and-true-p persp-mode))
-             (with-persp-buffer-list () (consult-buffer)))
-            ((featurep 'consult)
-             (consult-buffer)))
-          (t (call-interactively 'switch-to-buffer))))
-  :general
-  ;; (spc
-  ;;   :states '(normal insert visual)
-  ;;   "w" '(ace-window :which-key "ace-window"))
-  ("s-`" 'ace-window)
-  :custom
-  (aw-minibuffer-flag t)                ; minibuffer도 표시함
-  (aw-dispatch-always t)
-  (aw-background nil)                   ; disable dim background
-
-  :config
-  (setq aw-keys '(?a ?s ?d ?g ?h ?i ?n ?p ?w ?y ?z ?b))
-  (setq aw-dispatch-alist
-        '((?k aw-delete-window "delete Window")
-          (?m aw-swap-window "Swap Windows")
-          (?M aw-move-window "Move Window")
-          (?c aw-copy-window "Copy Window")
-          (?o aw-switch-buffer-in-window "Select Buffer")
-          ;; (?` aw-flip-window)
-          (?` switch-between-minibuffer)
-          (?O aw-switch-buffer-other-window "Switch Buffer Other Window")
-          (?e aw-execute-command-other-window "Execute Command Other Window")
-          ;; (?f aw-split-window-fair "Split Fair Window")
-          (?j aw-split-window-vert "Split Vert Window")
-          (?l aw-split-window-horz "Split Horz Window")
-          (?K delete-other-windows "Delete Other Windows")
-          (?t aw-transpose-frame "Transpose Frame")
-          (?! aw--vterm "open vTerm")
-          (?v hydra-window-scroll/body)
-          (?u aw--winner-undo)
-          (?r winner-redo)
-          ;; (?x )
-          (27 aw--done)
-          (?q aw--done)
-          (?? aw-show-dispatch-help)))
-
-  (defun switch-between-minibuffer (&rest _)
-    (when (active-minibuffer-window)
-      (if (minibufferp)
-          (select-window (minibuffer-selected-window))
-        (select-window (active-minibuffer-window)))))
-
-  (defun joe-scroll-other-window ()
-    (interactive)
-    (scroll-other-window 1))
-  (defun joe-scroll-other-window-down ()
-    (interactive)
-    (scroll-other-window-down 1))
-  (defhydra hydra-window-scroll (:color red)
-    "Scroll other window"
-    ("j" joe-scroll-other-window "scroll")
-    ("k" joe-scroll-other-window-down "scroll down"))
-
-  (defun aw--vterm (window)
-    (select-window window)
-    (vterm))
-
-  (defun aw--winner-undo ()
-    (progn (winner-undo)
-           (setq this-command 'winner-undo)))
-
-  ;; (setq aw-ignore-current t) ; 이러면 split이 현재 윈도우에서 작동하지 않는다.
-  (ace-window-display-mode t)           ; showing window identifier on modeline.
-  (ace-window-posframe-mode t)
-
-  ;; 테마 변경시 망가지는 ace-window-posframe 재설정
-  (define-advice refresh-theme
-      (:after (&optional _))
-    (if ace-window-posframe-mode
-        (kill-matching-buffers "*aw-posframe-buffer-*" t t))))
-#+end_src
-
-- [X] posframe 추가
-- [X] posframe face 변경
-- [-] window size, scroll-other-window의 transient map 만들기.
-  왠지 transient로는 scroll-other-window가 작동하지 않는다. 
-  - [X] scroll-other-window
-  - [ ] window size
-- [X] display-buffer-base-action 설정
-  + [X] display-buffer-alist 설정
-  + embark로 대체
-- [ ] x에 kill-buffer-and-window 추가하기 
-    
 **** font
 :PROPERTIES:
 :ID:       39EB7FC4-28EA-425B-AC20-4A8C05C71B19
@@ -4545,9 +4582,7 @@ https://github.com/alexluigit/dirvish
 :ID:       718255B1-676C-428B-8318-D296D0CA1679
 :END:
 #+begin_src emacs-lisp :tangle yes
-(use-package exa                        ; 디렉토리 프리뷰 생성
-  :straight nil
-  :ensure-system-package exa)
+(system-packages-ensure "exa") ; 디렉토리 프리뷰 생성
 #+end_src
 
 ***** COMMENT dired-single
@@ -4993,26 +5028,23 @@ https://github.com/Fanael/persistent-scratch
   (persistent-scratch-setup-default))
 #+end_src
 
-**** osx-trash
+k*** osx-trash
 :PROPERTIES:
 :ID:       EBA9857C-06A3-4DE4-93B3-6763A9CD57FD
 :END:
 https://github.com/emacsorphanage/osx-trash/
+
 osx의 휴지통을 사용
+
+https://github.com/ali-rantakari/trash
+
+trash를 brew로 설치해서 사용할 수도 있다. trash가 설치되지 않았다면 애플스크립트 헬퍼로 작동하고, 약간 느릴 수 있지만 둘 다 잘 작동한다고 함.
 #+begin_src emacs-lisp :tangle yes
 (use-package osx-trash
   :if (eq system-type 'darwin)
   :config
+  (system-packages-ensure "trash")
   (osx-trash-setup))
-#+end_src
-
-https://github.com/ali-rantakari/trash
-
-#+begin_src emacs-lisp :tangle yes
-(use-package trash
-  :straight nil
-  :if (eq system-type 'darwin)
-  :ensure-system-package trash)
 #+end_src
 
 **** super-save
@@ -5594,6 +5626,9 @@ emacs lisp의 문법 강조
 #+end_src
 
 ***** java
+:PROPERTIES:
+:ID:       7F718805-2323-4782-9AF1-97B5A5749FD5
+:END:
 ****** lsp-java
 https://github.com/emacs-lsp/lsp-java
 #+begin_src emacs-lisp :tangle yes
@@ -6448,6 +6483,7 @@ https://github.com/tonyaldon/org-bars
 :ID:       E7BA895E-08C5-4DD8-9D06-87EF6E413F42
 :END:
 https://github.com/integral-dw/org-superstar-mode
+
 heading, bullet을 prettify-symbols 처럼 꾸미는 패키지
 #+begin_src emacs-lisp :tangle yes
 (use-package org-superstar
@@ -6480,7 +6516,7 @@ heading, bullet을 prettify-symbols 처럼 꾸미는 패키지
 #+end_src
 
 - doom-themes를 쓸 경우 ​=doom-themes-org-config=​가 이 기능을 대체함
-
+  
 ******* org-appear
 :PROPERTIES:
 :ID:       D7AC8D50-A4D8-44A9-B771-3431EB062262
@@ -6610,11 +6646,19 @@ upcoming, todo와 heading 구조를 볼 수 있는 사이드바를 추가하는 
 #+end_src
 
 ****** TODO org-download
+:PROPERTIES:
+:ID:       B4B859AD-5AE0-46CA-96B1-B6D353DBDE0C
+:END:
 https://github.com/abo-abo/org-download
 
 이미지를 drag&drop으로 삽입할 수 있게 해준다.
 #+begin_src emacs-lisp :tangle yes
-(use-package org-download)
+(use-package org-download
+  :after org
+  :custom
+  (org-download-screenshot-method "/usr/local/bin/pngpaste %s")
+  :config
+  (system-packages-ensure "pngpaste"))
 #+end_src
 
 ****** org-bookmark-heading
@@ -6863,7 +6907,7 @@ org 파일의 마지막에 다음 헤딩을 넣으면 동작한다.
 # End:
 #+end_example
 
-****** TODO org-transclusion [1/4]
+****** TODO org-transclusion [1/5]
 :PROPERTIES:
 :ID:       D96D9C66-08C6-4B7B-A626-C39031603691
 :END:
@@ -6886,6 +6930,7 @@ https://github.com/nobiot/org-transclusion
 - [ ] live-sync edit 설정
 - [X] org-transclusion-mode를 org-mode-hook에 추가해야 함
 - [ ] undo-tree의 작동을 방해하는 것 같음 Buffer has been modified; could not load undo-tree history
+- [ ] org-edit-src-code 등에서 종종 transclusion된 버퍼 조각이 섞이는 현상이 발생함.
 
 ****** COMMENT org-pomodoro
 :PROPERTIES:
@@ -6944,18 +6989,21 @@ https://github.com/Somelauw/evil-org-mode
   (evil-org-agenda-set-keys))
 #+end_src
 
-****** org-auto-tangle
+****** TODO org-auto-tangle [0/1]
 :PROPERTIES:
 :CUSTOM_ID: org-auto-tangle
 :ID:       2FD0BE62-F732-47A5-9979-CC10C68857CE
 :END:
 https://github.com/yilkalargaw/org-auto-tangle
+
 ​=#+auto_tangle: t=​ 옵션을 사용하면 된다.
 #+begin_src emacs-lisp :tangle yes
 (use-package org-auto-tangle
   :defer t
   :hook (org-mode . org-auto-tangle-mode))
 #+end_src
+
+- [ ] 클린 설치 시 init.el을 설정할 수 없다.
 
 ****** COMMENT org-roam
 #+begin_src emacs-lisp :tangle yes
@@ -7349,6 +7397,9 @@ https://niklaseklund.gitlab.io/blog/posts/dtache_consult/
 
 *** 유틸리티
 **** COMMENT calibre
+:PROPERTIES:
+:ID:       03A64783-270A-4D05-8916-37F8BEED38E2
+:END:
 ***** calibredb
 :PROPERTIES:
 :ID:       C338A9B9-0B66-454F-B9AC-94E56FFDDC99
