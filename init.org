@@ -40,6 +40,7 @@ init 파일 디버그 용도
 (setq custom-file (expand-file-name "custom.el" user-emacs-directory))
 (load custom-file 'noerror)
 #+end_src
+
 *** font settings
 **** 기본 폰트 설정
 :PROPERTIES:
@@ -173,12 +174,12 @@ disabled-command-function nil           ; 어려운 기능 경고 해제
 async-bytecomp-package-mode t
 #+end_src
 
-***** COMMENT 버퍼 범위를 보여줌.
+**** COMMENT 버퍼 범위를 보여줌.
 #+begin_src emacs-lisp :tangle yes
 indicate-buffer-boundaries 'left
 #+end_src
 
-***** 문장의 끝을 "  "가 아니라 " "로 변경
+**** 문장의 끝을 "  "가 아니라 " "로 변경
 #+begin_src emacs-lisp :tangle yes
 sentence-end-double-space nil
 #+end_src
@@ -520,8 +521,10 @@ https://github.com/abo-abo/ace-window
           ((bound-and-true-p ido-mode)
            (ido-switch-buffer))
           (el-patch-add
-            ((and (featurep 'consult) (bound-and-true-p persp-mode))
+            ((and (featurep 'consult) (featurep 'persp-mode))
              (with-persp-buffer-list () (consult-buffer)))
+            ;; ((and (featurep 'consult) (featurep 'perspective))
+            ;;  ())
             ((featurep 'consult)
              (consult-buffer)))
           (t (call-interactively 'switch-to-buffer))))
@@ -934,11 +937,8 @@ https://github.com/minad/vertico
   :init
   (vertico-mode)
   :hook (minibuffer-setup . (lambda ()
-                              (let ((evil-move-beyond-eol t))
-                                (cursor-intangible-mode))
-                              ;; (setq-local evil-move-beyond-eol t)
-                              ;; (cursor-intangible-mode)))
-                              ))
+                              (setq-local evil-move-beyond-eol t)
+                              (cursor-intangible-mode)))
   :custom
   (vertico-scroll-margin 0)
   (vertico-resize t)
@@ -976,9 +976,9 @@ https://github.com/minad/vertico
   
   :config
   ;; persist history
-  (use-package savehist
-    :init
-    (savehist-mode))
+  ;; (use-package savehist
+  ;;   :init
+  ;;   (savehist-mode))
 
   ;; Add prompt indicator to `completing-read-multiple'.
   ;; Alternatively try `consult-completing-read-multiple'.
@@ -1050,9 +1050,7 @@ https://github.com/minad/vertico
   (vertico-map
    "RET" 'vertico-directory-enter
    "DEL" 'vertico-directory-delete-char
-   "M-DEL" 'vertico-directory-delete-entry
-   ;; "M-DEL" 'vertico-directory-delete-word
-   )
+   "M-DEL" 'vertico-directory-delete-entry)
   ;; Tidy shadowed file names
   :hook (rfn-eshadow-update-overlay . vertico-directory-tidy)
   :config
@@ -1082,6 +1080,14 @@ https://github.com/minad/marginalia
          ("M-A" . marginalia-cycle))
 
   ;; The :init configuration is always executed (Not lazy!)
+  :config/el-patch
+  (defun marginalia--truncate (str width)
+  "Truncate string STR to WIDTH."
+  (when-let (pos (string-match-p "\n" str))
+    (setq str (substring str 0 pos)))
+  (if (< width 0)
+      (nreverse (truncate-string-to-width (reverse str) (- width) 0 ?\s t))
+    (truncate-string-to-width str width 0 ?\s (el-patch-remove t))))
   :init
   ;; Must be in the :init section of use-package such that the mode gets
   ;; enabled right away. Note that this forces loading the package.
@@ -1093,6 +1099,8 @@ https://github.com/minad/marginalia
 :ID:       C140FD74-E355-4F1E-AC5B-709AB4E9BD4C
 :END:
 https://github.com/iyefrat/all-the-icons-completion
+
+marginalia에 all-the-icons 지원을 추가한다.
 #+begin_src emacs-lisp :tangle yes
 (use-package all-the-icons-completion
   ;; :hook (marginalia-mode-hook . all-the-icons-completion-marginalia-setup)
@@ -2086,6 +2094,8 @@ company의 backend를 corfu에서도 사용할 수 있도록 함
 
 - [X] 자동으로 버퍼 따라 백엔드 활성화가 필요함.
   + setq로 설정하면 되는 듯 하다. 기본 백엔드가 자동으로 사용하나? 그럼 왜 add-to-list는 안 되는거지?
+    - 기본 백엔드가 자동으로 사용하는데, 모드마다 사용하는 백엔드 범위가 다른듯함.
+- [ ] cape-yasnippet을 백엔드에서 제거하고 단축키를 따로 설정하는 편이 좋겠음.
 
 ****** corfu-doc
 :PROPERTIES:
@@ -2670,10 +2680,43 @@ https://github.com/Bad-ptr/persp-mode.el
 
 #+begin_src emacs-lisp :tangle yes
 (use-package perspective
-  ;; :bind
-  ;; ("C-x C-b" . persp-list-buffers)   ; or use a nicer switcher, see below
+  :init
+  (defvar persp-auto-save-keep-day 7 "how long keep old perspective state")
+  :custom
+  (persp-state-default-file (expand-file-name "perspective.el" persp-save-dir))
   :config
-  (persp-mode))
+  (persp-mode)
+
+  (with-eval-after-load 'consult
+    (defvar consult--source-perspective
+      (list :name "Perspective"
+            :narrow ?s
+            :category 'buffer
+            :history  buffer-name-history
+            :state #'consult--buffer-state
+            :default t
+            :items #'persp-get-buffer-names))
+    (push consult--source-perspective consult-buffer-sources))
+
+  (defun persp-save-persp-state ()
+    "Save persp state to file, and keep newer backup files and remove olds."
+    (when (file-exists-p persp-state-default-file)
+      (rename-file persp-state-default-file
+                   (concat persp-state-default-file
+                           (format-time-string ".%y%m%d-%H%M%S" (current-time)))))
+    (mapc (lambda (file) (delete-file file))
+          (-filter
+           (lambda (file)
+             (file-modified-before-p persp-auto-save-keep-day file))
+           (directory-files persp-save-dir t "perspective.el.")))
+    (persp-state-save persp-state-default-file))
+
+  (defun persp-load-persp-state ()
+    "load latest persp state"
+    (persp-state-load persp-state-default-file))
+
+  :hook ((kill-emacs . persp-save-persp-state)
+         (after-init . persp-load-persp-state)))
 #+end_src
 
 ***** treemacs-perspective
@@ -2681,6 +2724,16 @@ https://github.com/Bad-ptr/persp-mode.el
 (use-package treemacs-perspective 
   :after (treemacs perspective) 
   :config (treemacs-set-scope-type 'Perspectives))
+#+end_src
+
+**** COMMENT burly
+:PROPERTIES:
+:ID:       602894A0-B275-4CD7-B64F-C36F854ACED9
+:END:
+https://github.com/alphapapa/burly.el
+
+#+begin_src emacs-lisp :tangle yes
+(use-package burly)
 #+end_src
 
 *** completion sorting
@@ -3255,6 +3308,10 @@ https://github.com/abo-abo/lispy
 #+begin_src emacs-lisp :tangle yes
 (use-package lispy)
 #+end_src
+
+- [ ] lispy-split =M-RET=​에 바인딩 되어 있음
+  + normal-mode에서는 forward-char를 advice 해야 함
+  + insert-mode 매핑 없음
 
 ***** lispyville
 :PROPERTIES:
@@ -4681,6 +4738,7 @@ https://github.com/stsquad/dired-rsync/
 :ID:       02901F61-1B1C-478B-BE86-DE96AF438206
 :END:
 https://github.com/joodland/bm
+
 북마크를 버퍼에 표시함.
 emacs 내장 북마크 기능을 사용하지 않음.
 #+begin_src emacs-lisp :tangle yes
@@ -4766,8 +4824,6 @@ https://github.com/Alexander-Miller/treemacs
    "<escape>" 'treemacs
    "nf" 'treemacs-create-file
    "nd" 'treemacs-create-dir)
-  
-  ;; :hook (treemacs-mode . (lambda () (display-line-numbers-mode -1)))
   
   :config/el-patch
 ;;;###autoload
@@ -5072,14 +5128,31 @@ doom-themes를 기반으로 약간 수정함
 :ID:       B34FB60C-4A6E-4F40-97DB-4BB675153919
 :END:
 https://github.com/Fanael/persistent-scratch
+
 ​~*scratch*~​ 버퍼의 내용을 계속 보관한다.
 #+begin_src emacs-lisp :tangle yes
 (use-package persistent-scratch
+  :init
+  (defvar persistent-scratch-backup-keep 7 "How long keep scratch backup(day)")
+  :custom
+  (persistent-scratch-backup-file-name-format "%Y%m%dT%H%M%S")
+  (persistent-scratch-backup-directory
+   (expand-file-name "scratch" no-littering-var-directory))
+  (persistent-scratch-backup-filter
+   #'(lambda (files)
+       (-filter
+        (lambda (file)
+          (ignore-errors
+            (time-less-p
+             (encode-time (parse-time-string file))
+             (time-subtract (current-time)
+                            (days-to-time persistent-scratch-backup-keep)))))
+        files)))
   :config
   (persistent-scratch-setup-default))
 #+end_src
 
-k*** osx-trash
+**** osx-trash
 :PROPERTIES:
 :ID:       EBA9857C-06A3-4DE4-93B3-6763A9CD57FD
 :END:
@@ -6073,7 +6146,8 @@ auto code formatter
   "o" '(:ignore t :which-key "org-mode")
   "op" '(org-pomodoro :which-key "pomodoro")
   "on" '(org-toggle-narrow-to-subtree :which-key "toggle narrow")
-  "of" '(dw/search-org-files :which-key "search notes")
+  ;; "of" '(dw/search-org-files :which-key "search notes")
+  "of" '(consult-org-heading :which-key "search heading")
   ;; "os"  '(counsel-rg :which-key "search notes")
   "os" '(org-agenda :which-key "status")
   "ot" '(org-todo-list :which-key "todos")
@@ -6669,8 +6743,8 @@ upcoming, todo와 heading 구조를 볼 수 있는 사이드바를 추가하는 
    "k" 'org-agenda-previous-line)
   (spc
     :states '(normal insert visual emacs motion)
-    "oB" 'org-sidebar-toggle
-    "ob" 'org-sidebar-tree-toggle)
+    "ob" 'org-sidebar-toggle
+    "oB" 'org-sidebar-tree-toggle)
   :config
   ;; org-sidebar는 기본적으로 점프시 indirect buffer로 버퍼를 여는데 persp-mode에는 해당 indirect buffer가 추가되지 않는다. `org-sidebar-tree-jump-fn'을 변경하거나 advice로 persp-mode에 자동으로 indirect buffer를 추가하도록 바꾸면 된다. 
   ;; https://www.reddit.com/r/emacs/comments/fnstjj/perspmode_adding_indirect_buffers/
@@ -7273,7 +7347,7 @@ e​=mac=​s
 :END:
 [[*embrace][embrace]]
 [[*org-emphasize][org-emphasize]]
-****** dw/search-org-files
+****** COMMENT dw/search-org-files
 :PROPERTIES:
 :ID:       C0B585F1-E896-49F0-8B0F-E963F1384F82
 :END:
@@ -7429,7 +7503,7 @@ output instead."
       (shell-command command t nil)
       (exchange-point-and-mark))))
 #+end_src
-**** dtache
+**** TODO dtache
 ***** dtache
 :PROPERTIES:
 :ID:       06BAE0F9-C903-4B35-BA42-B2851AE0E6CF
@@ -7439,6 +7513,7 @@ https://gitlab.com/niklaseklund/dtache
 shell command를 이맥스에서 완전히 분리된 상태로 실행할 수 있는 패키지.(tmux, GNU screen의 대체제로 사용할 수 있음)
 
 핵심 개념은 =dtache-session=​. 세션의 명령어, 작업 디렉토리, 시작 위치, output, socket, 프로세스 위치 등의 정보를 캡슐화하는 객체다. 
+
 ***** dtache-consult
 :PROPERTIES:
 :ID:       3E05458E-A087-4C22-9F7C-6D805E60B929
@@ -7508,11 +7583,56 @@ MacOS Shortcut을 emacs에서 사용할 수 있다.
               :file "siri-shortcuts.el")
   :defer t)
 #+end_src
+**** psession
+:PROPERTIES:
+:ID:       E2FBD1E0-3380-4EDE-A25B-AFBBF67E2C52
+:END:
+https://github.com/thierryvolpiatto/psession
+
+emacs의 세션을 저장하고 유지하는 기능. 버퍼, 윈도우 구성 뿐 아니라 이맥스 내부 변수들과 히스토리(savehist-mode를 대체), 레지스터 등을 저장하고 복원한다. 자동저장도 지원.
+#+begin_src emacs-lisp :tangle yes
+(use-package psession
+  :init
+  (require 'psession)
+  (psession-mode 1)
+  (psession-savehist-mode 1)
+  (psession-autosave-mode 1))
+#+end_src
+**** redacted
+:PROPERTIES:
+:ID:       057373BD-41EC-488D-BDD8-89089D74CE76
+:END:
+https://github.com/bkaestner/redacted.el
+
+버퍼의 텍스트를 가리는 마이너 모드
+#+begin_src emacs-lisp :tangle yes
+(use-package redacted
+  :hook
+  ;; Enable `read-only-mode' to ensure that we don't change what we can't read.
+  (redacted-mode . (lambda () (read-only-mode (if redacted-mode 1 -1)))))
+#+end_src
 
 *** 기타 코드들
 :PROPERTIES:
 :ID:       8851551D-EC7F-4275-AE88-A855A25A0B8E
 :END:
+**** file-modified-before-p
+:PROPERTIES:
+:ID:       631361C2-592E-4699-B046-F107E57215C2
+:END:
+#+begin_src emacs-lisp :tangle yes
+(defun file-modified-before-p (time file)
+  "If file's last modified time is before `time', return t
+else return nil."
+  (time-less-p
+   (float-time (file-attribute-modification-time
+                (file-attributes file)))
+   (time-subtract (float-time (current-time)) (float-time time))))
+(defun file-modified-before-days-p (day file)
+  "Wrapper function for `file-before-p'."
+  (file-modified-before-p (days-to-time day) file))
+#+end_src
+
 **** unadvice
 :PROPERTIES:
 :ID:       44DF7EA2-FDB7-48A2-91B9-1A7BAAE7C175
