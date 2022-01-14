@@ -600,14 +600,14 @@ https://github.com/abo-abo/ace-window
 - [X] posframe 추가
 - [X] posframe face 변경
 - [-] window size, scroll-other-window의 transient map 만들기.
-  왠지 transient로는 scroll-other-window가 작동하지 않는다. 
+  왠지 transient로는 scroll-other-window가 작동하지 않는다.
   - [X] scroll-other-window
   - [ ] window size
 - [X] display-buffer-base-action 설정
   + [X] display-buffer-alist 설정
   + embark로 대체
-- [ ] x에 kill-buffer-and-window 추가하기 
-    
+- [ ] x에 kill-buffer-and-window 추가하기
+
 **** font-lock-plus
 https://gitlab.com/thomasluquet/font-lock-plus
 #+begin_src emacs-lisp :tangle yes
@@ -959,9 +959,6 @@ https://github.com/minad/vertico
    "q" 'minibuffer-keyboard-quit
    [remap evil-goto-first-line] 'vertico-first
    [remap evil-goto-line] 'vertico-last)
-  ;; ("M-n" 'down-from-outside
-  ;;  "M-p" 'up-from-outside
-  ;; "M-TAB" 'to-and-from-minibuffer)
   (vertico-map
    :states 'insert
    "C-d" 'vertico-scroll-up)
@@ -1233,7 +1230,7 @@ DEFS is a plist associating completion categories to commands."
                                                  minibuffer-completion-table
                                                  minibuffer-completion-predicate)
                             'category))))))
-  
+
   (defun consult-find-for-minibuffer ()
     "Search file with find, enter the result in the minibuffer."
     (interactive)
@@ -1253,7 +1250,7 @@ DEFS is a plist associating completion categories to commands."
   (define-minibuffer-key [(super f)]
     'consult-location #'previous-history-element
     'file #'consult-find-for-minibuffer)
-  
+
   ;; Optionally configure the narrowing key.
   ;; Both < and C-+ work reasonably well.
   (setq consult-narrow-key "<") ;; (kbd "C-+")
@@ -1280,7 +1277,7 @@ DEFS is a plist associating completion categories to commands."
   )
 #+end_src
 
-- [ ] describe-face 등에 history 
+- [ ] describe-face 등에 history
 
 ****** consult-dir
 :PROPERTIES:
@@ -1359,7 +1356,8 @@ https://github.com/mohkale/consult-yasnippet
 :END:
 https://github.com/tumashu/vertico-posframe
 
-**** TODO complete-at-point [0/0]
+**** DONE complete-at-point [0/0]
+CLOSED: [2022-01-14 Fri 17:15]
 :PROPERTIES:
 :ID:       9E3FA906-6CFE-47EF-A6ED-D302FD2D314E
 :END:
@@ -1382,11 +1380,13 @@ backend 부족은 같은 제작자의 cape가 해결한다. cape는 company 백�
     - [X] ​+corfu-quit-at-boundary+
     - [X] corfu-quit-no-match
       + 불편함이 크게 해결됨.
-  + [ ] quickhelp가 없다.
+  + [X] quickhelp가 없다.
+    - corfu-doc
   + [X] company-box와 비교해서는 빠른 편.
   + [X] tab 동작 수정
     - 아무데서나 tab이 자동완성으로 문자를 변경함.
     - 범인은 yas-expand
+      + cape-yasnippet을 비활성화 했음.
 
 ***** COMMENT company
 # :PROPERTIES:
@@ -2002,7 +2002,7 @@ company의 backend를 corfu에서도 사용할 수 있도록 함
   ;;        ("C-c p &" . cape-sgml)
   ;;        ("C-c p r" . cape-rfc1345))
   :general
-  
+
   :init
   ;; (use-package company)                 ; load company backends
   ;; Add `completion-at-point-functions', used by `completion-at-point'.
@@ -2156,7 +2156,14 @@ corfu용 quickhelp
         (make-frame-invisible corfu-doc--frame))
       (set-frame-position corfu-doc--frame x y)
       (set-frame-size corfu-doc--frame width height t)
-      (make-frame-visible corfu-doc--frame))))
+      (make-frame-visible corfu-doc--frame)))
+
+;; help에서 독스트링을 가리는 message를 제거함.
+(defun override-ignore-function (&rest _) nil)
+(define-advice corfu-doc-show (:around (orig) ignore-message)
+  (advice-add 'help-window-display-message :override 'override-ignore-function)
+  (funcall orig)
+  (advice-remove 'help-window-display-message 'override-ignore-function)))
 #+end_src
 
 ***** dabbrev
@@ -2396,7 +2403,7 @@ https://github.com/karthink/project-x
 :PROPERTIES:
 :ID:       C74085F3-FE2B-4ACB-BC5E-6271A3BAD7CD
 :END:
-https://github.com/CIAvash/persp-mode-project-bridge 
+https://github.com/CIAvash/persp-mode-project-bridge
 
 **** COMMENT persp-mode
 CLOSED: [2021-12-13 Mon 14:32]
@@ -2763,8 +2770,8 @@ https://github.com/Bad-ptr/persp-mode.el
 
 ***** treemacs-perspective
 #+begin_src emacs-lisp :tangle yes
-(use-package treemacs-perspective 
-  :after (treemacs perspective) 
+(use-package treemacs-perspective
+  :after (treemacs perspective)
   :config (treemacs-set-scope-type 'Perspectives))
 #+end_src
 
@@ -3871,24 +3878,6 @@ doom-themes에서 가져온 코드
                     (current-buffer))))
 
 #+end_src
-****** palette color
-:PROPERTIES:
-:ID:       B70438F8-F975-4143-8C54-139C04623B87
-:END:
-테마 내부의 색상을 외부에서 꺼내 쓸 수 있도록 함
-#+begin_src emacs-lisp :tangle yes
-(defvar gruvbox-color (make-hash-table :test 'equal)
-  "gruvbox theme color")
-
-(define-advice autothemer-deftheme
-    (:before (_ _ palette &rest _) defcolors)
-  (mapcar (lambda (e)
-            (puthash (symbol-name (car e)) (cadr e) gruvbox-color))
-          (cdr palette)))
-
-(defun gruvbox-color (color)
-  (gethash (if (symbolp color) (symbol-name color) color) gruvbox-color))
-#+end_src
 ****** blend color
 :PROPERTIES:
 :ID:       878573C5-C96D-4DB0-9D8F-53AFD0B68530
@@ -3923,6 +3912,26 @@ doom-themes에서 가져옴
 
 (when (eq window-system 'ns)
   (add-hook 'ns-system-appearance-change-functions #'refresh-theme))
+#+end_src
+
+****** palette color
+:PROPERTIES:
+:ID:       B70438F8-F975-4143-8C54-139C04623B87
+:END:
+테마 내부의 색상을 외부에서 꺼내 쓸 수 있도록 함
+#+begin_src emacs-lisp :tangle yes
+:init
+(defvar gruvbox-color (make-hash-table :test 'equal)
+  "gruvbox theme color")
+
+(define-advice autothemer-deftheme
+    (:after (_ _ palette &rest _) defcolors)
+  (mapcar (lambda (e)
+            (puthash (symbol-name (car e)) (cadr e) gruvbox-color))
+          (cdr palette)))
+
+(defun gruvbox-color (color)
+  (gethash (if (symbolp color) (symbol-name color) color) gruvbox-color))
 #+end_src
 
 ****** end
@@ -3967,7 +3976,7 @@ https://github.com/hlissner/emacs-solaire-mode
 
 #+end_src
 **** indicators
-***** display-line-numbers 
+***** display-line-numbers
 :PROPERTIES:
 :ID:       698D2C53-85FB-480C-9EA8-644D2EB7DAF8
 :END:
@@ -4045,8 +4054,7 @@ CLOSED: [2021-12-21 Tue 23:31]
                       space-mark
                       tab-mark
                       ;; newline-mark
-                      ))
-  )
+                      )))
 #+end_src
 
 ***** beacon
@@ -4116,12 +4124,11 @@ https://github.com/fgeller/highlight-thing.el
                         :foreground "black"))))
   ;; :hook (prog-mode . highlight-thing-mode)
   )
-
 #+end_src
 
 - [ ] on/off 키 추가
 
-***** TODO COMMENT region-occurrences-highlighter [0/1]
+***** COMMENT region-occurrences-highlighter [0/1]
 :PROPERTIES:
 :ID:       00283B73-B2B8-4E90-AB1B-A15742C83152
 :END:
@@ -4164,16 +4171,15 @@ https://github.com/alvarogonzalezsotillo/region-occurrences-highlighter
 :ID:       5A79ED5F-C2D1-4A63-A21A-289F87C24ED7
 :END:
 https://gitlab.com/ideasman42/emacs-hl-block-mode
+
 커서가 위치한 블럭을 강조 표시함
 #+begin_src emacs-lisp :tangle yes
 (use-package hl-block-mode
   :custom
   (hl-block-bracket nil)
   ;; (hl-block-single-level t)
-
   ;; (hl-block-style 'color-tint)
   ;; (hl-block-color-tint "#040404")
-
   (hl-block-style 'bracket)             ; color tint mode disables rainbow mode.
   (hl-block-bracket-face '(:inverse-video t)) ; and this fix face t problem.
   :commands (hl-block-mode)
@@ -4447,7 +4453,7 @@ https://github.com/alexmurray/evil-vimish-fold
 #+begin_src emacs-lisp :tangle yes
 (use-package evil-vimish-fold
   :after vimish-fold
-  :init
+  :custom
   ;; (setq evil-vimish-fold-mode-lighter " ⮒")
   (setq evil-vimish-fold-target-modes '(prog-mode conf-mode text-mode))
   :config
@@ -4616,11 +4622,11 @@ https://github.com/joostkremers/writeroom-mode
 #+BEGIN_SRC emacs-lisp :tangle yes
 (use-package auto-revert
   :straight nil
-  :ensure nil
   :defer 1
   :custom
   (global-auto-revert-mode t))
 #+END_SRC
+
 **** dired
 :PROPERTIES:
 :ID:       C1AB259E-3970-4624-9DC3-CDD184A1044F
@@ -4642,17 +4648,10 @@ https://github.com/jtbm37/all-the-icons-dired
 :END:
 #+begin_src emacs-lisp :tangle yes
 (use-package dired
-  :ensure nil
   :straight nil
   :defer 1
   :commands (dired dired-jump)
   :hook ((dired-load-hook . (lambda () (interactive) (dired-collapse)))
-         ;; (dired-mode-hook . (lambda ()
-         ;;                      (interactive)
-         ;;                      (dired-omit-mode 1)
-         ;;                      (dired-hide-details-mode 1)
-         ;;                      (all-the-icons-dired-mode 1)
-         ;;                      (hl-line-mode 1)))
          (dired-mode-hook . auto-revert-mode))
   :general
   (dired-mode-map
@@ -4660,17 +4659,8 @@ https://github.com/jtbm37/all-the-icons-dired
    "SPC" nil
    "SPC d" '(nil :which-key "dired")
    "SPC do" '(dired-omit-mode :which-key "omit mode(hide)")
-   ;; "h" 'dired-single-up-directory
    "h" 'evil-backward-char
-   ;; "H" 'dired-single-up-directory
-   ;; "l" 'dired-single-buffer
-   "l" 'evil-forward-char
-   ;; "L" 'dired-single-buffer
-   ;; "y" 'dired-ranger-copy
-   ;; "X" 'dired-ranger-move
-   ;; "p" 'dired-ranger-paste
-   ;; "r" 'dired-rsync
-   )
+   "l" 'evil-forward-char)
   :custom
   ;; (dired-listing-switches "-agho --group-directories-first")
   ;; (dired-omit-files "^\\.[^.].*")
@@ -4704,6 +4694,43 @@ https://github.com/jtbm37/all-the-icons-dired
         (concat dired-omit-files "\\|^\\..*$")))
 #+end_src
 
+***** dired-hacks
+:PROPERTIES:
+:ID:       E33901A6-7CAE-483C-BA0B-2EB2D25191EA
+:END:
+https://github.com/Fuco1/dired-hacks
+
+****** dired-narrow
+:PROPERTIES:
+:ID:       92322C5D-40DE-40E7-BD82-C84315FF34F4
+:END:
+문자열 검색 결과로 narrow
+
+#+begin_src emacs-lisp :tangle yes
+(use-package dired-narrow
+  :config
+  (bind-key "s-f" 'dired-narrow dired-mode-map))
+#+end_src
+
+****** COMMENT dired-ranger
+:PROPERTIES:
+:ID:       B072D4F7-340E-4542-B972-F58A131C4A26
+:END:
+#+begin_src emacs-lisp :tangle yes
+  (use-package dired-ranger
+    :defer t)
+#+end_src
+
+****** COMMENT dired-collapse
+:PROPERTIES:
+:ID:       8E157000-EF17-4368-ACB4-B1DFC5247F88
+:END:
+단일 자식 디렉토리만 있을 경우 함께 연결되어 표시됨
+#+begin_src emacs-lisp :tangle yes
+  (use-package dired-collapse
+    :defer t)
+#+end_src
+
 ***** dirvish
 :PROPERTIES:
 :ID:       1CFD91CC-BEB4-4EDC-AEBF-4696C85A2A13
@@ -4717,12 +4744,14 @@ https://github.com/alexluigit/dirvish
    :states 'normal
    "H" 'dirvish-up-directory
    [remap dired-do-copy] 'dirvish-yank
+   [remap evil-goto-first-line] 'dirvish-go-top
+   [remap evil-goto-line] 'dirvish-go-bottom
    "SPC dh" 'dirvish-show-history)
   :config
   ;; (require 'dirvish-minibuffer-preview)
   ;; (dirvish-minibuf-preview-mode)
   (require 'dirvish-yank)
-  (dirvish-override-dired-mode))
+  (dirvish-override-dired-mode t))
 #+end_src
 
 ***** dirvish의 외부 의존성
@@ -4742,28 +4771,6 @@ https://github.com/crocket/dired-single
 dired가 디렉토리별로 새 버퍼를 열지 않고 현재 버퍼를 재사용하도록 함
 #+begin_src emacs-lisp :tangle yes
   (use-package dired-single
-    :defer t)
-#+end_src
-
-***** COMMENT dired-hacks
-:PROPERTIES:
-:ID:       E33901A6-7CAE-483C-BA0B-2EB2D25191EA
-:END:
-https://github.com/Fuco1/dired-hacks
-
-****** dired-ranger
-#+begin_src emacs-lisp :tangle yes
-  (use-package dired-ranger
-    :defer t)
-#+end_src
-
-****** dired-collapse
-:PROPERTIES:
-:ID:       8E157000-EF17-4368-ACB4-B1DFC5247F88
-:END:
-단일 자식 디렉토리만 있을 경우 함께 연결되어 표시됨
-#+begin_src emacs-lisp :tangle yes
-  (use-package dired-collapse
     :defer t)
 #+end_src
 
@@ -4866,7 +4873,7 @@ https://github.com/Alexander-Miller/treemacs
    "<escape>" 'treemacs
    "nf" 'treemacs-create-file
    "nd" 'treemacs-create-dir)
-  
+
   :config/el-patch
 ;;;###autoload
   (defun treemacs-finish-edit ()
@@ -5512,6 +5519,7 @@ https://github.com/flycheck/flycheck-inline
   (global-flycheck-inline-mode)
   )
 #+end_src
+
 **** TODO COMMENT tree-sitter
 :PROPERTIES:
 :ID:       BF940CDE-7558-4C97-8F73-0B2D4B35FBF0
@@ -5655,8 +5663,8 @@ https://github.com/emacs-lsp/lsp-ui
   (lsp-ui-doc-position 'bottom)
   :config
   (lsp-ui-doc-show))
-
 #+end_src
+
 ***** dap-mode
 https://github.com/emacs-lsp/dap-mode
 lsp의 디버거
@@ -6093,6 +6101,7 @@ https://github.com/smihica/emmet-mode
 :ID:       27517D93-C940-4314-827E-D341DEF14EC9
 :END:
 https://github.com/lewang/ws-butler
+
 공백 문자를 제거함
 #+begin_src emacs-lisp :tangle yes
 (use-package ws-butler
@@ -6103,7 +6112,7 @@ https://github.com/lewang/ws-butler
   (ws-butler-mode))
 #+end_src
 
-- 또는 ​=delete-trailing-whitespace=​
+- 또는 ​=delete-trailing-whitespace=
 
 ***** apheleia
 :PROPERTIES:
@@ -6344,7 +6353,7 @@ prompted for."
 (org-refile-use-outline-path t)
 (org-outline-path-complete-in-steps nil)
 ;; emphasis using zero with space
-(org-emphasis-regexp-components '("   ('\"{\x200B" "-     .,:!?;'\")}\\[\x200B" " ,\"'" "." 1))
+(org-emphasis-regexp-components '("   ('\"{\x200B" "-     .,:!?;'\")}\\[\x200B" " ,\"'" "." 1)) ; " for matching 
 (org-startup-with-inline-images t)    ; start with inline images
 ;; (org-startup-with-latex-preview t)                ; start with latex preview
 (org-latex-create-formula-image-program 'dvisvgm) ; latex to svg
@@ -6682,7 +6691,7 @@ heading, bullet을 prettify-symbols 처럼 꾸미는 패키지
 #+end_src
 
 - doom-themes를 쓸 경우 ​=doom-themes-org-config=​가 이 기능을 대체함
-  
+
 ******* org-appear
 :PROPERTIES:
 :ID:       D7AC8D50-A4D8-44A9-B771-3431EB062262
@@ -6788,7 +6797,7 @@ upcoming, todo와 heading 구조를 볼 수 있는 사이드바를 추가하는 
     "ob" 'org-sidebar-toggle
     "oB" 'org-sidebar-tree-toggle)
   :config
-  ;; org-sidebar는 기본적으로 점프시 indirect buffer로 버퍼를 여는데 persp-mode에는 해당 indirect buffer가 추가되지 않는다. `org-sidebar-tree-jump-fn'을 변경하거나 advice로 persp-mode에 자동으로 indirect buffer를 추가하도록 바꾸면 된다. 
+  ;; org-sidebar는 기본적으로 점프시 indirect buffer로 버퍼를 여는데 persp-mode에는 해당 indirect buffer가 추가되지 않는다. `org-sidebar-tree-jump-fn'을 변경하거나 advice로 persp-mode에 자동으로 indirect buffer를 추가하도록 바꾸면 된다.
   ;; https://www.reddit.com/r/emacs/comments/fnstjj/perspmode_adding_indirect_buffers/
   (with-eval-after-load 'persp-mode
     (defun my/add-this-buf-to-persp ()
@@ -7476,6 +7485,7 @@ title."
 :ID:       6FA3C506-86CC-4302-84A3-2E8920657DCE
 :END:
 https://github.com/akermu/emacs-libvterm
+
 #+begin_src emacs-lisp :tangle yes
 (use-package vterm
   :commands vterm
@@ -7499,6 +7509,7 @@ not appropriate in some cases like terminals."
     (setq-local evil-move-cursor-back nil))
   (add-hook 'vterm-mode-hook #'evil-collection-vterm-escape-stay))
 #+end_src
+
 **** TODO vterm-toggle
 :PROPERTIES:
 :ID:       A02462BA-F34B-4A1C-91A6-FF21E4DE5BC8
@@ -7554,7 +7565,7 @@ https://gitlab.com/niklaseklund/dtache
 
 shell command를 이맥스에서 완전히 분리된 상태로 실행할 수 있는 패키지.(tmux, GNU screen의 대체제로 사용할 수 있음)
 
-핵심 개념은 =dtache-session=​. 세션의 명령어, 작업 디렉토리, 시작 위치, output, socket, 프로세스 위치 등의 정보를 캡슐화하는 객체다. 
+핵심 개념은 =dtache-session=​. 세션의 명령어, 작업 디렉토리, 시작 위치, output, socket, 프로세스 위치 등의 정보를 캡슐화하는 객체다.
 
 ***** dtache-consult
 :PROPERTIES:
