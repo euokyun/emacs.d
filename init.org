@@ -3914,13 +3914,12 @@ doom-themes에서 가져옴
   (add-hook 'ns-system-appearance-change-functions #'refresh-theme))
 #+end_src
 
-****** palette color
+****** COMMENT palette color
 :PROPERTIES:
 :ID:       B70438F8-F975-4143-8C54-139C04623B87
 :END:
 테마 내부의 색상을 외부에서 꺼내 쓸 수 있도록 함
 #+begin_src emacs-lisp :tangle yes
-:init
 (defvar gruvbox-color (make-hash-table :test 'equal)
   "gruvbox theme color")
 
