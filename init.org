@@ -956,16 +956,15 @@ https://github.com/minad/vertico
                  (forward-char 1)))
   (vertico-map
    :states 'normal
-   "q" 'minibuffer-keyboard-quit)
+   "q" 'minibuffer-keyboard-quit
+   [remap evil-goto-first-line] 'vertico-first
+   [remap evil-goto-line] 'vertico-last)
   ;; ("M-n" 'down-from-outside
   ;;  "M-p" 'up-from-outside
   ;; "M-TAB" 'to-and-from-minibuffer)
   (vertico-map
    :states 'insert
    "C-d" 'vertico-scroll-up)
-  ;; (vertico-map
-  ;;  [remap scroll-down-command] 'vertico-scroll-up
-  ;;  [remap scroll-up-command] 'vertico-scroll-down)
 
   :config/el-patch
   ;; 이거 왜 반대로 작동하게 해놓은 건지 모르겠다.
@@ -973,9 +972,10 @@ https://github.com/minad/vertico
     "Go back by N pages."
     (interactive "p")
     (vertico--goto (max 0 ((el-patch-swap - +) vertico--index (* (or n 1) vertico-count)))))
-  
+
   :config
   ;; persist history
+  ;; use psession instead.
   ;; (use-package savehist
   ;;   :init
   ;;   (savehist-mode))
@@ -985,25 +985,6 @@ https://github.com/minad/vertico
   (defun crm-indicator (args)
     (cons (concat "[CRM] " (car args)) (cdr args)))
   (advice-add #'completing-read-multiple :filter-args #'crm-indicator)
-
-  ;; do something outside minibuffer
-  (defun down-from-outside ()
-    "Move to next candidate in minibuffer, even when minibuffer isn't selected."
-    (interactive)
-    (ignore-error (with-selected-window (active-minibuffer-window))
-      (execute-kbd-macro [down])))
-  (defun up-from-outside ()
-    "Move to previous candidate in minibuffer, even when minibuffer isn't selected."
-    (interactive)
-    (ignore-error (with-selected-window (active-minibuffer-window))
-      (execute-kbd-macro [up])))
-  (defun to-and-from-minibuffer ()
-    "Go back and forth between minibuffer and other window."
-    (interactive)
-    (ignore-error
-        (if (window-minibuffer-p (selected-window))
-            (select-window (minibuffer-selected-window))
-          (select-window (active-minibuffer-window)))))
 
   ;; Emacs 28: Hide commands in M-x which do not work in the current mode.
   ;; Vertico commands are hidden in normal buffers.
@@ -1025,14 +1006,15 @@ https://github.com/minad/vertico
   ;; (advice-add #'vertico--setup :before #'vertico-resize--minibuffer)
 
   ;; add » current prefix
-  (advice-add #'vertico--format-candidate :around
-    (lambda (orig cand prefix suffix index _start)
-      (setq cand (funcall orig cand prefix suffix index _start))
-      (concat
-       (if (= vertico--index index)
-           (propertize "»" 'face 'vertico-current)
-         " ")
-       cand))))
+  (advice-remove 'vertico--format-candidate 'vertico--format-candidate@vertico-prefix)
+  (define-advice vertico--format-candidate
+      (:around (orig cand prefix suffix index _start) vertico-prefix)
+    (setq cand (funcall orig cand prefix suffix index _start))
+    (concat
+     (if (= vertico--index index)
+         (propertize "»" 'face 'vertico-current)
+       " ")
+     cand)))
 #+end_src
 
 ***** vertico-directory
@@ -1294,6 +1276,7 @@ DEFS is a plist associating completion categories to commands."
   ;; (setq consult-project-root-function #'vc-root-dir)
 ;;;; 4. locate-dominating-file
   ;; (setq consult-project-root-function (lambda () (locate-dominating-file "." ".git")))
+
   )
 #+end_src
 
@@ -2005,56 +1988,58 @@ company의 backend를 corfu에서도 사용할 수 있도록 함
              :host github
              :repo "minad/cape")
   ;; Bind dedicated completion commands
-  :bind (("C-c p p" . completion-at-point) ;; capf
-         ("C-c p t" . complete-tag)        ;; etags
-         ("C-c p d" . cape-dabbrev)        ;; or dabbrev-completion
-         ("C-c p f" . cape-file)
-         ("C-c p k" . cape-keyword)
-         ("C-c p s" . cape-symbol)
-         ("C-c p a" . cape-abbrev)
-         ("C-c p i" . cape-ispell)
-         ("C-c p l" . cape-line)
-         ("C-c p w" . cape-dict)
-         ("C-c p \\" . cape-tex)
-         ("C-c p &" . cape-sgml)
-         ("C-c p r" . cape-rfc1345))
+  ;; :bind (("C-c p p" . completion-at-point) ;; capf
+  ;;        ("C-c p t" . complete-tag)        ;; etags
+  ;;        ("C-c p d" . cape-dabbrev)        ;; or dabbrev-completion
+  ;;        ("C-c p f" . cape-file)
+  ;;        ("C-c p k" . cape-keyword)
+  ;;        ("C-c p s" . cape-symbol)
+  ;;        ("C-c p a" . cape-abbrev)
+  ;;        ("C-c p i" . cape-ispell)
+  ;;        ("C-c p l" . cape-line)
+  ;;        ("C-c p w" . cape-dict)
+  ;;        ("C-c p \\" . cape-tex)
+  ;;        ("C-c p &" . cape-sgml)
+  ;;        ("C-c p r" . cape-rfc1345))
+  :general
+  
   :init
   ;; (use-package company)                 ; load company backends
   ;; Add `completion-at-point-functions', used by `completion-at-point'.
-  ;; (add-to-list 'completion-at-point-functions #'cape-file)
+  (add-to-list 'completion-at-point-functions #'cape-file)
   ;; (add-to-list 'completion-at-point-functions
   ;;              (cape-company-to-capf #'cape-yasnippet))
-  ;; ;; (add-to-list 'completion-at-point-functions #'cape-tex)
-  ;; (add-to-list 'completion-at-point-functions #'cape-dabbrev)
-  ;; (add-to-list 'completion-at-point-functions #'cape-keyword)
-  ;; ;;(add-to-list 'completion-at-point-functions #'cape-sgml)
-  ;; ;;(add-to-list 'completion-at-point-functions #'cape-rfc1345)
+  ;; (add-to-list 'completion-at-point-functions #'cape-tex)
+  (add-to-list 'completion-at-point-functions #'cape-dabbrev)
+  (add-to-list 'completion-at-point-functions #'cape-keyword)
+  ;;(add-to-list 'completion-at-point-functions #'cape-sgml)
+  ;;(add-to-list 'completion-at-point-functions #'cape-rfc1345)
   ;; (add-to-list 'completion-at-point-functions #'cape-abbrev)
-  ;; ;;(add-to-list 'completion-at-point-functions #'cape-ispell)
-  ;; ;;(add-to-list 'completion-at-point-functions #'cape-dict)
-  ;; (add-to-list 'completion-at-point-functions #'cape-symbol)
-  ;; ;;(add-to-list 'completion-at-point-functions #'cape-line)
+  ;;(add-to-list 'completion-at-point-functions #'cape-ispell)
+  ;;(add-to-list 'completion-at-point-functions #'cape-dict)
+  (add-to-list 'completion-at-point-functions #'cape-symbol)
+  ;;(add-to-list 'completion-at-point-functions #'cape-line)
 
 
-  (setq completion-at-point-functions
-        `(
-          ,(cape-company-to-capf #'cape-yasnippet)
-          cape-symbol
-          ;; ,(cape-super-capf
-          ;;   #'cape-symbol
-          ;; ;; (cape-company-to-capf #'cape-yasnippet)
-          ;;   #'cape-abbrev
-          ;;   #'cape-keyword
-          ;;   #'cape-dabbrev
-          ;;   #'cape-file
-          ;;   ;; #'elisp-completion-at-point
-          ;;   )
-          ;; ,(cape-company-to-capf #'cape-yasnippet)
-          cape-dabbrev
-          cape-abbrev
-          cape-keyword
-          cape-file
-          t))
+  ;; (setq completion-at-point-functions
+  ;;       `(
+  ;;         ,(cape-company-to-capf #'cape-yasnippet)
+  ;;         cape-symbol
+  ;;         ;; ,(cape-super-capf
+  ;;         ;;   #'cape-symbol
+  ;;         ;; ;; (cape-company-to-capf #'cape-yasnippet)
+  ;;         ;;   #'cape-abbrev
+  ;;         ;;   #'cape-keyword
+  ;;         ;;   #'cape-dabbrev
+  ;;         ;;   #'cape-file
+  ;;         ;;   ;; #'elisp-completion-at-point
+  ;;         ;;   )
+  ;;         ;; ,(cape-company-to-capf #'cape-yasnippet)
+  ;;         cape-dabbrev
+  ;;         cape-abbrev
+  ;;         cape-keyword
+  ;;         cape-file
+  ;;         t))
 
   :config
 ;;;###autoload
@@ -2114,7 +2099,64 @@ corfu용 quickhelp
   :general
   (corfu-map
    "M-p" 'corfu-doc-scroll-down
-   "M-n" 'corfu-doc-scroll-up))
+   "M-n" 'corfu-doc-scroll-up)
+  :config/el-patch
+  (defun corfu-doc--make-frame (x y width height content)
+    "Show child frame at X/Y with WIDTH/HEIGHT and CONTENT."
+    (let* ((window-min-height 1)
+           (window-min-width 1)
+           (x-gtk-resize-child-frames
+            (let ((case-fold-search t))
+              (and
+               ;; XXX HACK to fix resizing on gtk3/gnome taken from posframe.el
+               ;; More information:
+               ;; * https://github.com/minad/corfu/issues/17
+               ;; * https://gitlab.gnome.org/GNOME/mutter/-/issues/840
+               ;; * https://lists.gnu.org/archive/html/emacs-devel/2020-02/msg00001.html
+               (string-match-p "gtk3" system-configuration-features)
+               (string-match-p "gnome\\|cinnamon" (or (getenv "XDG_CURRENT_DESKTOP")
+                                                      (getenv "DESKTOP_SESSION") ""))
+               'resize-mode)))
+           (after-make-frame-functions)
+           (border (alist-get 'child-frame-border-width corfu-doc--frame-parameters))
+           (buffer (corfu-doc--make-buffer content)))
+      (unless (and (frame-live-p corfu-doc--frame)
+                   (eq (frame-parent corfu-doc--frame) (window-frame)))
+        (when corfu-doc--frame (delete-frame corfu-doc--frame))
+        (setq corfu-doc--frame (make-frame
+                                `((parent-frame . ,(window-frame))
+                                  (minibuffer . ,(minibuffer-window (window-frame)))
+                                  (line-spacing . ,line-spacing)
+                                  ;; Set `internal-border-width' for Emacs 27
+                                  (internal-border-width . ,border)
+                                  ,@corfu-doc--frame-parameters))))
+      ;; XXX HACK Setting the same frame-parameter/face-background is not a nop (BUG!).
+      ;; Check explicitly before applying the setting.
+      ;; Without the check, the frame flickers on Mac.
+      (el-patch-remove (let* ((face (if (facep 'child-frame-border) 'child-frame-border 'internal-border)))
+                         (internal-border-color (face-attribute 'corfu-default :background nil 'default))
+                         (bg-color (face-attribute 'corfu-default :background nil 'default)))
+                       (unless (and (equal (face-attribute face :background corfu-doc--frame 'default)
+                                           internal-border-color)
+                                    (equal (frame-parameter corfu--frame 'background-color) bg-color))
+                         (set-face-background face internal-border-color corfu-doc--frame)
+                         ;; XXX HACK We have to apply the face background before adjusting the frame parameter,
+                         ;; otherwise the border is not updated (BUG!).
+                         (set-frame-parameter corfu-doc--frame 'background-color bg-color))
+                       ;; set fringe color
+                       (unless (equal (face-attribute 'fringe :background corfu-doc--frame 'default)
+                                      bg-color)
+                         (set-face-background 'fringe bg-color corfu-doc--frame)))
+      (let ((win (frame-root-window corfu-doc--frame)))
+        (set-window-buffer win buffer)
+        ;; Mark window as dedicated to prevent frame reuse (#60)
+        (set-window-dedicated-p win t))
+      ;; XXX HACK Make the frame invisible before moving the popup in order to avoid flicker.
+      (unless (eq (cdr (frame-position corfu-doc--frame)) y)
+        (make-frame-invisible corfu-doc--frame))
+      (set-frame-position corfu-doc--frame x y)
+      (set-frame-size corfu-doc--frame width height t)
+      (make-frame-visible corfu-doc--frame))))
 #+end_src
 
 ***** dabbrev
@@ -2687,16 +2729,16 @@ https://github.com/Bad-ptr/persp-mode.el
   :config
   (persp-mode)
 
-  (with-eval-after-load 'consult
-    (defvar consult--source-perspective
-      (list :name "Perspective"
-            :narrow ?s
-            :category 'buffer
-            :history  buffer-name-history
-            :state #'consult--buffer-state
-            :default t
-            :items #'persp-get-buffer-names))
-    (push consult--source-perspective consult-buffer-sources))
+  ;; (with-eval-after-load 'consult
+  ;;   (defvar consult--source-perspective
+  ;;     (list :name "Perspective"
+  ;;           :narrow ?s
+  ;;           :category 'buffer
+  ;;           :history buffer-name-history
+  ;;           :state #'consult--buffer-state
+  ;;           :default t
+  ;;           :items #'persp-get-buffer-names))
+  ;;   (push consult--source-perspective consult-buffer-sources))
 
   (defun persp-save-persp-state ()
     "Save persp state to file, and keep newer backup files and remove olds."
@@ -3564,9 +3606,8 @@ https://github.com/abo-abo/ace-link
   :defer t
   :general
   (:states 'normal
-           "s-g f" '(nil :which-key "link-hint")
-           "s-g fo" 'link-hint-open-link
-           "s-g fy" 'link-hint-copy-link))
+           "g t" 'link-hint-open-link
+           "g T" 'link-hint-copy-link))
 #+end_src
 
 **** snippet
@@ -4072,7 +4113,7 @@ https://github.com/fgeller/highlight-thing.el
   :custom-face
   (highlight-thing ((t (:box (:line-width -1)
                         :background "orange"
-                        :distance-foreground "white"))))
+                        :foreground "black"))))
   ;; :hook (prog-mode . highlight-thing-mode)
   )
 
@@ -4080,11 +4121,12 @@ https://github.com/fgeller/highlight-thing.el
 
 - [ ] on/off 키 추가
 
-***** TODO region-occurrences-highlighter [0/1]
+***** TODO COMMENT region-occurrences-highlighter [0/1]
 :PROPERTIES:
 :ID:       00283B73-B2B8-4E90-AB1B-A15742C83152
 :END:
 https://github.com/alvarogonzalezsotillo/region-occurrences-highlighter
+
 영역 선택시 같은 텍스트를 강조 표시함
 #+begin_src emacs-lisp :tangle yes
 (use-package region-occurrences-highlighter
@@ -4167,7 +4209,7 @@ indent 레벨을 라인으로 표시해줌
   (highlight-indent-guides-delay 0)
   :config
   ;; 테마 변경시
-  (define-advice refresh-theme (:after (&rest args))
+  (define-advice refresh-theme (:after (&optional args))
     (mapc (lambda (b)
             (with-current-buffer b
               (when highlight-indent-guides-mode
@@ -5722,8 +5764,7 @@ https://github.com/Fanael/highlight-defined
 emacs lisp의 문법 강조
 #+begin_src emacs-lisp :tangle yes
 (use-package highlight-defined
-  :defer t
-  :hook ((emacs-lisp-mode lisp-interaction-mode) . highlight-defined-mode))
+  :hook (emacs-lisp-mode . highlight-defined-mode))
 #+end_src
 
 ****** highlight-quoted
@@ -5735,18 +5776,19 @@ https://github.com/Fanael/highlight-quoted
 emacs lisp의 문법 강조
 #+begin_src emacs-lisp :tangle yes
 (use-package highlight-quoted
-  :defer t
-  :hook ((emacs-lisp-mode lisp-interaction-mode) . highlight-quoted-mode))
+  :hook (emacs-lisp-mode . highlight-quoted-mode))
 #+end_src
 
 ****** highlight-numbers
+:PROPERTIES:
+:ID:       F0625FFD-CFEC-4B38-A153-22120CC5EF7C
+:END:
 https://github.com/Fanael/highlight-numbers
 
 emacs lisp의 문법 강조
 #+begin_src emacs-lisp :tangle yes
 (use-package highlight-numbers
-  :defer t
-  :hook ((emacs-lisp-mode lisp-interaction-mode) . highlight-numbers-mode))
+  :hook (emacs-lisp-mode . highlight-numbers-mode))
 #+end_src
 
 ***** java
@@ -7521,6 +7563,58 @@ shell command를 이맥스에서 완전히 분리된 상태로 실행할 수 있
 https://niklaseklund.gitlab.io/blog/posts/dtache_consult/
 
 *** 유틸리티
+**** xwidget
+:PROPERTIES:
+:ID:       1D46A65E-F786-4D10-9207-A69EB06452A6
+:END:
+내장 웹 브라우저
+
+#+begin_src emacs-lisp :tangle yes
+(use-package xwidget
+  :general
+  (xwidget-webkit-mode-map
+   :states 'normal
+   "g u" nil
+   "g f" 'xwidget-webkit-browse-url
+   "esc" 'xwidget-webkit-end-edit-textarea
+   ;; "i" 'xwidget-webkit-begin-edit-textarea
+   ;; "a" 'xwidget-webkit-begin-edit-textarea
+   )
+  :config
+  (defun xwidget-papago-translate ()
+    "Open papago translate for this xwidget page"
+    (xwidget-webkit-goto-url
+     (concat
+      "https://papago.naver.net/website?locale=ko&source=auto&target=ko&url="
+      (xwidget-webkit-uri (xwidget-webkit-current-session)))))
+  )
+#+end_src
+**** xwwp
+:PROPERTIES:
+:ID:       A4D7DD98-DFF4-4816-A34D-D3BE3F50FE19
+:END:
+https://github.com/BlueFlo0d/xwwp
+
+xwidget 기능 확장 패키지
+#+begin_src emacs-lisp :tangle yes
+(use-package xwwp
+  :straight (xwwp
+             :fork (:type git
+                          :host github
+                          :repo "BlueFlo0d/xwwp")
+             :files ("*"))
+  :custom
+  (xwwp-follow-link-completion-system)
+  :config
+  (require 'xwwp-ace.el)
+  :general
+  (xwidget-webkit-mode-map
+   :states 'normal
+   "s-t" 'xwwp-follow-link
+   "g t" 'xwwp-ace-toggle
+   "<escape>" 'keyboard-quit))
+#+end_src
+
 **** COMMENT calibre
 :PROPERTIES:
 :ID:       03A64783-270A-4D05-8916-37F8BEED38E2
@@ -7625,9 +7719,9 @@ https://github.com/bkaestner/redacted.el
   "If file's last modified time is before `time', return t
 else return nil."
   (time-less-p
+   (time-subtract (float-time (current-time)) (float-time time))
    (float-time (file-attribute-modification-time
-                (file-attributes file)))
-   (time-subtract (float-time (current-time)) (float-time time))))
+                (file-attributes file)))))
 (defun file-modified-before-days-p (day file)
   "Wrapper function for `file-before-p'."
   (file-modified-before-p (days-to-time day) file))
@@ -7645,6 +7739,7 @@ symbol에 대한 모든 advice를 제거한다.
   (interactive "aFunction symbol: ")
   (advice-mapc (lambda (advice _props) (advice-remove sym advice)) sym))
 #+end_src
+
 **** uniquify region
 :PROPERTIES:
 :ID:       58C74332-5EBE-4182-A32F-4E87CA44A095
@@ -7665,6 +7760,7 @@ https://www.emacswiki.org/emacs/DuplicateLines
   (sort-lines nil (region-beginning) (region-end))
   (uniquify-region-lines (region-beginning) (region-end)))
 #+end_src
+
 **** last-message
 #+begin_src emacs-lisp :tangle yes
 (defun last-message (&optional num)
@@ -7683,8 +7779,13 @@ https://www.emacswiki.org/emacs/DuplicateLines
   (interactive "*p")
   (insert (last-message num)))
 #+end_src
+
 **** TODO toggle-window-dedicated [0/2]
+:PROPERTIES:
+:ID:       D92D12A2-9693-4726-ADF9-D8A82004E4FD
+:END:
 https://emacs.stackexchange.com/a/2198
+
 #+begin_src emacs-lisp :tangle yes
 (defun toggle-window-dedicated ()
   "Control whether or not Emacs is allowed to display another buffer in current window."
@@ -7696,9 +7797,13 @@ https://emacs.stackexchange.com/a/2198
      "%s is up for grabs.")
    (current-buffer)))
 #+end_src
+
 - [ ] ace-window와 통합
 
 **** tail message buffer
+:PROPERTIES:
+:ID:       BD2365D0-309C-4956-AAD7-680B6635F6C2
+:END:
 #+begin_src emacs-lisp :tangle yes
 (advice-add 'message :after
   (defun me/message-tail (&rest _)
@@ -7708,8 +7813,8 @@ https://emacs.stackexchange.com/a/2198
         (dolist (window (get-buffer-window-list name nil t))
           (with-selected-window window
             (goto-char (point-max))))))))
-
 #+end_src
+
 **** COMMENT enlarge window
 :PROPERTIES:
 :ID:       1395958D-7AC6-48D1-A60E-1E8A6121950C
@@ -7774,6 +7879,7 @@ scratch 버퍼를 여는 함수
   ;;   (get-buffer-create "*scratch*"))
   (switch-to-buffer "*scratch*"))
 #+end_src
+
 **** measure-time
 :PROPERTIES:
 :ID:       5A3C479D-6DF9-42FB-A6DF-182DF0B7FA0A
@@ -7785,6 +7891,29 @@ https://stackoverflow.com/questions/23622296/emacs-timing-execution-of-function-
   `(let ((time (current-time)))
      ,@body
      (message "%.06f" (float-time (time-since time)))))
+#+end_src
+**** scratch 버퍼에 highlight-* 적용
+:PROPERTIES:
+:ID:       B86D1C2C-3EEB-44F7-BE4F-F984F3858E4C
+:END:
+#+begin_src emacs-lisp :tangle yes
+(defun scratch-apply-highlights ()
+  "Highlight elisp syntax"
+  (mapc
+   (lambda (buffer)
+     (with-current-buffer buffer
+       ;; (when (featurep 'highlight-numbers) (highlight-numbers-mode 1))
+       ;; (when (featurep 'highlight-defined) (highlight-defined-mode 1))
+       ;; (when (featurep 'highlight-quoted) (highlight-quoted-mode 1))
+       (highlight-numbers-mode 1)
+       (highlight-defined-mode 1)
+       (highlight-quoted-mode 1)))
+   (-filter
+    (lambda (buffer) (string-match-p "*scratch*" (buffer-name buffer)))
+    (buffer-list))))
+
+(general-after-init
+  (scratch-apply-highlights))
 #+end_src
 
 ** keybinding
