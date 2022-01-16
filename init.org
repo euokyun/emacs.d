@@ -100,7 +100,9 @@ init 파일 디버그 용도
 ad-redefinition-action 'accept         ; silent warning for redifinition.
 ;; auto-save-default nil                  ; do not make temporary auto-save files. now i use `super-save' instead.
 byte-compile-warnings '(cl-functions)  ; silent old cl-functions warning.
-comp-async-report-warnings-errors nil  ; silent gccemacs native comp warning.
+native-comp-async-report-warnings-errors nil  ; silent gccemacs native comp warning.
+package-native-compile t
+find-function-C-source-directory "/Applications/Emacs.app/Contents/Resources/src"
 cursor-in-non-selected-windows nil     ; only shows the cursor of focus buffer.
 cursor-type '(hbar . 2)                ; 2px size horizontal bar
 default-input-method "korean-hangul"   ; input method for korean
@@ -123,7 +125,6 @@ mouse-wheel-progressive-speed nil      ; scroll speed = wheel speed
 mouse-wheel-scroll-amount '(1 ((shift) . 1))
 scroll-step 1                          ; scroll step
 show-help-function nil                 ; t
-straight-use-package-by-default t      ; use use-package
 straight-check-for-modifications '(check-on-save find-when-checking) ; don't catch modification unless `save buffer' command.
 tramp-default-method "ssh"             ; remote connection default.
 use-dialog-box nil                     ;
@@ -253,6 +254,22 @@ bidi-inhibit-bpa t
 :PROPERTIES:
 :ID:       58099CAD-73EC-4A95-9EAD-D98EDB75A2D5
 :END:
+
+*** benchmark-init 
+:PROPERTIES:
+:ID:       0C7E8442-D1C9-428A-8952-A85EBDD050B8
+:END:
+
+#+begin_src emacs-lisp :tangle yes
+(use-package benchmark-init
+  ;; demand when using
+  ;; :demand t
+  :defer t
+  :config
+  ;; To disable collection of benchmark data after init is done.
+  (add-hook 'emacs-startup-hook 'benchmark-init/deactivate))
+#+end_src
+
 *** core packages
 :PROPERTIES:
 :ID:       DC473FF1-C169-4A67-881E-7CFEC53B7684
@@ -507,9 +524,9 @@ https://github.com/abo-abo/ace-window
 #+begin_src emacs-lisp :tangle yes
 (use-package ace-window
   :straight (ace-window
-             :type git
-             :host github
-             :repo "abo-abo/ace-window"
+             ;; :type git
+             ;; :host github
+             ;; :repo "abo-abo/ace-window"
              :fork (:host github
                     :repo "rdiaz02/ace-window"
                     :branch "posframe-notmgsk")
@@ -946,6 +963,7 @@ https://github.com/minad/vertico
   ;; Do not allow the cursor in the minibuffer prompt
   (minibuffer-prompt-properties
    '(read-only t cursor-intangible t face minibuffer-prompt))
+  (resize-mini-windows t)
 
   :general
   (vertico-map
@@ -1161,6 +1179,7 @@ https://github.com/minad/consult
             "M-s l" 'consult-line
             "s-f" 'consult-line
             "M-s L" 'consult-line-multi
+            "s-F" 'consult-line-multi
             "M-s m" 'consult-multi-occur
             "M-s k" 'consult-keep-lines
             "M-s u" 'consult-focus-lines
@@ -1169,8 +1188,11 @@ https://github.com/minad/consult
             :map isearch-mode-map
             "M-e" 'consult-isearch-history ;; orig. isearch-edit-string
             "M-s e" 'consult-isearch-history ;; orig. isearch-edit-string
-            "M-s l" 'consult-line ;; needed by consult-line to detect isearch
-            "M-s L" 'consult-line-multi) ;; needed by consult-line to detect isearch
+            ;; "M-s l" 'consult-line ;; needed by consult-line to detect isearch
+            ;; "M-s L" 'consult-line-multi
+            "s-f" 'consult-line ;; needed by consult-line to detect isearch
+            "s-F" 'consult-line-multi) ;; ;; needed by consult-line to detect isearch
+  ;; needed by consult-line to detect isearch
 
   ;; Enable automatic preview at point in the *Completions* buffer. This is
   ;; relevant when you use the default completion UI. You may want to also
@@ -1179,6 +1201,7 @@ https://github.com/minad/consult
 
   ;; The :init configuration is always executed (Not lazy)
   :init
+  (fset 'multi-occur #'consult-multi-occur)
 
   ;; Optionally configure the register formatting. This improves the register
   ;; preview for `consult-register', `consult-register-load',
@@ -1346,8 +1369,7 @@ https://github.com/mohkale/consult-yasnippet
 
 #+begin_src emacs-lisp :tangle yes
 (use-package consult-yasnippet
-  :after (consult yasnippet)
-  )
+  :after (consult yasnippet))
 #+end_src
 
 ***** vertico-posframe
@@ -1852,7 +1874,6 @@ https://xenodium.com/emacs-org-block-company-completion/
 :PROPERTIES:
 :ID:       D58D0A72-6B52-4B1C-9ED2-A1FF106DEA72
 :END:
-
 company의 대체제.
 company와 다르게 SPC를 눌러도 자동완성이 종료되지 않는다. 퍼지 검색에 유용함.
 company와 비교하면 서드파티 패키지 지원이 부족한 편이다.(capf만 사용)
@@ -1973,7 +1994,7 @@ company에서 company-box가 그러하듯 corfu에서 아이콘을 표시하는 
 
 - backend의 ​='kind=​를 읽어옴
 
-****** TODO cape
+****** TODO cape [1/2]
 :PROPERTIES:
 :ID:       8F65C0EC-D60B-4B50-A55D-E81BAA03494F
 :END:
@@ -2099,7 +2120,8 @@ corfu용 quickhelp
   :general
   (corfu-map
    "M-p" 'corfu-doc-scroll-down
-   "M-n" 'corfu-doc-scroll-up)
+   "M-n" 'corfu-doc-scroll-up
+   "S-SPC" 'corfu-doc-show)
   :config/el-patch
   (defun corfu-doc--make-frame (x y width height content)
     "Show child frame at X/Y with WIDTH/HEIGHT and CONTENT."
@@ -2159,11 +2181,11 @@ corfu용 quickhelp
       (make-frame-visible corfu-doc--frame)))
 
 ;; help에서 독스트링을 가리는 message를 제거함.
-(defun override-ignore-function (&rest _) nil)
+;; (defun override-ignore-function (&rest _) nil)
 (define-advice corfu-doc-show (:around (orig) ignore-message)
-  (advice-add 'help-window-display-message :override 'override-ignore-function)
+  (advice-add 'help-window-display-message :override 'ignore)
   (funcall orig)
-  (advice-remove 'help-window-display-message 'override-ignore-function)))
+  (advice-remove 'help-window-display-message 'ignore)))
 #+end_src
 
 ***** dabbrev
@@ -2205,20 +2227,30 @@ https://github.com/oantolin/embark
 
 #+begin_src emacs-lisp :tangle yes
 (use-package embark
-  :bind
-  (("s-." . embark-act)                 ; pick some comfortable binding
-   ("M-." . embark-dwim)                ; good alternative: M-.
-   ("C-h B" . embark-bindings))         ; alternative for `describe-bindings'
+  :general
+  ("s-."    'embark-act                   ; pick some comfortable binding
+   "M-."    'embark-dwim                  ; good alternative: M-.
+   "C-h B"  'embark-bindings)             ; alternative for `describe-bindings'
+  (embark-file-map
+   "f"      'embark/dired
+   "s-f"    'embark/consult-ripgrep)
   :custom
   ;; 왠지 이게 없으면 `embark--confirm'이 작동하지 않는다.
-  (y-or-n-p-use-read-key t)             ; `read-key' instead of `read-from-minibuffer'
-
+  (y-or-n-p-use-read-key t)               ; `read-key' instead of `read-from-minibuffer'
+  ;; embark action 버퍼 제거
+  ;; (embark-indicators '(embark-minimal-indicator
+  ;;                      embark-highlight-indicator
+  ;;                      embark-isearch-highlight-indicator))
+  
   :init
   ;; Optionally replace the key help with a completing-read interface
   (setq prefix-help-command #'embark-prefix-help-command)
 #+end_src
 
 ****** config
+:PROPERTIES:
+:ID:       DC624A68-3F1C-4D52-ADA9-69451BDEFE37
+:END:
 #+begin_src emacs-lisp :tangle yes
   :config
   ;; Hide the mode line of the Embark live/completions buffers
@@ -2226,6 +2258,21 @@ https://github.com/oantolin/embark
                '("\\`\\*Embark Collect \\(Live\\|Completions\\)\\*"
                  nil
                  (window-parameters (mode-line-format . none))))
+#+end_src
+
+****** embark functions
+:PROPERTIES:
+:ID:       32476348-E172-471D-835A-058DFE6F2875
+:END:
+#+begin_src emacs-lisp :tangle yes
+(defun open-dired (file)
+  "Dired this directory"
+  (dired (file-name-directory file)))
+
+(defun embark/consult-ripgrep (file)
+  "consult-ripgrep in this directory."
+  (let ((default-directory (file-name-directory file)))
+    (consult-ripgrep)))
 #+end_src
 
 ****** embark-ace-window
@@ -2265,19 +2312,18 @@ https://github.com/oantolin/embark
 :PROPERTIES:
 :ID:       481C8710-5A2B-4BE0-B784-CAD65F1B29CC
 :END:
+avy 명령 중 embark를 호출할 수 있게 함. 
 
 #+begin_src emacs-lisp :tangle yes
-(defun avy-action-embark (pt)
-  (unwind-protect
-      (save-excursion
-        (goto-char pt)
-        (embark-act))
-    (select-window
-     (cdr (ring-ref avy-ring 0))))
-  t)
 (with-eval-after-load 'avy
-  (setf (alist-get 8388654 avy-dispatch-alist) 'avy-action-embark) ; `s-.'
-  )
+  (defun avy-action-embark (pt)
+    (unwind-protect
+        (save-excursion (goto-char pt) (embark-act))
+      (select-window (cdr (ring-ref avy-ring 0))))
+    t)
+  (with-eval-after-load 'avy
+    ;; s-.
+    (setf (alist-get 8388654 avy-dispatch-alist) 'avy-action-embark)))
 #+end_src
 
 ****** end
@@ -2405,13 +2451,20 @@ https://github.com/karthink/project-x
 :END:
 https://github.com/CIAvash/persp-mode-project-bridge
 
+***** project-tab-groups
+:PROPERTIES:
+:ID:       9B678C25-CDBD-4B72-912A-3B8175AEFDE7
+:END:
+https://github.com/fritzgrabo/project-tab-groups
+
 **** COMMENT persp-mode
 CLOSED: [2021-12-13 Mon 14:32]
 :PROPERTIES:
 :ID:       7FA6EFE1-D9E9-49CF-8538-E704C07C84E0
 :END:
-가상 데스크탑처럼 한 프레임에 여러 프레임을 갈아끼우며 작업 공간을 확장하는 패키지
 https://github.com/Bad-ptr/persp-mode.el
+
+가상 데스크탑처럼 한 프레임에 여러 프레임을 갈아끼우며 작업 공간을 확장하는 패키지. perspective의 fork.
 #+begin_src emacs-lisp :tangle yes
 (use-package persp-mode
   :demand t
@@ -2725,8 +2778,10 @@ https://github.com/Bad-ptr/persp-mode.el
 :PROPERTIES:
 :ID:       655B7D4D-D359-4D54-801B-EF10EC30519C
 :END:
- https://github.com/nex3/perspective-el
+https://github.com/nex3/perspective-el
 
+persp-mode보다 좀 더 관리가 잘 되는 듯 하다.
+기능도 다양하게 많지만 winner-mode와 잘 맞지 않는다. 
 #+begin_src emacs-lisp :tangle yes
 (use-package perspective
   :init
@@ -2893,6 +2948,7 @@ https://github.com/oantolin/orderless
 :ID:       0F8599FE-8C21-405D-9490-D01FA3C3104A
 :END:
 https://github.com/emacs-evil/evil
+
 vim 키바인딩 레이어
 #+begin_src emacs-lisp :tangle yes
 (use-package evil
@@ -2902,7 +2958,6 @@ vim 키바인딩 레이어
   (evil-ex-search-vim-style-regexp t)
   ;; (evil-search-module 'evil-search)
   (evil-undo-system 'undo-tree)
-  (evil-respect-visual-line-mode t)
   (evil-shift-width tab-width)    ; tab option for evil
   (evil-want-C-u-scroll t)        ; set `C-u' to scroll up. not for insert mode.
   (evil-want-C-i-jump nil)        ; set `C-i' to insert `TAB' key.
@@ -3469,12 +3524,7 @@ https://github.com/abo-abo/avy
   ;; (set-face-italic 'avy-goto-char-timer-face nil)
   ;; (set-face-italic 'avy-lead-face nil)
   :general
-  ;; (spc
-  ;;   :states '(normal insert visual emacs motion)
-  ;;   ";" '(evil-avy-line-saving-column :which-key "avy-line")
-  ;;   "f" '(evil-avy-goto-char-timer :which-key "avy-timer"))
-  (;; "s-t" '(evil-avy-goto-char-timer :which-key "avy-timer")
-   "s-;" '(evil-avy-line-saving-column :which-key "avy-line")
+  ("s-;" '(evil-avy-line-saving-column :which-key "avy-line")
    "s-t" 'evil-avy-goto-char-timer
    "s-p" 'avy-copy-line
    "s-P" 'avy-copy-region)
@@ -3613,8 +3663,8 @@ https://github.com/abo-abo/ace-link
   :defer t
   :general
   (:states 'normal
-           "g t" 'link-hint-open-link
-           "g T" 'link-hint-copy-link))
+           "g f" 'link-hint-open-link
+           "g F" 'link-hint-copy-link))
 #+end_src
 
 **** snippet
@@ -4648,10 +4698,11 @@ https://github.com/jtbm37/all-the-icons-dired
 #+begin_src emacs-lisp :tangle yes
 (use-package dired
   :straight nil
-  :defer 1
-  :commands (dired dired-jump)
-  :hook ((dired-load-hook . (lambda () (interactive) (dired-collapse)))
-         (dired-mode-hook . auto-revert-mode))
+  :defer t
+  :commands (dired dired-jump dired-jump-other-window)
+  :hook ((dired-mode-hook . auto-revert-mode)
+         ;; (dired-load-hook . (lambda () (interactive) (dired-collapse)))
+         )
   :general
   (dired-mode-map
    :states 'normal
@@ -4665,9 +4716,12 @@ https://github.com/jtbm37/all-the-icons-dired
   ;; (dired-omit-files "^\\.[^.].*")
   (dired-omit-verbose nil)
   (dired-hide-details-hide-symlink-targets nil)
+  ;; copy&delete subfolders
   (dired-recursive-deletes 'always)
+  (dired-recursive-copies 'always)
   (dired-dwim-target t)
   (dired-listing-switches "-AGhlv --group-directories-first --time-style=long-iso")
+  (wdired-allow-to-change-permissions t)
   :config
   (when (string= system-type "darwin")
     (setq dired-use-ls-dired t
@@ -4707,8 +4761,13 @@ https://github.com/Fuco1/dired-hacks
 
 #+begin_src emacs-lisp :tangle yes
 (use-package dired-narrow
-  :config
-  (bind-key "s-f" 'dired-narrow dired-mode-map))
+  :commands (dired-narrow)
+  :general
+  (dired-mode-map
+   "/" 'dired-narrow)
+  (dired-narrow-map
+   :states 'normal
+    "q" 'exit-minibuffer))
 #+end_src
 
 ****** COMMENT dired-ranger
@@ -4745,12 +4804,14 @@ https://github.com/alexluigit/dirvish
    [remap dired-do-copy] 'dirvish-yank
    [remap evil-goto-first-line] 'dirvish-go-top
    [remap evil-goto-line] 'dirvish-go-bottom
-   "SPC dh" 'dirvish-show-history)
+   "SPC dh" 'dirvish-show-history
+   "S-SPC" 'dirvish-toggle-preview)
+  :custom 
+  (dirvish-override-dired-mode t)
   :config
   ;; (require 'dirvish-minibuffer-preview)
   ;; (dirvish-minibuf-preview-mode)
-  (require 'dirvish-yank)
-  (dirvish-override-dired-mode t))
+  (require 'dirvish-yank))
 #+end_src
 
 ***** dirvish의 외부 의존성
@@ -7282,6 +7343,7 @@ https://github.com/duckwork/titlecase.el
 #+begin_src emacs-lisp :tangle yes
 (defun org-mode-setup ()
   (visual-line-mode 1)
+  (setq-local evil-respect-visual-line-mode t)
   ;; (visual-fill-column-mode 1)
   (toggle-truncate-lines -1)
   (display-line-numbers-mode -1)
@@ -7411,7 +7473,7 @@ https://config.daviwil.com/
     (counsel-rg "" "~/Notes" nil "Search Notes: ")))
 #+end_src
 
-****** TODO COMMENT create human readable CUSTOM_ID
+****** TODO COMMENT create human readable CUSTOM ID
 :PROPERTIES:
 :ID:       0CB44A1C-5290-4A1A-9CB2-BFEBB9043166
 :END:
@@ -7621,7 +7683,7 @@ xwidget 기능 확장 패키지
   (xwidget-webkit-mode-map
    :states 'normal
    "s-t" 'xwwp-follow-link
-   "g t" 'xwwp-ace-toggle
+   "g o" 'xwwp-ace-toggle
    "<escape>" 'keyboard-quit))
 #+end_src
 
