@@ -3,13 +3,16 @@
 ;; from https://github.com/hlissner/doom-emacs/blob/develop/early-init.el
 ;; temporary prevent gc running and reset it later by `gcmh-mode'.
 (setq gc-cons-threshold most-positive-fixnum
-      gc-cons-percentage 0.6)
+      ;; gc-cons-percentage 0.6
+      )
 
 ;; Prevent unwanted runtime compilation for gccemacs.
 ;; (setq comp-deferred-compilation nil
 ;;       native-comp-deferred-compilation nil)
 
 (setq native-comp-compiler-options '("-O2" "-march=skylake" "-mtune=native")) ; for gccemacs compile options
+
+(setq max-specpdl-size 13000)
 
 ;; prevent use stale byte-code.
 ;; Otherwise skip mtime check on every *.elc file.
@@ -37,12 +40,24 @@
       (goto-char (point-max))
       (eval-print-last-sexp)))
   (load bootstrap-file nil 'nomessage))
+
 ;; use straight.el for use-package expressions
 (straight-use-package 'use-package)
 (require 'use-package-ensure)
-(setq straight-use-package-by-default t)
+(setq straight-use-package-by-default t
+      straight-check-for-modifications '(check-on-save find-when-checking))
 
-(straight-use-package 'esup)
+(advice-add 'straight-prune-build
+    :before #'(lambda ()
+                (delete-file
+                 (expand-file-name
+                  ".DS_Store"
+                  (expand-file-name
+                   straight-build-dir
+                   (concat straight-base-dir "straight"))))))
+
+
+;; (straight-use-package 'esup)
 
 ;; (setq use-package-enable-imenu-support t)
 
@@ -67,21 +82,29 @@
   (add-to-list 'recentf-exclude no-littering-var-directory)
   (add-to-list 'recentf-exclude no-littering-etc-directory))
 
-(push '(menu-bar-lines . 0) default-frame-alist)
-(push '(tool-bar-lines . 0) default-frame-alist)
-(push '(internal-border-width . 0) default-frame-alist)
-(push '(frame-title-format "\n") default-frame-alist)
-(push '(ns-use-proxy-icon nil) default-frame-alist)
-(push '(horizontal-scroll-bars . nil) default-frame-alist)
-(push '(vertical-scroll-bars . nil) default-frame-alist)
-(push '(ns-appearance . dark) default-frame-alist)          ; hide titlebar
-(push '(ns-transparent-titlebar . t) default-frame-alist)   ; hide titlebar
-(push '(scroll-bar-mode -1) default-frame-alist)
+;; frame
+(setq frame-title-format nil
+      frame-inhibit-implied-resize t)
 
-(setq frame-title-format nil)
+(push '(menu-bar-lines . 0)             default-frame-alist)
+(push '(tool-bar-lines . 0)             default-frame-alist)
+(push '(internal-border-width . 0)      default-frame-alist)
+(push '(frame-title-format "\n")        default-frame-alist)
+(push '(ns-use-proxy-icon nil)          default-frame-alist)
+(push '(horizontal-scroll-bars . nil)   default-frame-alist)
+(push '(vertical-scroll-bars . nil)     default-frame-alist)
+(push '(ns-appearance . dark)           default-frame-alist) ; hide titlebar
+(push '(ns-transparent-titlebar . t)    default-frame-alist) ; hide titlebar
+;; (push '(scroll-bar-mode -1)             default-frame-alist)
 
-(setq frame-inhibit-implied-resize t)
+(setq scroll-bar-mode nil
+      tool-bar-mode nil)
 
+;; Fundamental mode at startup
+(setq initial-major-mode 'fundamental-mode)
+
+(defun display-startup-echo-area-message ()
+  (message ""))
 
 (set-default-coding-systems 'utf-8)
 (set-language-environment "UTF-8")
