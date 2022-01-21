@@ -64,8 +64,7 @@
 ;; https://github.com/purcell/exec-path-from-shell
 (use-package exec-path-from-shell
   :custom
-  ;; (exec-path-from-shell-arguments nil)
-  ;; (exec-path-from-shell-debug t)
+  (exec-path-from-shell-arguments 'nil)
   (exec-path-from-shell-variables '("PATH" "MANPATH" "SHELL" "JAVA_HOME"))
   :config
   (exec-path-from-shell-initialize))
