@@ -34,22 +34,61 @@ init 파일 디버그 용도
 (setq user-full-name "Jeon Euokyun"
       user-mail-address "euokyun@me.com")
 #+end_src
-*** emacs customize file
+*** COMMENT emacs customize file
 이맥스에서 자동으로 생성하는 커스터마이즈 형식이 있는데 사용자가 직접 수정하는걸 권장하지 않는다. 스스로 강하게 살아가도록 파일을 분리시켜 놓는 편이 편하다.
 #+begin_src emacs-lisp :tangle yes
 (setq custom-file (expand-file-name "custom.el" user-emacs-directory))
 (load custom-file 'noerror)
 #+end_src
+*** cus-edit
+:PROPERTIES:
+:ID:       E8F12E83-8B6D-49CE-A14E-9270170AE458
+:END:
+speed up load time 
+
+#+begin_src emacs-lisp :tangle yes
+(use-package cus-edit
+  :straight (:type built-in)
+  :defer 1
+  :custom
+  (custom-file (expand-file-name "custom.el" user-emacs-directory))
+  :config 
+  (unless (file-exists-p custom-file)
+    (write-file custom-file))
+  (when (file-exists-p custom-file)
+    (load-file custom-file)))
+#+end_src
 
 *** font settings
+**** Sarasa-Gothic 
+:PROPERTIES:
+:ID:       39759F8F-FF90-4550-A25C-A19D7B12E3B4
+:END:
+https://picaq.github.io/sarasa/
+
+Iosevka와 Source Han Sans 폰트 기반의 한글 지원 폰트.
+
+- mono 코딩용 고정폭 폰트.
+- term 터미널용 폰트
+  + fixed 터미널용 non-ligature 폰트
+
+- Slab 세리프 폰트 
+
+#+begin_src emacs-lisp :tangle yes
+(unless (member "Sarasa Mono K" (font-family-list))
+  (system-packages-ensure "font-sarasa-gothic"))
+#+end_src
+
 **** 기본 폰트 설정
 :PROPERTIES:
 :ID:       B77FA35F-A5B2-483C-B4D7-97F8495F22AA
 :END:
 기본 폰트는 Iosevka SS08을, 한글 폰트는 D2Coding을 사용한다.
 #+begin_src emacs-lisp :tangle yes
-(set-face-attribute 'default nil :font "Iosevka SS08" :height 170)
-(set-frame-font "Iosevka SS08" t t)
+;; (set-face-attribute 'default nil :font "Iosevka SS08" :height 170)
+(set-face-attribute 'default nil :height 170)
+;; (set-frame-font "Iosevka SS08" t t)
+(set-frame-font "Sarasa Mono K" t t)
 #+end_src
 
 **** all-the-icons 설정
@@ -61,12 +100,12 @@ init 파일 디버그 용도
 (set-fontset-font "fontset-default" 'unicode (font-spec :family "github-octicons") nil 'prepend)
 (set-fontset-font "fontset-default" 'unicode (font-spec :family "FontAwesome") nil 'prepend)
 (set-fontset-font "fontset-default" 'unicode (font-spec :family "all-the-icons") nil 'prepend)
-(set-fontset-font "fontset-default" 'unicode (font-spec :family "MesloLGS") nil 'append)
+;; (set-fontset-font "fontset-default" 'unicode (font-spec :family "MesloLGS") nil 'append)
 (set-fontset-font "fontset-default" 'unicode (font-spec :family "Weather Icons") nil 'append)
 (set-fontset-font "fontset-default" 'unicode (font-spec :family "file-icons") nil 'append)
 #+end_src
 
-**** 한글 폰트 설정
+**** COMMENT 한글 폰트 설정
 :PROPERTIES:
 :ID:       D012F44F-BFBF-4F88-934C-9E48778C3A45
 :END:
@@ -109,10 +148,6 @@ default-input-method "korean-hangul"   ; input method for korean
 delete-by-moving-to-trash t            ; delete = trash
 delete-selection-mode t                ; override selection
 ;; desktop-save-mode 1                    ; save last frame -- can break perspective.
-frame-resize-pixelwise t               ; fix frame margin/padding
-mouse-wheel-flip-direction t           ; for OSX -- reverse horizontal scroll.
-mouse-wheel-tilt-scroll t              ; horizontal scroll
-help-window-select t                   ; focus on help window when activated.
 indent-tabs-mode nil                   ; tab=space!
 tab-width 4                            ; space=4!
 inhibit-startup-screen t               ;
@@ -120,9 +155,6 @@ initial-scratch-message nil            ; empty *scratch* buffer.
 keyboard-coding-system 'utf-8-unix     ; utf-8
 large-file-warning-threshold nil       ; do not warn file size.
 make-backup-files nil                  ; do not make temporal backup files.
-mouse-wheel-follow-mouse t             ; scroll buffer under the mouse cursor.
-mouse-wheel-progressive-speed nil      ; scroll speed = wheel speed
-mouse-wheel-scroll-amount '(1 ((shift) . 1))
 scroll-step 1                          ; scroll step
 show-help-function nil                 ; t
 straight-check-for-modifications '(check-on-save find-when-checking) ; don't catch modification unless `save buffer' command.
@@ -143,12 +175,9 @@ auto-revert-verbose nil                ; do not message this
 auto-revert-avoid-polling t            ; do not use pooling.
 delete-old-versions t                  ; delete old versions.
 version-control t                      ;
-ns-use-proxy-icon nil                  ; do not use icon in titlebar
 x-underline-at-descent-line t          ; Underline looks a bit better when drawn lower
 inhibit-compacting-font-caches t       ; for fix all-the-icons slow rendering
 even-window-sizes nil                  ; perspective - fix window layout.
-display-buffer-base-action '((display-buffer-reuse-window display-buffer-same-window)
-                             (reusable-frames . t)) ; perspective - fix window layout.
 ;; tab-bar-format '(tab-bar-format-global) ; global modeline using emacs28 tab-bar
 ;; tab-bar-mode t                         ; http://ruzkuku.com/texts/emacs-global.html
 ;; tab-line-mode t
@@ -156,9 +185,6 @@ display-buffer-base-action '((display-buffer-reuse-window display-buffer-same-wi
 use-default-font-for-symbols nil
 require-final-newline t ; according to POSIX, every text file should end with newline.
 imenu-auto-rescan t
-mouse-wheel-scroll-amount '(1 ((shift) . 1)) ;; one line at a time
-mouse-wheel-progressive-speed nil            ; don't accelerate scrolling
-mouse-wheel-follow-mouse 't                ; scroll window under mouse
 scroll-step 1      ; keyboard scroll one line at a time
 use-dialog-box nil ; Disable dialog boxes since they weren't working in Mac OSX
 world-clock-list '(("Asia/Seoul" "Seoul")
@@ -168,11 +194,11 @@ world-clock-list '(("Asia/Seoul" "Seoul")
 world-clock-time-format "%a, %e %b %T %Z"
 display-time-format "%R"
 display-time-default-load-average nil
-ns-pop-up-frames nil                       ; macos specific
 blink-cursor-mode nil
 create-lockfiles nil                    ; .#foo.txt 등의 lockfile을 생성하지 않음
 disabled-command-function nil           ; 어려운 기능 경고 해제
 async-bytecomp-package-mode t
+save-interprogram-paste-before-kill t   ; 다른 프로그램의 클립보드를 덮어쓰기 전에 저장함
 #+end_src
 
 **** COMMENT 버퍼 범위를 보여줌.
@@ -248,6 +274,79 @@ bidi-inhibit-bpa t
 - 긴 줄에서 퍼포먼스 저하가 있을 때 마이너 모드를 비활성화함
 #+begin_src emacs-lisp :tangle yes
 (global-so-long-mode 1)
+#+end_src
+
+*** built-in package 설정
+:PROPERTIES:
+:ID:       D57DA809-B17B-4838-8466-6D26485CF9B2
+:END:
+**** mwheel
+#+begin_src emacs-lisp :tangle yes
+(use-package mwheel
+  :straight (:type built-in)
+  :custom
+  (mouse-wheel-scroll-amount '(1 ((shift) . 10)))
+  (mouse-wheel-progressive-speed nil)
+  (mouse-wheel-flip-direction t)
+  (mouse-wheel-tilt-scroll t)
+  (mouse-wheel-follow-mouse t))
+#+end_src
+
+**** frame
+:PROPERTIES:
+:ID:       056B76C8-F847-45B2-A3AF-E7F470A7A2FF
+:END:
+#+begin_src emacs-lisp :tangle yes
+(use-package frame
+  :straight (:type built-in)
+  :custom
+  (frame-resize-pixelwise t)            ; fix frame margin/padding
+  (window-resize-pixelwise t)
+  (ns-use-proxy-icon nil)               ; do not use icon in titlebar
+  (display-buffer-base-action
+   '((display-buffer-reuse-window display-buffer-same-window)
+     (reusable-frames . t)))            ; perspective - fix window layout.
+  (ns-pop-up-frames nil)                ; macos specific
+  (frame-title-format nil))
+#+end_src
+
+**** COMMENT fontset
+:PROPERTIES:
+:ID:       C36B4EDE-E269-41B7-B429-DF57767513E6
+:END:
+#+begin_src emacs-lisp :tangle yes
+(use-package fontset
+  :straight (:type built-in)
+  :config
+  (add-to-list 'default-frame-alist '(font . "Iosevka SS08"))
+  (set-face-attribute 'default nil :height 170)
+  (set-frame-font "Iosevka SS08" t t)
+  (set-fontset-font "fontset-default" 'unicode (font-spec :family "Material Icons") nil)
+  (set-fontset-font "fontset-default" 'unicode (font-spec :family "github-octicons") nil 'prepend)
+  (set-fontset-font "fontset-default" 'unicode (font-spec :family "FontAwesome") nil 'prepend)
+  (set-fontset-font "fontset-default" 'unicode (font-spec :family "all-the-icons") nil 'prepend)
+  (set-fontset-font "fontset-default" 'unicode (font-spec :family "MesloLGS") nil 'append)
+  (set-fontset-font "fontset-default" 'unicode (font-spec :family "Weather Icons") nil 'append)
+  (set-fontset-font "fontset-default" 'unicode (font-spec :family "file-icons") nil 'append)
+  ;; 한글 폰트
+  (set-fontset-font t 'hangul "D2Coding" nil 'prepend)
+  ;; 캐릭터 폰트 수정
+  (set-fontset-font "fontset-default" (decode-char 'ucs 8984) "D2Coding") ; mac의 command 키 아이콘
+  )
+#+end_src
+
+**** COMMENT so-long
+:PROPERTIES:
+:ID:       BBED442E-F35A-4433-9FB2-B2C8882C138C
+:END:
+long-line
+
+#+begin_src emacs-lisp :tangle yes
+(use-package so-long
+  :straight (:type built-in)
+  :hook (after-init . global-so-long-mode)
+  :config
+  (global-so-long-mode))
 #+end_src
 
 ** packages
@@ -420,7 +519,8 @@ https://github.com/noctuid/general.el
   (general-override-mode)
   (general-evil-setup t)
   (general-unbind 'global
-    "s-q"
+    ;; "s-q"
+    [f1]
     "s-z"
     "s-Z"
     "s-f"
@@ -637,7 +737,9 @@ https://gitlab.com/thomasluquet/font-lock-plus
 :ID:       E19D2990-DF29-49C0-BE37-3759AB7E022A
 :END:
 https://github.com/mickeynp/ligature.el
+
 합자(리가추어) 지원
+
 #+begin_src emacs-lisp :tangle yes
 (use-package ligature
   :straight (ligature
@@ -646,29 +748,39 @@ https://github.com/mickeynp/ligature.el
              :repo "mickeynp/ligature.el")
   :defer 2
   :config
-  ;; Enable the "www" ligature in every possible major mode
-  (ligature-set-ligatures 't '("www"))
-  ;; Enable traditional ligature support in eww-mode, if the
-  ;; `variable-pitch' face supports it
-  (ligature-set-ligatures 'eww-mode '("ff" "fi" "ffi"))
-  ;; Enable all Cascadia Code ligatures in programming modes
-  (ligature-set-ligatures
-   '(prog-mode racket-repl-mode)
-   '("|||>" "<|||" "<==>" "<!--" "####" "~~>" "***" "||=" "||>"
-     ":::" "::=" "=:=" "===" "==>" "=!=" "=>>" "=<<" "=/=" "!=="
-     "!!." ">=>" ">>=" ">>>" ">>-" ">->" "->>" "-->" "---" "-<<"
-     "<~~" "<~>" "<*>" "<||" "<|>" "<$>" "<==" "<=>" "<=<" "<->"
-     "<--" "<-<" "<<=" "<<-" "<<<" "<+>" "</>" "###" "#_(" "..<"
-     "..." "+++" "/==" "///" "_|_" "www" "&&" "^=" "~~" "~@" "~="
-     "~>" "~-" "**" "*>" "*/" "||" "|}" "|]" "|=" "|>" "|-" "{|"
-     "[|" "]#" "::" ":=" ":>" ":<" "$>" "==" "=>" "!=" "!!" ">:"
-     ">=" ">>" ">-" "-~" "-|" "->" "--" "-<" "<~" "<*" "<|" "<:"
-     "<$" "<=" "<>" "<-" "<<" "<+" "</" "#{" "#[" "#:" "#=" "#!"
-     "##" "#(" "#?" "#_" "%%" ".=" ".-" ".." ".?" "+>" "++" "?:"
-     "?=" "?." "??" ";;" "/*" "/=" "/>" "//" "__" "~~" "(*" "*)"
-     "\\\\" "://"))
-  ;; Enables ligature checks globally in all buffers. You can also do it
-  ;; per mode with `ligature-mode'.
+  ;; for Sarasa font
+  (ligature-set-ligatures 't
+   '("|||>" "<|||" "<==>" "<!--" "~~>" "||=" "||>" ":::"
+     "=:=" "===" "==>" "=>>" "!==" "!!." ">=>" ">>>" "->>"
+     "-->" "<~~" "<~>" "<*>" "<||" "<|>" "<==" "<=>" "<->"
+     "<--" "<<-" "<<<" "..." "+++" "///" "^=" "~>" "*>" "||"
+     "|>" "::" ":=" ":>" ":<" "==" "=>" "!=" "!!" ">:" ">="
+     ">>" "->" "<~" "<*" "<|" "<:" "<=" "<-" "<<" ".." ".?"
+     "++" "?:" "?." "??" ";;" "//" "\\\\" "://"))
+  
+  ;; ;; Enable the "www" ligature in every possible major mode
+  ;; (ligature-set-ligatures 't '("www"))
+  ;; ;; Enable traditional ligature support in eww-mode, if the
+  ;; ;; `variable-pitch' face supports it
+  ;; (ligature-set-ligatures 'eww-mode '("ff" "fi" "ffi"))
+  ;; ;; Enable all Cascadia Code ligatures in programming modes
+  ;; (ligature-set-ligatures
+  ;;  'prog-mode
+  ;;  '("|||>" "<|||" "<==>" "<!--" "####" "~~>" "***" "||=" "||>"
+  ;;    ":::" "::=" "=:=" "===" "==>" "=!=" "=>>" "=<<" "=/=" "!=="
+  ;;    "!!." ">=>" ">>=" ">>>" ">>-" ">->" "->>" "-->" "---" "-<<"
+  ;;    "<~~" "<~>" "<*>" "<||" "<|>" "<$>" "<==" "<=>" "<=<" "<->"
+  ;;    "<--" "<-<" "<<=" "<<-" "<<<" "<+>" "</>" "###" "#_(" "..<"
+  ;;    "..." "+++" "/==" "///" "_|_" "www" "&&" "^=" "~~" "~@" "~="
+  ;;    "~>" "~-" "**" "*>" "*/" "||" "|}" "|]" "|=" "|>" "|-" "{|"
+  ;;    "[|" "]#" "::" ":=" ":>" ":<" "$>" "==" "=>" "!=" "!!" ">:"
+  ;;    ">=" ">>" ">-" "-~" "-|" "->" "--" "-<" "<~" "<*" "<|" "<:"
+  ;;    "<$" "<=" "<>" "<-" "<<" "<+" "</" "#{" "#[" "#:" "#=" "#!"
+  ;;    "##" "#(" "#?" "#_" "%%" ".=" ".-" ".." ".?" "+>" "++" "?:"
+  ;;    "?=" "?." "??" ";;" "/*" "/=" "/>" "//" "__" "~~" "(*" "*)"
+  ;;    "\\\\" "://"))
+  ;; ;; Enables ligature checks globally in all buffers. You can also do it
+  ;; ;; per mode with `ligature-mode'.
   (global-ligature-mode t))
 #+end_src
 
@@ -711,89 +823,81 @@ https://github.com/rougier/svg-lib
 #+begin_src emacs-lisp :tangle yes
 (use-package svg-lib
   :config/el-patch
-  (defun svg-lib-style-compute-default (&optional face)
-    "Compute the default style according to face (which defaults
-to the default face)."
-
-    (let* ((face (or face 'default))
-           (font-family (face-attribute face :family nil 'default))
-           (font-weight (face-attribute face :weight nil 'default))
-           ((el-patch-swap font-size default-font-size) (face-attribute face :height nil 'default))
-           (font-size ((el-patch-swap round ceiling) (* (el-patch-swap font-size default-font-size) 0.085)))
-           (foreground (face-attribute face :foreground nil 'default))
-           (background (face-attribute face :background nil 'default)))
-
-      `(:background ,(el-patch-swap background foreground)
-        :foreground ,(el-patch-swap foreground background)
-
-        :padding 1 ;; In characters (tag and icons) or pixels (progress)
-        :margin 1  ;; In chracters
-        :stroke 2  ;; In pixels
-        :radius 3  ;; In pixels
-        :width 20  ;; In characters
-        :height 0.9 ;; Ratio of text line height
-        :scale 0.75 ;; Icon scaling
-
-        :collection "material" ;; Icon collection
-
-        :font-family ,font-family
-        :font-size ,font-size
-        :font-weight ,font-weight)))
-
   (defun svg-lib-tag (label &optional style &rest args)
-    "Create an image displaying LABEL in a rounded box using given STYLE
+  "Create an image displaying LABEL in a rounded box using given STYLE
 and style elements ARGS."
 
-    (let* ((default svg-lib-style-default)
-           (style (if style (apply #'svg-lib-style nil style) default))
-           (style (if args (apply #'svg-lib-style style args) style))
+  (let* ((default svg-lib-style-default)
+         (style (if style (apply #'svg-lib-style nil style) default))
+         (style (if args  (apply #'svg-lib-style style args) style))
 
-           (foreground (plist-get style :foreground))
-           (background (plist-get style :background))
-           (stroke (plist-get style :stroke))
-           ;; (width       (plist-get style :width))
-           (height (plist-get style :height))
-           (radius (plist-get style :radius))
-           ;; (scale       (plist-get style :scale))
-           (margin (plist-get style :margin))
-           (padding (plist-get style :padding))
-           (font-size (plist-get style :font-size))
-           (font-family (plist-get style :font-family))
-           (font-weight (plist-get style :font-weight))
+         (foreground  (plist-get style :foreground))
+         (background  (plist-get style :background))
 
-           (txt-char-width (el-patch-wrap 1 1 (* (window-font-width) 0.9)))
-           (txt-char-height (window-font-height))
-           (font-info (font-info (format "%s-%d" font-family font-size)))
-           (ascent (aref font-info 8))
-           (tag-char-width (aref font-info 11))
-           ;; (tag-char-height (aref font-info 3))
-         (label-length (+ (length label) (s-count-matches "[가-힣]" label)))
-         (tag-width (* (+ (el-patch-swap (length label) label-length) padding) txt-char-width))
-           (tag-height (* txt-char-height height))
+         (crop-left   (plist-get style :crop-left))
+         (crop-right  (plist-get style :crop-right))
 
-           (svg-width (+ tag-width (* margin txt-char-width)))
-           (svg-height tag-height)
+         (alignment   (plist-get style :alignment))
+         (stroke      (plist-get style :stroke))
 
-           (tag-x (/ (- svg-width tag-width) 2))
-         (text-x (+ tag-x (el-patch-swap
-                            (/ (- tag-width (* (length label) tag-char-width)) 2)
-                            (- tag-width (* label-length txt-char-width)
-                               (/ (* padding txt-char-width) 2.0)))))
-           (text-y ascent)
+         (height      (plist-get style :height))
+         (radius      (plist-get style :radius))
 
-           (svg (svg-create svg-width svg-height)))
+         (margin      (plist-get style :margin))
+         (padding     (plist-get style :padding))
+         (font-size   (plist-get style :font-size))
+         (font-family (plist-get style :font-family))
+         (font-weight (plist-get style :font-weight))
 
-      (if (>= stroke 0.25)
-          (svg-rectangle svg tag-x 0 tag-width tag-height
-                         :fill foreground :rx radius))
-      (svg-rectangle svg (+ tag-x (/ stroke 2.0)) (/ stroke 2.0)
-                     (- tag-width stroke) (- tag-height stroke)
-                     :fill background :rx (- radius (/ stroke 2.0)))
-      (svg-text svg label
-                :font-family font-family :font-weight font-weight :font-size font-size
-                :fill foreground :x text-x :y text-y)
-      (svg-image svg :ascent 'center)))
-  )
+         (txt-char-width  (window-font-width))
+         (txt-char-height (window-font-height))
+         (txt-char-height (if line-spacing
+                              (+ txt-char-height line-spacing)
+                            txt-char-height))
+         (font-info       (font-info (format "%s-%d" font-family font-size)))
+         (font-size       (aref font-info 2)) ;; redefine font-size
+         (ascent          (aref font-info 8))
+         (tag-char-width  (aref font-info 11))
+         ;; (tag-char-height (aref font-info 3))
+         (tag-width       (* (el-patch-wrap 1 (1- (+ (length label) padding))) txt-char-width))
+         (tag-height      (* txt-char-height height))
+
+         (svg-width       (+ tag-width (* margin txt-char-width)))
+         (svg-height      tag-height)
+
+         (tag-x  (* (- svg-width tag-width)  alignment))
+         (text-x (+ tag-x (/ (- tag-width (* (length label) tag-char-width)) 2)))
+         (text-y ascent)
+
+         (tag-x      (if crop-left  (- tag-x     txt-char-width) tag-x))
+         (tag-width  (if crop-left  (+ tag-width txt-char-width) tag-width))
+         (text-x     (if crop-left  (- text-x (/ stroke 2)) text-x))
+         (tag-width  (if crop-right (+ tag-width txt-char-width) tag-width))
+         (text-x     (if crop-right (+ text-x (/ stroke 2)) text-x))
+
+         (svg (svg-create svg-width svg-height)))
+
+    (if (>= stroke 0.25)
+        (svg-rectangle svg tag-x 0 tag-width tag-height
+                           :fill foreground :rx radius))
+    (svg-rectangle svg (+ tag-x (/ stroke 2.0)) (/ stroke 2.0)
+                       (- tag-width stroke) (- tag-height stroke)
+                       :fill background :rx (- radius (/ stroke 2.0)))
+    (svg-text svg label
+              :font-family font-family :font-weight font-weight  :font-size font-size
+              :fill foreground :x text-x :y  text-y)
+    (svg-lib--image svg :ascent 'center))))
+#+end_src
+
+**** svg-tag-mode
+:PROPERTIES:
+:ID:       9B558CD5-45B0-4C62-8F64-7E3986E939F7
+:END:
+https://github.com/rougier/svg-tag-mode
+
+#+begin_src emacs-lisp :tangle yes
+(use-package svg-tag-mode
+  :straight t)
 #+end_src
 
 *** completion UI
@@ -1039,9 +1143,8 @@ https://github.com/minad/vertico
 #+begin_src emacs-lisp :tangle yes
 (use-package vertico-directory
   :after vertico
-  :ensure nil
   :load-path "~/.config/emacs/straight/build/vertico/extensions/"
-  :straight nil
+  :straight vertico
   ;; More convenient directory navigation commands
   :general
   (vertico-map
@@ -2308,24 +2411,6 @@ https://github.com/oantolin/embark
 (add-hook 'embark-collect-mode-hook #'+embark-collect-hook)
 #+end_src
 
-****** avy-action-embark
-:PROPERTIES:
-:ID:       481C8710-5A2B-4BE0-B784-CAD65F1B29CC
-:END:
-avy 명령 중 embark를 호출할 수 있게 함. 
-
-#+begin_src emacs-lisp :tangle yes
-(with-eval-after-load 'avy
-  (defun avy-action-embark (pt)
-    (unwind-protect
-        (save-excursion (goto-char pt) (embark-act))
-      (select-window (cdr (ring-ref avy-ring 0))))
-    t)
-  (with-eval-after-load 'avy
-    ;; s-.
-    (setf (alist-get 8388654 avy-dispatch-alist) 'avy-action-embark)))
-#+end_src
-
 ****** end
 :PROPERTIES:
 :ID:       A6FAFC1D-2D9D-451E-9EF1-BA39D55C5A0F
@@ -2804,16 +2889,20 @@ persp-mode보다 좀 더 관리가 잘 되는 듯 하다.
 
   (defun persp-save-persp-state ()
     "Save persp state to file, and keep newer backup files and remove olds."
-    (when (file-exists-p persp-state-default-file)
-      (rename-file persp-state-default-file
-                   (concat persp-state-default-file
-                           (format-time-string ".%y%m%d-%H%M%S" (current-time)))))
-    (mapc (lambda (file) (delete-file file))
-          (-filter
-           (lambda (file)
-             (file-modified-before-p persp-auto-save-keep-day file))
-           (directory-files persp-save-dir t "perspective.el.")))
-    (persp-state-save persp-state-default-file))
+    (let ((last-save
+           (concat persp-state-default-file
+                   (format-time-string ".%y%m%d-%H%M%S" (current-time)))))
+      (when (file-exists-p persp-state-default-file)
+        (rename-file persp-state-default-file
+                     last-save))
+      (mapc (lambda (file) (delete-file file))
+            (-filter
+             (lambda (file)
+               (file-modified-before-p persp-auto-save-keep-day file))
+             (directory-files persp-save-dir t "perspective.el.")))
+      (condition-case nil
+          (persp-state-save persp-state-default-file)
+        (rename-file last-save persp-state-default-file))))
 
   (defun persp-load-persp-state ()
     "load latest persp state"
@@ -2897,7 +2986,6 @@ ivy와 통합. counsel의 설정값을 덮어쓰기 때문에 counsel 이후에 
 #+begin_src emacs-lisp :tangle yes
 (use-package ivy-prescient
   :straight nil
-  :ensure nil
   :after counsel
   :config
   (ivy-prescient-mode 1))
@@ -2907,7 +2995,6 @@ company와 통합
 #+begin_src emacs-lisp :tangle yes
 (use-package company-prescient
   :straight nil
-  :ensure nil
   :after company prescient
   :config
   (company-prescient-mode 1))
@@ -3043,7 +3130,11 @@ evil 키바인딩 모음집.
 :ID:       F5085277-203F-4032-A539-590CB45D988E
 :END:
 ***** expand-region
+:PROPERTIES:
+:ID:       5F9CAFF3-AA41-444F-8AE8-24215392F1C7
+:END:
 https://github.com/magnars/expand-region.el
+
 선택 영역을 확장해나가는 기능
 #+begin_src emacs-lisp :tangle yes
 (use-package expand-region
@@ -3053,6 +3144,7 @@ https://github.com/magnars/expand-region.el
   (:states 'visual
    "v" 'er/expand-region))
 #+end_src
+
 ***** evil-surround
 괄호, 브라켓, ', 태그, 기타 등등 "감싸는" 단축키 패키지
 https://github.com/emacs-evil/evil-surround
@@ -3109,6 +3201,28 @@ http://github.com/Dewdrops/evil-exchange
 (use-package evil-exchange
   :config
   (evil-exchange-install))
+#+end_src
+
+***** evil-lion
+:PROPERTIES:
+:ID:       06572FD6-C5B8-4B26-8F0F-CA01005208BA
+:END:
+https://github.com/edkolev/evil-lion
+
+align operator를 추가함
+​~COUNT gl|gL ip(text-object paragraph) SPC|=|기타등등 구분자~​
+#+begin_src emacs-lisp :tangle yes
+(use-package evil-lion
+  :after evil
+  :straight (:host github :repo "edkolev/evil-lion")
+  :commands (evil-lion-left evil-lion-right)
+  :general
+  (evil-normal-state-map
+         "g l " 'evil-lion-left
+         "g L " 'evil-lion-right)
+  (evil-visual-state-map
+         "g l " 'evil-lion-left
+         "g L " 'evil-lion-right))
 #+end_src
 
 **** 다중 편집 기능
@@ -3359,6 +3473,9 @@ REGEXP defaults to \"[ \\t\\n\\r]+\"."
 #+end_src
 
 **** evil-nerd-commenter
+:PROPERTIES:
+:ID:       81D14C5A-379C-4BC3-B140-C1B08A050F5F
+:END:
 https://github.com/redguardtoo/evil-nerd-commenter
 #+begin_src emacs-lisp :tangle yes
 (use-package evil-nerd-commenter
@@ -3375,6 +3492,7 @@ https://github.com/redguardtoo/evil-nerd-commenter
      (let* ((imenu-create-index-function 'evilnc-imenu-create-index-function))
        (counsel-imenu)))))
 #+end_src
+
 **** structure editing
 :PROPERTIES:
 :ID:       1B6A5C59-0010-4AC6-A2A5-8C8AEF591CFC
@@ -3451,7 +3569,7 @@ https://github.com/noctuid/lispyville
      slurp/barf-cp                      ; <>
      prettify                           ; indent
      commentary                         ; gc, gy, s/
-     wrap                               ; M-([{
+     wrap
      ))
 
   (advice-add 'lispy-join :before #'my/move-forward-char)
@@ -3505,8 +3623,8 @@ https://github.com/cofi/evil-numbers
 #+begin_src emacs-lisp :tangle yes
 (use-package evil-numbers
   :defer t)
-
 #+end_src
+
 **** 검색 및 선택
 :PROPERTIES:
 :ID:       D3F539C9-01F0-4AF8-8F06-4AAF90A4ABF7
@@ -3546,10 +3664,21 @@ https://github.com/abo-abo/avy
   (evil-define-avy-motion avy-line-saving-column line)
   (dolist (command '(avy-line-saving-column))
     (define-key evil-motion-state-map
-      (vector 'remap command) (intern-soft (format "evil-%s" command)))))
+      (vector 'remap command) (intern-soft (format "evil-%s" command))))
+  ;; embark
+  (with-eval-after-load 'embark
+    (defun avy-action-embark (pt)
+      (unwind-protect
+          (save-excursion (goto-char pt) (embark-act))
+        (select-window (cdr (ring-ref avy-ring 0))))
+      t)
+    (setf (alist-get 8388654 avy-dispatch-alist) 'avy-action-embark)))
 #+end_src
 
 ***** evil-matchit
+:PROPERTIES:
+:ID:       881D442B-6F03-49A0-9BAC-CC4AA8982AE6
+:END:
 https://github.com/redguardtoo/evil-matchit
 =%= 키로 일치하는 반대편 괄호로 점프
 #+begin_src emacs-lisp :tangle yes
@@ -3909,6 +4038,9 @@ https://github.com/greduan/emacs-theme-gruvbox
 #+end_src
 
 ****** visual-bell
+:PROPERTIES:
+:ID:       66EF93CA-61DF-4AEA-A0A8-F9B740FFC90E
+:END:
 doom-themes에서 가져온 코드
 #+begin_src emacs-lisp :tangle yes
 (defface visual-bell '((t nil)) "")
@@ -3926,8 +4058,8 @@ doom-themes에서 가져온 코드
                         (force-mode-line-update)))
                     doom-themes--bell-cookie
                     (current-buffer))))
-
 #+end_src
+
 ****** blend color
 :PROPERTIES:
 :ID:       878573C5-C96D-4DB0-9D8F-53AFD0B68530
@@ -4016,14 +4148,29 @@ doom-themes에서 가져옴
 :ID:       7196F580-4288-4A4E-8CDD-EA54BA29B3EB
 :END:
 https://github.com/hlissner/emacs-solaire-mode
+
 파일 버퍼와 기타 버퍼를 테마 컬러로 구분할 수 있게 함
 몇 몇 지원되는 테마를 제외하면 테마에 관련 face를 추가해야 한다.
 #+begin_src emacs-lisp :tangle yes
 (use-package solaire-mode
   :config
   (solaire-global-mode t))
-
 #+end_src
+
+**** COMMENT ns-auto-titlebar
+:PROPERTIES:
+:ID:       B0315DAC-C551-4E38-9915-243E8D81A1EA
+:END:
+https://github.com/purcell/ns-auto-titlebar
+
+title 폰트의 색상을 적당하게 변경함
+#+begin_src emacs-lisp :tangle yes
+(use-package ns-auto-titlebar
+  :commands ns-auto-titlebar-mode
+  :if (eq system-type 'darwin)
+  :init (ns-auto-titlebar-mode))
+#+end_src
+
 **** indicators
 ***** display-line-numbers
 :PROPERTIES:
@@ -4137,6 +4284,43 @@ https://github.com/purcell/page-break-lines
 :PROPERTIES:
 :ID:       C03CC354-1BDB-4409-9BDB-9C78D746A840
 :END:
+***** COMMENT hl-line+
+:PROPERTIES:
+:ID:       CF6869A5-405F-47AF-BF37-4CC134E458EA
+:END:
+#+begin_src emacs-lisp :tangle yes
+(use-package hl-line+
+  :straight t
+  :custom-face
+  ;; subtle highlighting
+  (hl-line ((t (:inherit highlight))))
+  :custom
+  (global-hl-line-mode nil)
+  (hl-line-flash-show-period 1.0)
+  (hl-line-inhibit-highlighting-for-modes '(dired-mode))
+  (hl-line-when-idle-interval 2)
+  :config
+  (toggle-hl-line-when-idle 1 t)
+  )
+#+end_src
+***** crosshairs
+:PROPERTIES:
+:ID:       57F54A7C-E1D8-4BD5-B0D7-F80EE21C8558
+:END:
+#+begin_src emacs-lisp :tangle yes
+(use-package crosshairs
+  :straight t
+  :commands (crosshairs-highlight
+             crosshairs-mode
+             crosshairs 
+             flash-crosshairs)
+  :custom-face
+  (col-highlight ((t (:inherit hl-line))))
+  :custom
+  ;; same colors for both hlines
+  (col-highlight-vline-face-flag t))
+#+end_src
+
 ***** volatile-highlights
 :PROPERTIES:
 :ID:       2FE81916-EA2E-4DF7-9573-B756864E3C47
@@ -4390,6 +4574,25 @@ modeline 대신 minibuffer에 모드라인을 표시하는 기능.
 :ID:       9A54A041-C719-4D7E-AB23-B47CC5BB4E95
 :END:
 [[#awesome-tray][awesome-tray]]와 비슷하지만 mini-modeline은 모드라인을 그대로 가져다 쓴다. smart-mode-line 등의 모드라인 패키지도 사용할 수 있음.
+***** keycast
+:PROPERTIES:
+:ID:       A6AD0EC8-834F-4F54-9778-195CE1B79621
+:END:
+https://github.com/tarsius/keycast
+
+누른 키를 모드라인에 표시해주는 기능
+#+begin_src emacs-lisp :tangle yes
+(use-package keycast
+  :straight t
+  :defer 3
+  :custom-face
+  (keycast-key ((t (:weight bold :inverse-video t :height 0.85))))
+  :custom
+  (keycast-mode-line-format "%k")
+  (keycast-remove-tail-elements nil)
+  :config
+  (keycast-mode))
+#+end_src
 
 **** font
 :PROPERTIES:
@@ -4412,7 +4615,7 @@ variable-pitch, fixed-pitch의 간격을 적당하게 조절
 :END:
 https://github.com/cstby/fixed-pitch-mode
 
-**** COMMENT visual-fill-column
+**** visual-fill-column
 :PROPERTIES:
 :ID:       64A3948C-13EA-4A5D-ABFE-617627E2C547
 :CUSTOM_ID: visual-fill-column
@@ -4422,15 +4625,9 @@ https://github.com/joostkremers/visual-fill-column
 ​=visual-line-mode=​와 비슷하지만 window 경계가 아닌 ​=fill-column=​에 맞춰서 글자를 자른다.
 #+begin_src emacs-lisp :tangle yes
 (use-package visual-fill-column
-  :hook ((visual-line-mode . visual-fill-column-mode)
-         ;; (visual-fill-column-mode . (lambda () (toggle-truncate-lines -1)))
-        )
+  ;; :hook (visual-line-mode . visual-fill-column-mode)
   :config
-  ;; (add-hook 'visual-fill-column-mode-hook #'visual-line-mode)
-  ;; (add-hook 'visual-line-mode-hook #'visual-fill-column-mode)
   (advice-add 'text-scale-adjust :after #'visual-fill-column-adjust)
-  ;; (setq visual-fill-column-width 80)
-  ;; (setq visual-fill-column-extra-text-width '(10 . 10))
 
   (when evil-respect-visual-line-mode
     (evil-define-minor-mode-key 'motion 'visual-fill-column-mode
@@ -4447,12 +4644,23 @@ https://github.com/joostkremers/visual-fill-column
 
 - [[git-gutter][git-gutter]]의 버퍼 표시를 덮어쓴다.
 
-**** origami
+**** folding 
+:PROPERTIES:
+:ID:       3EFFFF7E-6590-4F22-9E53-80D05EA2DC46
+:END:
+
+- vimish-fold는 여러 레벨의 폴딩을 할 수 없고 직접 폴딩 영역을 지정해야 한다.
+- origami는 느리고 더이상 관리가 되지 않는 듯 하다.
+- emacs 내장 기능인 hideshow는 origami와 비슷하면서 보다 가볍다.
+
+***** COMMENT origami
 :PROPERTIES:
 :ID:       CC0E4678-527A-4A59-BEB6-BDB209E19518
 :END:
 https://github.com/gregsexton/origami.el
+
 fold/unfold
+관리가 안 되는 듯 하다. folding 후 느린 편. 
 #+begin_src emacs-lisp :tangle yes
 (use-package origami
   ;; :disabled
@@ -4466,26 +4674,28 @@ fold/unfold
   ;; :hook (yaml-mode . origami-mode)
   :config
   (global-origami-mode t))
-
 #+end_src
 
-***** lsp-origami
+****** lsp-origami
 :PROPERTIES:
 :ID:       BE840642-3B86-41D3-8EB7-88D1EE27D75E
 :END:
 https://github.com/emacs-lsp/lsp-origami
-#+BEGIN_SRC emacs-lisp :tangle yes
+
+#+begin_src emacs-lisp :tangle yes
 (use-package lsp-origami
   :after (lsp-mode origami)
   :config
   (add-hook 'lsp-after-open-hook #'lsp-origami-try-enable))
-#+END_SRC
+#+end_src
 
-**** TODO vimish-fold
+***** TODO COMMENT vimish-fold
 :PROPERTIES:
 :ID:       30D6D4DA-503D-464D-AB35-6498A9FCF551
 :END:
 https://github.com/matsievskiysv/vimish-fold
+
+1단계만 folding이 가능하다. 코드를 접어서 보기에는 좀 불편함.
 
 #+begin_src emacs-lisp :tangle yes
 (use-package vimish-fold
@@ -4493,7 +4703,7 @@ https://github.com/matsievskiysv/vimish-fold
 #+end_src
 - [ ] vimish-fold-overlay
 
-**** evil-vimish-fold
+***** COMMENT evil-vimish-fold
 :PROPERTIES:
 :ID:       3988A775-61B2-47CA-B275-FC0F6A36CC39
 :END:
@@ -4507,6 +4717,28 @@ https://github.com/alexmurray/evil-vimish-fold
   (setq evil-vimish-fold-target-modes '(prog-mode conf-mode text-mode))
   :config
   (global-evil-vimish-fold-mode))
+#+end_src
+
+***** hideshow
+이맥스 내장 기능.
+
+#+begin_src emacs-lisp :tangle yes
+(use-package hideshow
+  :straight (:type built-in)
+  :config/el-patch
+  ;; evil과의 호환 문제인지 hideshow가 만든 접힘 표시가 접을때와 펼 때 커서의 위치가 다르다. 그 부분을 수정했다.
+  (defun hs-toggle-hiding (&optional e)
+  "Toggle hiding/showing of a block.
+See `hs-hide-block' and `hs-show-block'.
+Argument E should be the event that triggered this action."
+  (interactive)
+  (hs-life-goes-on
+   (el-patch-remove (posn-set-point (event-end e)))
+   (if (hs-already-hidden-p)
+       (hs-show-block)
+     (hs-hide-block))))
+  :custom
+  (hs-allow-nesting t))
 #+end_src
 
 **** dogears
@@ -4612,8 +4844,36 @@ help-mode 도움말을 를 더 유용하게 바꿈
   ;; (add-hook 'helpful-mode-hook
   ;;           #'helpful-mode-hook-function)
   )
-
 #+end_src
+
+**** elisp-demos
+:PROPERTIES:
+:ID:       8FDA0791-F789-4A01-8673-1A4073D411A7
+:END:
+https://github.com/xuchunyang/elisp-demos
+
+#+begin_src emacs-lisp :tangle yes
+(use-package elisp-demos
+  :defer 1
+  :config
+  ;; inject demos into helpful
+  (advice-add 'helpful-update :after #'elisp-demos-advice-helpful-update))
+#+end_src
+
+**** info-colors
+:PROPERTIES:
+:ID:       098C8571-A6DA-476E-851F-EF6305476D91
+:END:
+https://github.com/ubolonton/info-colors
+
+#+begin_src emacs-lisp :tangle yes
+(use-package info-colors
+  :straight (:host github :repo "ubolonton/info-colors")
+  :defer t
+  :hook
+  (Info-selection . info-colors-fontify-node))
+#+end_src
+
 **** writeroom-mode
 :PROPERTIES:
 :ID:       A11CEC84-6AAC-4225-9C29-339C40E37701
@@ -4664,13 +4924,24 @@ https://github.com/joostkremers/writeroom-mode
 
 - 패키지가 내부적으로 [[visual-fill-column][visual-fill-column-mode]]를 사용함
 - 하지만 [[git-gutter][git-gutter]]도 정상 작동함
+**** eldoc
+
+#+begin_src emacs-lisp :tangle yes
+(use-package eldoc
+  :straight (:type built-in)
+  :commands eldoc-mode
+  :hook (emacs-lisp-mode . turn-on-eldoc-mode)
+  :diminish t
+  :custom
+  (eldoc-idle-delay 0))
+#+end_src
 
 *** 파일 관리
 **** auto-revert
 파일의 변경을 버퍼에 반영한다.
 #+BEGIN_SRC emacs-lisp :tangle yes
 (use-package auto-revert
-  :straight nil
+  :straight (:type built-in)
   :defer 1
   :custom
   (global-auto-revert-mode t))
@@ -4697,7 +4968,7 @@ https://github.com/jtbm37/all-the-icons-dired
 :END:
 #+begin_src emacs-lisp :tangle yes
 (use-package dired
-  :straight nil
+  :straight (:type built-in)
   :defer t
   :commands (dired dired-jump dired-jump-other-window)
   :hook ((dired-mode-hook . auto-revert-mode)
@@ -4736,7 +5007,7 @@ https://github.com/jtbm37/all-the-icons-dired
 :END:
 #+begin_src emacs-lisp :tangle yes
 (use-package dired-x
-  :straight nil
+  :straight (:type built-in)
   :ensure nil
   ;; Enable dired-omit-mode by default
   ;; :hook
@@ -5275,9 +5546,35 @@ trash를 brew로 설치해서 사용할 수도 있다. trash가 설치되지 않
 #+begin_src emacs-lisp :tangle yes
 (use-package osx-trash
   :if (eq system-type 'darwin)
+  :custom
+  (trash-directory "~/.Trash")
   :config
   (system-packages-ensure "trash")
   (osx-trash-setup))
+#+end_src
+
+**** reveal-in-osx-finder
+:PROPERTIES:
+:ID:       2419831E-033D-4D6B-A054-BD89F2907251
+:END:
+https://github.com/kaz-yos/reveal-in-osx-finder
+
+#+begin_src emacs-lisp :tangle yes
+(use-package reveal-in-osx-finder
+  :defer t
+  :commands (reveal-in-osx-finder))
+#+end_src
+
+**** grab-mac-link
+:PROPERTIES:
+:ID:       7749E4D6-9A34-44EF-9A21-6C8FF799F687
+:END:
+https://github.com/xuchunyang/grab-mac-link.el
+
+#+begin_src emacs-lisp :tangle yes
+(use-package grab-mac-link
+  :defer t
+  :commands (grab-mac-link))
 #+end_src
 
 **** super-save
@@ -5887,9 +6184,8 @@ https://github.com/emacs-lsp/lsp-java
 ****** dap-java
 #+begin_src emacs-lisp :tangle yes
 (use-package dap-java
-  :after company dap-mode
-  :ensure nil
-  :straight nil)
+  :after dap-mode
+  :straight (:type built-in))
 
 #+end_src
 ***** latex
@@ -6018,19 +6314,17 @@ https://gitlab.com/emacs-geiser/geiser
   (js2-highlight-level 3)
   (js2-idle-timer-delay 0)
   (js2-mode-show-parse-errors nil)
+  (js-indent-level 2)
   :config
-  ;; Use js2-mode for Node scripts
-  (add-to-list 'magic-mode-alist '("#!/usr/bin/env node" . js2-mode))
-  ;; (setq js2-mode-show-strict-warnings nil)
-  ;; (add-hook 'js2-mode-hook #'dw/set-js-indentation)
-  )
+  (add-to-list 'magic-mode-alist '("#!/usr/bin/env node" . js2-mode)))
 #+end_src
+
 ****** json-mode
 #+begin_src emacs-lisp :tangle yes
 (use-package json-mode
   :mode "\\.json\\'")
-
 #+end_src
+
 ****** rjax-mode
 :PROPERTIES:
 :ID:       C2054DCA-2535-4D57-94EB-7CF234C08DAC
@@ -6041,8 +6335,8 @@ https://gitlab.com/emacs-geiser/geiser
   (rx (or ".jsx"
           (and (or "components" "pages") "/" (* anything) ".js"))
       eos))
-
 #+end_src
+
 ***** C/C++
 ****** ccls
 :PROPERTIES:
@@ -6195,17 +6489,17 @@ auto code formatter
 :END:
 #+begin_src emacs-lisp :tangle yes
 (use-package compile
-  :straight nil
+  :straight (:type built-in)
   :custom
-  (compilation-scroll-output t))
-
-(defun auto-recompile-buffer ()
-  (interactive)
-  (if (member #'recompile after-save-hook)
-      (remove-hook 'after-save-hook #'recompile t)
-    (add-hook 'after-save-hook #'recompile nil t)))
-
+  (compilation-scroll-output t)
+  :config 
+  (defun auto-recompile-buffer ()
+    (interactive)
+    (if (member #'recompile after-save-hook)
+        (remove-hook 'after-save-hook #'recompile t)
+      (add-hook 'after-save-hook #'recompile nil t))))
 #+end_src
+
 *** org
 :PROPERTIES:
 :ID:       021BE967-5548-498C-BDAD-9775B7EB2C5C
@@ -6216,87 +6510,62 @@ auto code formatter
 :END:
 #+begin_src emacs-lisp :tangle yes
 (use-package org
-;; :demand t
-  :hook (
-         (org-mode . org-mode-setup)
+  :hook ((org-mode . org-mode-setup)
          ;; (org-mode . org-icons)
-         ;; https://emacs.stackexchange.com/questions/16845/expand-org-mode-subtree-with-point-after-ellipsis/44568
-         ;; expand when press TAB after ellipsis.
-         (org-mode . svg-lib-on)
+         ;; (org-mode . svg-lib-on)
+         ;; (org-mode . svg-tag-mode)
+;; https://emacs.stackexchange.com/questions/16845/expand-org-mode-subtree-with-point-after-ellipsis/44568
+;; expand when press TAB after ellipsis.
          (org-tab-first-hook . org-end-of-line))
 #+end_src
+
 **** 키바인딩 [2/6]
 :PROPERTIES:
 :ID:       F1716479-97B0-44F2-8F99-E5B987F12882
 :END:
 #+begin_src emacs-lisp :tangle yes
 :general
-;;  (org-mode-map
-;;  :states '(normal visual emacs motion)
-;;  "SPC o" '(:ignore t :which-key "org-mode")
-;;  "SPC op" '(org-pomodoro :which-key "pomodoro")
-;;  "SPC on" '(org-toggle-narrow-to-subtree :which-key "toggle narrow")
-;;  "SPC of" '(dw/search-org-files :which-key "search notes")
-;;  ;; "os"  '(counsel-rg :which-key "search notes")
-;;  "SPC os" '(org-agenda :which-key "status")
-;;  "SPC ot" '(org-todo-list :which-key "todos")
-;;  "SPC oc" '(org-capture t :which-key "capture")
-;;  "SPC ox" '(org-export-dispatch t :which-key "export")
-;;  ;; insert
-;;  "SPC oi" '(:ignore t :which-key "insert")
-;;  "SPC oil" '(org-insert-link :which-key "insert link")
-;;  "SPC oi," '(org-insert-structure-template :which-key "insert structure")
-;;  "SPC oii" '(org-emphasize :which-key "emphasize")
-;;  ;; transclusion
-;;  "SPC oit" 'org-transclusion-add
-;;  ;; whitespace
-;;  "SPC oi SPC" '(insert-zero-width-space :which-key "zero width space"))
 (spc
   :keymaps 'org-mode-map
   :states '(normal insert visual emacs motion)
-  "o" '(:ignore t :which-key "org-mode")
-  "op" '(org-pomodoro :which-key "pomodoro")
-  "on" '(org-toggle-narrow-to-subtree :which-key "toggle narrow")
-  ;; "of" '(dw/search-org-files :which-key "search notes")
-  "of" '(consult-org-heading :which-key "search heading")
+  "o"      '(:ignore t :which-key "org-mode")
+  "op"     '(org-pomodoro :which-key "pomodoro")
+  "on"     '(org-toggle-narrow-to-subtree :which-key "toggle narrow")
+  ;; "of"  '(dw/search-org-files :which-key "search notes")
+  "of"     '(consult-org-heading :which-key "search heading")
   ;; "os"  '(counsel-rg :which-key "search notes")
-  "os" '(org-agenda :which-key "status")
-  "ot" '(org-todo-list :which-key "todos")
-  "oc" '(org-capture t :which-key "capture")
-  "ox" '(org-export-dispatch t :which-key "export")
+  "os"     '(org-agenda :which-key "status")
+  "ot"     '(org-todo-list :which-key "todos")
+  "oc"     '(org-capture t :which-key "capture")
+  "ox"     '(org-export-dispatch t :which-key "export")
   ;; insert
-  "oi" '(:ignore t :which-key "insert")
-  "oil" '(org-insert-link :which-key "insert link")
-  "oi," '(org-insert-structure-template :which-key "insert structure")
-  "oii" '(org-emphasize :which-key "emphasize")
+  "oi"     '(:ignore t :which-key "insert")
+  "oil"    '(org-insert-link :which-key "insert link")
+  "oi,"    '(org-insert-structure-template :which-key "insert structure")
+  "oii"    '(org-emphasize :which-key "emphasize")
   ;; transclusion
-  "oit" 'org-transclusion-add
+  "oit"    'org-transclusion-add
   ;; whitespace
   "oi SPC" '(insert-zero-width-space :which-key "zero width space"))
 (org-mode-map
  "C-j" 'org-next-visible-heading
  "C-k" 'org-previous-visible-heading)
-(org-mode-map
- :states 'normal
-  ;; [remap evil-backward-char]
- "h" (general-predicate-dispatch 'evil-backward-char
-       (and (eolp) (bolp)) 'evil-backward-word-begin)
- ;; [remap evil-forward-char]
- "l" (general-predicate-dispatch 'evil-forward-char
-       (and (eolp) (bolp)) 'evil-forward-word-begin))
+
+;; evil-cross-lines 설정으로 대체
+;; (org-mode-map
+;;  :states 'normal
+;;   ;; [remap evil-backward-char]
+;;  "h" (general-predicate-dispatch 'evil-backward-char
+;;        (and (eolp) (bolp))       'evil-backward-word-begin)
+;;  ;; [remap evil-forward-char]
+;;  "l" (general-predicate-dispatch 'evil-forward-char
+;;        (and (eolp) (bolp))       'evil-forward-word-begin))
 
 (general-define-key
  :keymaps 'org-mode-map
  :states 'normal
  :predicate '(eq (org-element-type (org-element-context)) 'headline)
  "s-/" 'org-toggle-comment)
-
-;; (general-define-key
-;;  :keymaps 'org-mode-map
-;;  :states 'normal
-;;  :predicate '(eq (car (org-element-at-point)) 'headline)
-;;  "gc" 'nil
-;;  "gcc" 'org-toggle-comment)
 
 (org-src-mode-map
  "s-s" 'org-edit-src-save
@@ -6307,6 +6576,7 @@ auto code formatter
   "SPC ee" '(my/org-edit-this :which-key "edit-this")
   "SPC eb" '(org-babel-execute-src-block :which-key "execute this block"))
 
+;; $를 한번 누르면 보이는 라인 끝으로, 두번 누르면 실제 라인 끝으로 보낸다.
 (org-mode-map
  :states '(normal motion visual)
  "$" (general-key-dispatch '(lambda () (interactive) (evil-org-end-of-line))
@@ -6434,6 +6704,12 @@ prompted for."
 자리비움 상태로 간주할 시간(분 단위)
 #+begin_src emacs-lisp :tangle yes
 ;; (org-clock-idle-time 15)
+#+end_src
+
+***** evil
+#+begin_src emacs-lisp :tangle yes
+(evil-cross-lines t)
+(evil-respect-visual-line-mode t)
 #+end_src
 
 **** config
@@ -6603,7 +6879,10 @@ CLOSED: [2021-11-30 Tue 19:28]
 #+end_src
 - org-superstar나 org-bars 때문인지 작동하지 않는다.
 - org-superstart가 대체
-****** svg-lib
+****** COMMENT svg-lib
+:PROPERTIES:
+:ID:       4980071A-A28C-4840-BB7A-5FF24F9D4126
+:END:
 #+begin_src emacs-lisp :tangle yes
 (defvar svg-font-lock-keywords
   `(("TODO"
@@ -6672,6 +6951,92 @@ CLOSED: [2021-11-30 Tue 19:28]
 (defun svg-lib-toggle ()
   (interactive)
   (if svg-lib-status (svg-lib-off) (svg-lib-on)))
+#+end_src
+****** svg-tag-mode
+:PROPERTIES:
+:ID:       94528775-2AC0-463A-A907-BB85B5D0C2DB
+:END:
+#+begin_src emacs-lisp :tangle yes
+(defconst date-re "[0-9]\\{4\\}-[0-9]\\{2\\}-[0-9]\\{2\\}")
+(defconst time-re "[0-9]\\{2\\}:[0-9]\\{2\\}")
+(defconst day-re "[A-Za-z]\\{3\\}")
+
+(defun svg-progress-percent (value)
+  (svg-image (svg-lib-concat
+              (svg-lib-progress-bar (/ (string-to-number value) 100.0)
+                                nil :stroke 2 :radius 3 :padding 2 :width 10)
+              (svg-lib-tag (concat value "%") nil :stroke 0))
+             :ascent 'center))
+
+(defun svg-progress-count (value)
+  (let* ((seq (mapcar #'string-to-number (split-string value "/")))
+         (count (float (car seq)))
+         (total (float (cadr seq))))
+  (svg-image (svg-lib-concat
+              (svg-lib-progress-bar
+               (/ count total) nil :stroke 2 :radius 3 :padding 2 :width 10)
+              (svg-lib-tag value nil :stroke 0))
+             :ascent 'center)))
+
+(setq svg-tag-tags
+      `(
+        ;; Org tags
+        (":\\([A-Za-z0-9]+\\)" .
+         ((lambda (tag) (svg-tag-make tag))))
+        (":\\([A-Za-z0-9]+[ \-]\\)" .
+         ((lambda (tag) tag)))
+        
+        ;; Task priority
+        ("\\[#[A-Z]\\]" .
+         ((lambda (tag)
+            (svg-tag-make tag :face 'org-priority :beg 1 :end -1 :padding 3))))
+
+        ;; Progress
+        ("\\(\\[[0-9]\\{1,3\\}%\\]\\)" .
+         ((lambda (tag)
+            (svg-progress-percent (substring tag 1 -2)))))
+        ("\\(\\[[0-9]+/[0-9]+\\]\\)" .
+         ((lambda (tag)
+            (svg-progress-count (substring tag 1 -1)))))
+        
+        ;; TODO / DONE
+        ("TODO" . ((lambda (tag) 
+                     (svg-tag-make "TODO" :face 'org-todo :inverse t))))
+        ("DONE" . ((lambda (tag) 
+                     (svg-tag-make "DONE" :face 'org-done))))
+        ("COMMENT" . ((lambda (tag)
+                        (svg-tag-make "COMMENT" :face 'org-special-keyword))))
+
+        ;; Citation of the form [cite:@Knuth:1984] 
+        ("\\(\\[cite:@[A-Za-z]+:\\)" .
+         ((lambda (tag)
+            (svg-tag-make tag :inverse t :beg 7 :end -1 :crop-right t))))
+        ("\\[cite:@[A-Za-z]+:\\([0-9]+\\]\\)" .
+         ((lambda (tag)
+            (svg-tag-make tag :end -1 :crop-left t))))
+        
+        ;; Active date (without day name, with or without time)
+        (,(format "\\(<%s>\\)" date-re) .
+         ((lambda (tag)
+            (svg-tag-make tag :beg 1 :end -1 :padding 2))))
+        (,(format "\\(<%s *\\)%s>" date-re time-re) .
+         ((lambda (tag)
+            (svg-tag-make tag :beg 1 :inverse nil :crop-right t :padding 2))))
+        (,(format "<%s *\\(%s>\\)" date-re time-re) .
+         ((lambda (tag)
+            (svg-tag-make tag :end -1 :inverse t :crop-left t :padding 3))))
+
+        ;; Inactive date  (without day name, with or without time)
+         (,(format "\\(\\[%s\\]\\)" date-re) .
+          ((lambda (tag)
+             (svg-tag-make tag :beg 1 :end -1 :face 'org-date :padding 2))))
+         (,(format "\\(\\[%s *\\)%s\\]" date-re time-re) .
+          ((lambda (tag)
+             (svg-tag-make tag :beg 1 :inverse nil :crop-right t :face 'org-date :padding 2))))
+
+         (,(format "\\[%s *\\(%s\\]\\)" date-re time-re) .
+          ((lambda (tag)
+             (svg-tag-make tag :end -1 :inverse t :crop-left t :face 'org-date :padding 3))))))
 #+end_src
 
 ***** 패키지
@@ -6874,7 +7239,7 @@ upcoming, todo와 heading 구조를 볼 수 있는 사이드바를 추가하는 
 #+begin_src emacs-lisp :tangle yes
 (use-package org-indent
   :ensure nil
-  :straight nil
+  :straight (:type built-in)
   :diminish
   :custom
   (org-indent-indentation-per-level 1))
@@ -6914,8 +7279,7 @@ org heading을 이맥스 내장 북마크로 저장할 수 있는 기능
 :END:
 #+begin_src emacs-lisp :tangle yes
 (use-package org-src
-  :ensure nil
-  :straight nil
+  :straight (:type built-in)
   :custom
   (org-src-window-setup 'split-window-below) ; show edit buffer below current buffer
   ;; :init/el-patch
@@ -6928,19 +7292,7 @@ org heading을 이맥스 내장 북마크로 저장할 수 있는 기능
         "\C-c\C-k"
         'org-edit-src-abort)
       (define-key map (el-patch-swap "\C-x\C-s" [(super s)]) 'org-edit-src-save)
-      map))
-  ;; :config
-  ;; (defvar org-src-mode-map
-  ;;   (let ((map (make-sparse-keymap)))
-  ;;     (define-key map "s-s" 'org-edit-src-exit)
-  ;;     (define-key map "s-k" 'org-edit-src-abort)
-  ;;     (define-key map "\C-x\C-s" 'org-edit-src-save)
-  ;;     map))
-  ;; (advice-add 'org-edit-src-code
-  ;;     :before
-  ;;   #'(lambda () (if (eq evil-state 'normal) (evil-force-normal-state))))
-  ;; (advice-add 'org-edit-src-code :after #'evil-insert-state)
-  )
+      map)))
 #+end_src
 
 - [X] 키매핑을 쓰기 쉬운 것으로 변경해야 함
@@ -6993,26 +7345,24 @@ https://github.com/togakangaroo/ob-racket
 :ID:       7803E2A7-0314-472C-B8D5-651E5C5A1EA8
 :END:
 #+begin_src emacs-lisp :tangle yes
-  (use-package ox-latex
-    :straight nil
-    :ensure nil
-    :config
-    (setq org-format-latex-options
-          (plist-put org-format-latex-options :scale 1.75)))
+(use-package ox-latex
+  :straight (:type built-in)
+  :config
+  (setq org-format-latex-options
+        (plist-put org-format-latex-options :scale 1.75)))
 #+end_src
 
 ******* ob-shell
 #+begin_src emacs-lisp :tangle yes
-  (use-package ob-shell
-    :defer t
-    :ensure nil
-    :straight nil
-    :commands (org-babel-execute:sh
-               org-babel-expand-body:sh
-               org-babel-execute:bash
-               org-babel-expand-body:bash))
-
+(use-package ob-shell
+  :defer t
+  :straight (:type built-in)
+  :commands (org-babel-execute:sh
+             org-babel-expand-body:sh
+             org-babel-execute:bash
+             org-babel-expand-body:bash))
 #+end_src
+
 ******* TODO math-preview
 :PROPERTIES:
 :ID:       3AE70A5B-EF88-4CCB-8C7C-3AB19C7EA364
@@ -7171,9 +7521,21 @@ https://github.com/nobiot/org-transclusion
 :PROPERTIES:
 :ID:       F14734B4-167E-4DD4-AF51-3C7BCA563AAF
 :END:
+https://github.com/marcinkoziej/org-pomodoro
+
 #+begin_src emacs-lisp :tangle yes
-  (use-package org-pomodoro
-    :after org)
+(use-package org-pomodoro
+  :after org)
+#+end_src
+
+****** org-inlinetask
+:PROPERTIES:
+:ID:       CD035FB9-DAE7-450C-8015-23ABACC3A0AF
+:END:
+#+begin_src emacs-lisp :tangle yes
+(use-package org-inlinetask
+  :straight nil
+  :commands org-inlinetask-insert-task)
 #+end_src
 
 ****** org-auto-expand
@@ -7331,6 +7693,21 @@ org-flashcards
 ****** TODO titlecase
 https://github.com/duckwork/titlecase.el
 
+****** org-autolist
+:PROPERTIES:
+:ID:       A37A9B5A-4F03-4E7B-8FD9-24A517483DB0
+:END:
+https://github.com/calvinwyoung/org-autolist
+
+list 삽입/제거시 동작을 더 자연스럽게 만들어줌
+#+begin_src emacs-lisp :tangle yes
+(use-package org-auto-list
+  :straight (:type git
+             :host github
+             :repo "calvinwyoung/org-autolist")
+  :hook (org-mode . org-autolist-mode))
+#+end_src
+
 ***** 기타 function
 :PROPERTIES:
 :ID:       59EFFD4B-F0B9-443B-B131-F7C53E9EBB86
@@ -7343,12 +7720,13 @@ https://github.com/duckwork/titlecase.el
 #+begin_src emacs-lisp :tangle yes
 (defun org-mode-setup ()
   (visual-line-mode 1)
-  (setq-local evil-respect-visual-line-mode t)
+  ;; (setq-local evil-respect-visual-line-mode t
+  ;;             evil-cross-lines t)
   ;; (visual-fill-column-mode 1)
   (toggle-truncate-lines -1)
   (display-line-numbers-mode -1)
   ;; (setq evil-auto-indent nil)
-  )
+  (svg-tag-mode t))
 #+end_src
 
 ****** TODO my/org-edit-this
@@ -7583,8 +7961,7 @@ https://github.com/jixiuf/vterm-toggle
 comint는 외부 프로세스를 이맥스 모드로 감싸는 패키지다.
 #+begin_src emacs-lisp :tangle yes
 (use-package comint
-  :straight nil
-  :ensure nil
+  :straight (:type built-in)
   :commands (comint-mode shell-command-at-line)
   :bind
   ("C-!" . shell-command-at-line)
@@ -7617,6 +7994,7 @@ output instead."
       (shell-command command t nil)
       (exchange-point-and-mark))))
 #+end_src
+
 **** TODO dtache
 ***** dtache
 :PROPERTIES:
@@ -7648,10 +8026,7 @@ https://niklaseklund.gitlab.io/blog/posts/dtache_consult/
    :states 'normal
    "g u" nil
    "g f" 'xwidget-webkit-browse-url
-   "esc" 'xwidget-webkit-end-edit-textarea
-   ;; "i" 'xwidget-webkit-begin-edit-textarea
-   ;; "a" 'xwidget-webkit-begin-edit-textarea
-   )
+   "esc" 'xwidget-webkit-end-edit-textarea)
   :config
   (defun xwidget-papago-translate ()
     "Open papago translate for this xwidget page"
@@ -7661,7 +8036,8 @@ https://niklaseklund.gitlab.io/blog/posts/dtache_consult/
       (xwidget-webkit-uri (xwidget-webkit-current-session)))))
   )
 #+end_src
-**** xwwp
+
+**** COMMENT xwwp
 :PROPERTIES:
 :ID:       A4D7DD98-DFF4-4816-A34D-D3BE3F50FE19
 :END:
@@ -7732,6 +8108,7 @@ https://github.com/dalanicolai/calibre-layer
          (restart-emacs args)))]
      [("s-q" "Quit Emacs" save-buffers-kill-emacs)]]))
 #+end_src
+
 **** siri-shortcuts
 :PROPERTIES:
 :ID:       B3E15C02-9BA5-420E-AC36-7D14A3DD5589
@@ -7749,6 +8126,7 @@ MacOS Shortcut을 emacs에서 사용할 수 있다.
               :file "siri-shortcuts.el")
   :defer t)
 #+end_src
+
 **** psession
 :PROPERTIES:
 :ID:       E2FBD1E0-3380-4EDE-A25B-AFBBF67E2C52
@@ -7760,7 +8138,7 @@ emacs의 세션을 저장하고 유지하는 기능. 버퍼, 윈도우 구성 �
 (use-package psession
   :init
   (require 'psession)
-  (psession-mode 1)
+  (psession-mode          1)
   (psession-savehist-mode 1)
   (psession-autosave-mode 1))
 #+end_src
@@ -7871,11 +8249,14 @@ https://emacs.stackexchange.com/a/2198
 #+end_src
 
 - [ ] ace-window와 통합
+- [ ] modeline 등등 표시할 것이 필요함
 
 **** tail message buffer
 :PROPERTIES:
 :ID:       BD2365D0-309C-4956-AAD7-680B6635F6C2
 :END:
+Message 버퍼는 파일 버퍼가 아니라서 auto-revert-tail-mode가 동작하지 않는다.
+
 #+begin_src emacs-lisp :tangle yes
 (advice-add 'message :after
   (defun me/message-tail (&rest _)
@@ -7887,7 +8268,7 @@ https://emacs.stackexchange.com/a/2198
             (goto-char (point-max))))))))
 #+end_src
 
-**** COMMENT enlarge window
+**** TODO COMMENT enlarge window
 :PROPERTIES:
 :ID:       1395958D-7AC6-48D1-A60E-1E8A6121950C
 :END:
@@ -7906,7 +8287,12 @@ https://www.reddit.com/r/emacs/comments/qgxz43/allow_use_of_to_repeat_emacs_comm
      t)))
 #+end_src
 
+- [ ] 단위가 너무 작다.
+
 **** toggle maximize buffer
+:PROPERTIES:
+:ID:       E9CF6360-2577-4301-A341-EF5BBE5641A9
+:END:
 https://github.com/pascalfleury/emacs-config
 #+begin_src emacs-lisp :tangle yes
 (defun toggle-maximize-buffer () "Maximize buffer"
@@ -7916,7 +8302,6 @@ https://github.com/pascalfleury/emacs-config
          (progn
            (window-configuration-to-register '_)
            (delete-other-windows))))
-
 #+end_src
 
 **** COMMENT svg screenshot
@@ -7936,6 +8321,7 @@ Saves to a temp file and puts the filename in the kill ring."
     (kill-new filename)
     (message filename)))
 #+end_src
+
 - cario가 필요함
 - cario를 사용하는 MacOS 빌드는 없음
 
@@ -7947,9 +8333,9 @@ scratch 버퍼를 여는 함수
 #+begin_src emacs-lisp :tangle yes
 (defun open-scratch ()
   (interactive)
-  ;; (unless (get-buffer "*scratch*")
-  ;;   (get-buffer-create "*scratch*"))
-  (switch-to-buffer "*scratch*"))
+  (switch-to-buffer "*scratch*")
+  (with-current-buffer
+      (persistent-scratch-restore)))
 #+end_src
 
 **** measure-time
@@ -7964,6 +8350,7 @@ https://stackoverflow.com/questions/23622296/emacs-timing-execution-of-function-
      ,@body
      (message "%.06f" (float-time (time-since time)))))
 #+end_src
+
 **** scratch 버퍼에 highlight-* 적용
 :PROPERTIES:
 :ID:       B86D1C2C-3EEB-44F7-BE4F-F984F3858E4C
@@ -7974,15 +8361,12 @@ https://stackoverflow.com/questions/23622296/emacs-timing-execution-of-function-
   (mapc
    (lambda (buffer)
      (with-current-buffer buffer
-       ;; (when (featurep 'highlight-numbers) (highlight-numbers-mode 1))
-       ;; (when (featurep 'highlight-defined) (highlight-defined-mode 1))
-       ;; (when (featurep 'highlight-quoted) (highlight-quoted-mode 1))
        (highlight-numbers-mode 1)
        (highlight-defined-mode 1)
-       (highlight-quoted-mode 1)))
-   (-filter
-    (lambda (buffer) (string-match-p "*scratch*" (buffer-name buffer)))
-    (buffer-list))))
+       (highlight-quoted-mode  1)))
+   (-filter (lambda (buffer)
+              (string-match-p "*scratch*" (buffer-name buffer)))
+            (buffer-list))))
 
 (general-after-init
   (scratch-apply-highlights))
@@ -7995,19 +8379,27 @@ https://stackoverflow.com/questions/23622296/emacs-timing-execution-of-function-
 #+begin_src emacs-lisp :tangle yes
 (general-define-key
  "<f17>" 'toggle-input-method
- "s-n" '(nil :which-key "new buffer & frame")
+ "s-n"   '(nil
+           :which-key "new buffer & frame")
  "s-n f" 'make-frame
- "s-n b" '(clone-indirect-buffer-other-window :which-key "clone indirect buffer - other window")
- "s-n B" '(make-indirect-buffer :which-key "make indirect buffer")
- "C-h '" 'describe-char)
+ "s-n b" '(clone-indirect-buffer-other-window
+           :which-key "clone indirect buffer - other window")
+ "s-n B" '(make-indirect-buffer
+           :which-key "make indirect buffer"))
+
+(general-define-key
+ :keymaps 'help-map
+ [remap display-local-help] 'describe-char
+ "." 'describe-char
+ "'"                        'display-local-help)
 
 (spc-e
   :states '(normal visual)
-  "" '(nil :which-key "eval")
-  "b" '(eval-buffer :which-key "eval buffer")
-  "x" '(eval-last-sexp :which-key "eval sexp")
+  ""  '(nil                  :which-key "eval")
+  "b" '(eval-buffer          :which-key "eval buffer")
+  "x" '(eval-last-sexp       :which-key "eval sexp")
   "j" '(eval-print-last-sexp :which-key "eval print")
-  "d" '(eval-defun :which-key "eval defun"))
+  "d" '(eval-defun           :which-key "eval defun"))
 
 (spc-e
   :keymaps '(visual)
@@ -8025,7 +8417,8 @@ https://stackoverflow.com/questions/23622296/emacs-timing-execution-of-function-
 :END:
 #+begin_src emacs-lisp :tangle yes
 (refresh-theme ns-system-appearance)
-(add-hook 'window-setup-hook 'toggle-frame-maximized t)
+;; (add-hook 'window-setup-hook 'toggle-frame-maximized)
+(general-after-init (toggle-frame-maximized))
 #+end_src
 
 *** gcmh
@@ -8038,7 +8431,7 @@ https://github.com/emacsmirror/gcmh
 #+begin_src emacs-lisp :tangle yes
 (use-package gcmh
   :custom
-  (garbage-collection-messages t)
+  (garbage-collection-messages nil)
  ;; (gcmh-vervose t)
   :init
   (gcmh-mode 1))
