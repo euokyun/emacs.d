@@ -70,25 +70,6 @@ speed up load time
 #+end_src
 
 *** font settings
-**** Sarasa-Gothic 
-:PROPERTIES:
-:ID:       39759F8F-FF90-4550-A25C-A19D7B12E3B4
-:END:
-https://picaq.github.io/sarasa/
-
-Iosevka와 Source Han Sans 폰트 기반의 한글 지원 폰트.
-
-- mono 코딩용 고정폭 폰트.
-- term 터미널용 폰트
-  + fixed 터미널용 non-ligature 폰트
-
-- Slab 세리프 폰트 
-
-#+begin_src emacs-lisp :tangle yes
-(unless (member "Sarasa Mono K" (font-family-list))
-  (system-packages-ensure "font-sarasa-gothic"))
-#+end_src
-
 **** 기본 폰트 설정
 :PROPERTIES:
 :ID:       B77FA35F-A5B2-483C-B4D7-97F8495F22AA
@@ -197,7 +178,7 @@ imenu-auto-rescan t
 scroll-step 1      ; keyboard scroll one line at a time
 use-dialog-box nil ; Disable dialog boxes since they weren't working in Mac OSX
 world-clock-list '(("Asia/Seoul" "Seoul")
-                   ("America/Los_Angeles" "Seattle")
+                   ;; ("America/Los_Angeles" "Seattle")
                    ("America/New_York" "New York")
                    ("Etc/UTC" "UTC"))
 world-clock-time-format "%a, %e %b %T %Z"
@@ -208,6 +189,7 @@ create-lockfiles nil                    ; .#foo.txt 등의 lockfile을 생성하
 disabled-command-function nil           ; 어려운 기능 경고 해제
 async-bytecomp-package-mode t
 save-interprogram-paste-before-kill t   ; 다른 프로그램의 클립보드를 덮어쓰기 전에 저장함
+switch-to-buffer-preserve-window-point 'already-displayed
 #+end_src
 
 **** COMMENT 버퍼 범위를 보여줌.
@@ -386,6 +368,19 @@ straight에서는 작동하지 않는다.
   ;; (setq auto-package-update-hide-results t)
   :config
   (auto-package-update-maybe))
+#+end_src
+
+**** system-packages
+:PROPERTIES:
+:ID:       1EC57A63-2988-4FCD-A4AB-339C3189FC6C
+:END:
+https://gitlab.com/jabranham/system-packages
+#+begin_src emacs-lisp :tangle yes
+(use-package system-packages
+  :straight (system-packages
+             :type git
+             :host github
+             :repo "jabranham/system-packages"))
 #+end_src
 
 **** ensure-system-package
@@ -583,10 +578,11 @@ https://www.dr-qubit.org/Lost_undo-tree_history.html
   ;;   (setq ad-return-value (concat ad-return-value ".gz")))
   (global-undo-tree-mode t))
 #+end_src
+
 - undo-tree-auto-save-history :: undo 내역을 저장하고 다음 세션에서도 쓸 수 있게 함.
 - undo-tree-enable-undo-in-region :: 선택 region 내에서만 undo를 할 수 있는 기능
 
-undo-tree는 강력하지만 히스토리 저장이 자주 꺠진다. 가바지 콜렉터가 elisp 인터프리터 외부에서 실행되고, 그에 따라 실행 취소 기록이 손상될 수 있는 것이 문제라고 함.
+undo-tree는 강력하지만 히스토리 저장이 자주 깨진다. 가바지 콜렉터가 elisp 인터프리터 외부에서 실행되고, 그에 따라 실행 취소 기록이 손상될 수 있는 것이 문제라고 함.
 
 **** transient
 :PROPERTIES:
@@ -648,7 +644,8 @@ https://github.com/abo-abo/ace-window
              (consult-buffer)))
           (t (call-interactively 'switch-to-buffer))))
   :general
-  ("s-`" 'ace-window)
+  ;; ("s-`" 'ace-window)
+  ("M-o" 'ace-window)
   :custom
   (aw-minibuffer-flag t)                ; minibuffer도 표시함
   (aw-dispatch-always t)
@@ -707,7 +704,8 @@ https://github.com/abo-abo/ace-window
 
   ;; (setq aw-ignore-current t) ; 이러면 split이 현재 윈도우에서 작동하지 않는다.
   (ace-window-display-mode t)           ; showing window identifier on modeline.
-  (ace-window-posframe-mode t)
+  (when (display-graphic-p)
+    (ace-window-posframe-mode t))
 
   ;; 테마 변경시 망가지는 ace-window-posframe 재설정
   (define-advice refresh-theme
@@ -728,10 +726,12 @@ https://github.com/abo-abo/ace-window
 - [ ] x에 kill-buffer-and-window 추가하기
 
 **** font-lock-plus
+:PROPERTIES:
+:ID:       565BB617-7CFD-44DB-A8EF-D013C70DE0E7
+:END:
 https://gitlab.com/thomasluquet/font-lock-plus
 #+begin_src emacs-lisp :tangle yes
 (use-package font-lock+)
-
 #+end_src
 
 **** ligature
@@ -787,13 +787,17 @@ https://github.com/mickeynp/ligature.el
 #+end_src
 
 **** all-the-icons
+:PROPERTIES:
+:ID:       DF07644C-8C20-4200-90AF-7E8D840F9392
+:END:
 https://github.com/domtronn/all-the-icons.el
 fancy한 유니코드 아이콘을 추가함.
 #+begin_src emacs-lisp :tangle yes
 (use-package all-the-icons
   :config
-  (unless (member "all-the-icons" (font-family-list))
-    (all-the-icons-install-fonts t)))
+  (when (display-graphic-p)
+    (unless (member "all-the-icons" (font-family-list))
+      (all-the-icons-install-fonts t))))
 #+end_src
 
 **** icons-in-terminal
@@ -804,15 +808,14 @@ https://github.com/sebastiencs/icons-in-terminal
 
 #+begin_src emacs-lisp :tangle yes
 (use-package icons-in-terminal
-  :straight '(icons-in-terminal
+  :straight (icons-in-terminal
               :type git
               :host github
               :repo "sebastiencs/icons-in-terminal"
               :files ("build/icons-in-terminal.el")))
-
 #+end_src
 
-#+begin_example emacs-lisp
+#+begin_example emacs-lisp :tangle no
 (insert (icons-in-terminal 'fa_bookmark))
 #+end_example
 
@@ -900,6 +903,7 @@ https://github.com/rougier/svg-tag-mode
 
 #+begin_src emacs-lisp :tangle yes
 (use-package svg-tag-mode
+  :if (display-graphic-p)
   :straight t
   :after svg-lib)
 #+end_src
@@ -2947,6 +2951,81 @@ https://github.com/alphapapa/burly.el
 :END:
 **** TODO bookmark-in-project
 https://gitlab.com/ideasman42/emacs-bookmark-in-project
+**** TODO harpoon
+:PROPERTIES:
+:ID:       5BDD2A4D-7FEB-4499-935A-3908F1B7E72C
+:END:
+프로젝트/브랜치 별 북마크 기능을 제공함
+https://github.com/otavioschwanck/harpoon.el
+
+**** bm [1/1]
+:PROPERTIES:
+:ID:       02901F61-1B1C-478B-BE86-DE96AF438206
+:END:
+https://github.com/joodland/bm
+
+북마크를 버퍼에 표시함.
+emacs 내장 북마크 기능을 사용하지 않음.
+#+begin_src emacs-lisp :tangle yes
+(use-package bm
+  :demand t
+  :init
+  ;; restore on load (even before you require bm)
+  (setq bm-restore-repository-on-load t)
+  :general
+  ;; (:global-prefix "M-SPC"
+  ;;  :prefix "SPC"
+  ;;  :states '(normal insert visual emacs motion)
+  ;;  "m" 'Visible-Bookmark
+  ;;  "mn" 'bm-next
+  ;;  "mp" 'bm-previous)
+  (:states 'normal
+   "m" (general-key-dispatch 'evil-set-marker
+         ;; :timeout 0.2
+         "m" 'bm-toggle
+         "j" 'bm-next
+         "k" 'bm-previous))
+  :custom
+  ;; where to store persistant files
+  (bm-repository-file
+   (expand-file-name "bm-repository" no-littering-var-directory))
+  ;; Allow cross-buffer 'next'
+  ;; (bm-cycle-all-buffers t)
+  ;; save bookmarks
+  (bm-buffer-persistence t)
+
+  :config
+  ;; Loading the repository from file when on start up.
+  (add-hook 'after-init-hook 'bm-repository-load)
+  ;; Saving bookmarks
+  (add-hook 'kill-buffer-hook #'bm-buffer-save)
+  ;; Saving the repository to file when on exit.
+  ;; kill-buffer-hook is not called when Emacs is killed, so we
+  ;; must save all bookmarks first.
+  (add-hook 'kill-emacs-hook #'(lambda nil
+                                 (bm-buffer-save-all)
+                                 (bm-repository-save)))
+  ;; The `after-save-hook' is not necessary to use to achieve persistence,
+  ;; but it makes the bookmark data in repository more in sync with the file
+  ;; state.
+  (add-hook 'after-save-hook #'bm-buffer-save)
+
+  ;; Restoring bookmarks
+  (add-hook 'find-file-hooks #'bm-buffer-restore)
+  (add-hook 'after-revert-hook #'bm-buffer-restore)
+
+  ;; The `after-revert-hook' is not necessary to use to achieve persistence,
+  ;; but it makes the bookmark data in repository more in sync with the file
+  ;; state. This hook might cause trouble when using packages
+  ;; that automatically reverts the buffer (like vc after a check-in).
+  ;; This can easily be avoided if the package provides a hook that is
+  ;; called before the buffer is reverted (like `vc-before-checkin-hook').
+  ;; Then new bookmarks can be saved before the buffer is reverted.
+  ;; Make sure bookmarks is saved before check-in (and revert-buffer)
+  (add-hook 'vc-before-checkin-hook #'bm-buffer-save))
+#+end_src
+
+- [X] bm 키바인딩
 
 *** completion sorting
 :PROPERTIES:
@@ -4033,10 +4112,9 @@ https://github.com/emacs-dashboard/emacs-dashboard
            (,(all-the-icons-octicon "tools" :height 1.1 :v-adjust 0.0)
             "Config" "Open Configuration"
             (lambda (&rest _) (find-file (expand-file-name "init.org" user-emacs-directory)))))))
-
   (dashboard-setup-startup-hook))
-
 #+end_src
+
 **** theme
 ***** gruvbox
 :PROPERTIES:
@@ -4107,7 +4185,7 @@ doom-themes에서 가져옴
   (interactive)
   "Load theme, taking current system APPEARANCE into consideration."
   (mapc #'disable-theme custom-enabled-themes)
-  (pcase (or appearance ns-system-appearance)
+  (pcase (or appearance ns-system-appearance 'dark)
     ('light (load-theme 'gruvbox-light-soft t))
     ('dark (load-theme 'gruvbox-dark-soft t))))
 
@@ -4322,6 +4400,7 @@ https://github.com/purcell/page-break-lines
   (toggle-hl-line-when-idle 1 t)
   )
 #+end_src
+
 ***** crosshairs
 :PROPERTIES:
 :ID:       57F54A7C-E1D8-4BD5-B0D7-F80EE21C8558
@@ -4356,29 +4435,27 @@ https://github.com/k-talo/volatile-highlights.el
                         'evil-paste-after 'evil-paste-before 'evil-paste-pop 'evil-move)
   (vhl/install-extension 'evil)
   (volatile-highlights-mode t))
-
 #+end_src
-***** TODO highlight-thing [0/1]
+
+***** highlight-thing
 :PROPERTIES:
 :ID:       F5AE411B-FFA9-44D9-8EEA-0A002AA07855
 :END:
 https://github.com/fgeller/highlight-thing.el
-커서 위치와 같은 단어를 강조 표시함
+현재 커서 위치와 같은 단어를 강조 표시함
 #+begin_src emacs-lisp :tangle yes
 (use-package highlight-thing
   :diminish
-  :commands (highlight-thing-mode hilight-thing-do)
+  :commands (highlight-thing-mode highlight-thing-do)
   :custom
   (highlight-thing-exclude-thing-under-point t)
-  :custom-face
-  (highlight-thing ((t (:box (:line-width -1)
-                        :background "orange"
-                        :foreground "black"))))
+  ;; :custom-face
+  ;; (highlight-thing ((t (;; :box (:line-width -1)
+  ;;                       :background "orange"
+  ;;                       :foreground "black"))))
   ;; :hook (prog-mode . highlight-thing-mode)
   )
 #+end_src
-
-- [ ] on/off 키 추가
 
 ***** COMMENT region-occurrences-highlighter [0/1]
 :PROPERTIES:
@@ -4415,6 +4492,7 @@ https://github.com/alvarogonzalezsotillo/region-occurrences-highlighter
             (highlight-regexp str 'region-occurrences-highlighter-face)
             (region-occurrences-highlighter-nav-mode 1))))))))
 #+end_src
+
 - 긴 org-mode에서 퍼포먼스 저하를 발견함.(fold 때문인 듯)
 - [ ] on/off 키 추가
 
@@ -4454,6 +4532,7 @@ indent 레벨을 라인으로 표시해줌
 #+begin_src emacs-lisp :tangle yes
 (use-package highlight-indent-guides
   :diminish
+  :if (display-graphic-p)
   :hook (prog-mode . highlight-indent-guides-mode)
   :custom
   ;; (highlight-indent-guides-suppress-auto-error t) ; supress errors.
@@ -4613,6 +4692,23 @@ https://github.com/tarsius/keycast
   (keycast-mode))
 #+end_src
 
+***** COMMENT tb-keycast
+:PROPERTIES:
+:ID:       57FA0334-82DC-4439-9655-E3E83960A681
+:END:
+https://github.com/ir33k/tb-keycast
+
+keycast를 모드라인 대신 tab-bar에 표시한다.
+#+begin_src emacs-lisp :tangle yes
+(use-package tb-keycast
+  :straight (tb-keycast
+             :type git
+             :host github
+             :repo "ir33k/tb-keycast")
+  :config
+  (tb-keycast-mode 1))
+#+end_src
+
 **** font
 :PROPERTIES:
 :ID:       39EB7FC4-28EA-425B-AC20-4A8C05C71B19
@@ -4739,6 +4835,9 @@ https://github.com/alexmurray/evil-vimish-fold
 #+end_src
 
 ***** hideshow
+:PROPERTIES:
+:ID:       DA739142-4481-4370-A66E-D9DCBC8C0194
+:END:
 이맥스 내장 기능.
 
 #+begin_src emacs-lisp :tangle yes
@@ -4890,7 +4989,7 @@ https://github.com/ubolonton/info-colors
   :straight (:host github :repo "ubolonton/info-colors")
   :defer t
   :hook
-  (Info-selection . info-colors-fontify-node))
+  (info-selection . info-colors-fontify-node))
 #+end_src
 
 **** writeroom-mode
@@ -5131,74 +5230,6 @@ https://github.com/stsquad/dired-rsync/
   (use-package dired-rsync
     :defer t)
 #+end_src
-
-**** TODO bm [0/1]
-:PROPERTIES:
-:ID:       02901F61-1B1C-478B-BE86-DE96AF438206
-:END:
-https://github.com/joodland/bm
-
-북마크를 버퍼에 표시함.
-emacs 내장 북마크 기능을 사용하지 않음.
-#+begin_src emacs-lisp :tangle yes
-(use-package bm
-  :demand t
-  :init
-  ;; restore on load (even before you require bm)
-  (setq bm-restore-repository-on-load t)
-  :general
-  ;; (:global-prefix "M-SPC"
-  ;;  :prefix "SPC"
-  ;;  :states '(normal insert visual emacs motion)
-  ;;  "m" 'Visible-Bookmark
-  ;;  "mn" 'bm-next
-  ;;  "mp" 'bm-previous)
-  (:states 'normal
-   "m" (general-key-dispatch 'evil-set-marker
-         ;; :timeout 0.2
-         "m" 'bm-toggle))
-
-  :custom
-  ;; where to store persistant files
-  (bm-repository-file
-   (expand-file-name "bm-repository" no-littering-var-directory))
-  ;; Allow cross-buffer 'next'
-  ;; (bm-cycle-all-buffers t)
-  ;; save bookmarks
-  (bm-buffer-persistence t)
-
-  :config
-  ;; Loading the repository from file when on start up.
-  (add-hook 'after-init-hook 'bm-repository-load)
-  ;; Saving bookmarks
-  (add-hook 'kill-buffer-hook #'bm-buffer-save)
-  ;; Saving the repository to file when on exit.
-  ;; kill-buffer-hook is not called when Emacs is killed, so we
-  ;; must save all bookmarks first.
-  (add-hook 'kill-emacs-hook #'(lambda nil
-                                 (bm-buffer-save-all)
-                                 (bm-repository-save)))
-  ;; The `after-save-hook' is not necessary to use to achieve persistence,
-  ;; but it makes the bookmark data in repository more in sync with the file
-  ;; state.
-  (add-hook 'after-save-hook #'bm-buffer-save)
-
-  ;; Restoring bookmarks
-  (add-hook 'find-file-hooks #'bm-buffer-restore)
-  (add-hook 'after-revert-hook #'bm-buffer-restore)
-
-  ;; The `after-revert-hook' is not necessary to use to achieve persistence,
-  ;; but it makes the bookmark data in repository more in sync with the file
-  ;; state. This hook might cause trouble when using packages
-  ;; that automatically reverts the buffer (like vc after a check-in).
-  ;; This can easily be avoided if the package provides a hook that is
-  ;; called before the buffer is reverted (like `vc-before-checkin-hook').
-  ;; Then new bookmarks can be saved before the buffer is reverted.
-  ;; Make sure bookmarks is saved before check-in (and revert-buffer)
-  (add-hook 'vc-before-checkin-hook #'bm-buffer-save))
-#+end_src
-
-- [ ] bm 키바인딩
 
 **** treemacs
 :PROPERTIES:
@@ -6955,7 +6986,6 @@ CLOSED: [2021-11-30 Tue 19:28]
               (svg-lib-tag value nil
                            :stroke 2 :margin 0)) :ascent 'center)))
 
-
 (defvar svg-lib-status nil "")
 
 ;; Activate
@@ -6968,7 +6998,6 @@ CLOSED: [2021-11-30 Tue 19:28]
     (message "svg-lib on")))
 
 ;; Deactivate
-
 (defun svg-lib-off ()
   (font-lock-remove-keywords nil svg-font-lock-keywords)
   (setq svg-lib-status nil)
@@ -6979,6 +7008,7 @@ CLOSED: [2021-11-30 Tue 19:28]
   (interactive)
   (if svg-lib-status (svg-lib-off) (svg-lib-on)))
 #+end_src
+
 ****** svg-tag-mode
 :PROPERTIES:
 :ID:       94528775-2AC0-463A-A907-BB85B5D0C2DB
@@ -6990,7 +7020,7 @@ CLOSED: [2021-11-30 Tue 19:28]
 
 (defun svg-progress-percent (value)
   (svg-image (svg-lib-concat
-              (svg-lib-progress-bar (/ (string-to-number value) 100.0)
+              (svg-lib-progress-pie (/ (string-to-number value) 100.0)
                                 nil :stroke 2 :radius 3 :padding 2 :width 10)
               (svg-lib-tag (concat value "%") nil :stroke 0))
              :ascent 'center))
@@ -7000,7 +7030,7 @@ CLOSED: [2021-11-30 Tue 19:28]
          (count (float (car seq)))
          (total (float (cadr seq))))
   (svg-image (svg-lib-concat
-              (svg-lib-progress-bar
+              (svg-lib-progress-pie
                (/ count total) nil :stroke 2 :radius 3 :padding 2 :width 10)
               (svg-lib-tag value nil :stroke 0))
              :ascent 'center)))
@@ -7760,7 +7790,8 @@ https://github.com/amno1/org-center-headings
   (toggle-truncate-lines -1)
   (display-line-numbers-mode -1)
   ;; (setq evil-auto-indent nil)
-  (svg-tag-mode t))
+  (when (display-graphic-p)
+  (svg-tag-mode t)))
 #+end_src
 
 ****** TODO my/org-edit-this
@@ -8047,6 +8078,26 @@ shell command를 이맥스에서 완전히 분리된 상태로 실행할 수 있
 https://niklaseklund.gitlab.io/blog/posts/dtache_consult/
 
 *** 유틸리티
+**** Sarasa-Gothic 
+:PROPERTIES:
+:ID:       39759F8F-FF90-4550-A25C-A19D7B12E3B4
+:END:
+https://picaq.github.io/sarasa/
+
+Iosevka와 Source Han Sans 폰트 기반의 한글 지원 폰트.
+
+- mono 코딩용 고정폭 폰트.
+- term 터미널용 폰트
+  + fixed 터미널용 non-ligature 폰트
+
+- Slab 세리프 폰트 
+
+#+begin_src emacs-lisp :tangle yes
+(when (display-graphic-p)
+  (unless (member "Sarasa Mono K" (font-family-list))
+    (system-packages-ensure "font-sarasa-gothic")))
+#+end_src
+
 **** xwidget
 :PROPERTIES:
 :ID:       1D46A65E-F786-4D10-9207-A69EB06452A6

@@ -43,7 +43,7 @@
 
 ;; use straight.el for use-package expressions
 (straight-use-package 'use-package)
-(require 'use-package-ensure)
+;; (require 'use-package-ensure)
 (setq straight-use-package-by-default t
       straight-check-for-modifications '(check-on-save find-when-checking))
 
