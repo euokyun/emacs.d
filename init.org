@@ -357,6 +357,9 @@ long-line
 :ID:       DC473FF1-C169-4A67-881E-7CFEC53B7684
 :END:
 **** package manager
+:PROPERTIES:
+:ID:       2C0246C9-228D-4DA1-9FC2-F45D3EEEF0C1
+:END:
 ​=straight-use-package=​를 사용한다. early-init.el 파일에 있음.
 
 **** COMMENT 패키지 업데이트
@@ -450,9 +453,9 @@ use-package에 통합해서 사용하는게 편하다
   :init/el-patch
   (defvar some-var
     '(((el-patch-swap ?x ?k) aaaaaaaaaaaaaaa "bbbbbbbbbbbbb")
-      (?m aw-swap-window "aaaaaaa")
+      (?m adsvaesrq "aaaaaaa")
       (el-patch-add (?! aaaa "bbbbbb"))
-      (?? aw-show-dispatch-help))))
+      (?? show-dispatch-help))))
 #+end_example
 :init나 :config에 /el-patch를 더해서 쓰면 된다.
 
@@ -584,6 +587,28 @@ https://www.dr-qubit.org/Lost_undo-tree_history.html
 
 undo-tree는 강력하지만 히스토리 저장이 자주 깨진다. 가바지 콜렉터가 elisp 인터프리터 외부에서 실행되고, 그에 따라 실행 취소 기록이 손상될 수 있는 것이 문제라고 함.
 
+**** vundo
+:PROPERTIES:
+:ID:       2A1A13F3-9B0C-4296-834C-326AB59DB659
+:END:
+undo-tree와 비슷하지만 diff 등의 기능은 없다.
+#+begin_src emacs-lisp :tangle yes
+(use-package vundo
+ :straight (vundo
+            :type git
+            :host github
+            :repo "casouri/vundo")
+ :custom
+  ;; (vundo-glyph-alist vundo-unicode-symbols)
+  (vundo-roll-back-on-quit t)           ; 커밋이 아닌 종료시에도 유지할지
+ :general
+  (vundo-mode-map
+   "h" 'vundo-backward
+   "l" 'vundo-forward
+   "j" 'vundo-next
+   "k" 'vundo-previous
+   "<escape>" 'vundo-quit))
+#+end_src
 **** transient
 :PROPERTIES:
 :ID:       E4B8D460-0025-4043-9F5D-4D421369BC4B
@@ -645,7 +670,8 @@ https://github.com/abo-abo/ace-window
           (t (call-interactively 'switch-to-buffer))))
   :general
   ;; ("s-`" 'ace-window)
-  ("M-o" 'ace-window)
+  ;; ("M-o" 'ace-window)
+  ("M-`" 'ace-window)
   :custom
   (aw-minibuffer-flag t)                ; minibuffer도 표시함
   (aw-dispatch-always t)
@@ -722,7 +748,7 @@ https://github.com/abo-abo/ace-window
   - [ ] window size
 - [X] display-buffer-base-action 설정
   + [X] display-buffer-alist 설정
-  + embark로 대체
+  + embark로 대체했음
 - [ ] x에 kill-buffer-and-window 추가하기
 
 **** font-lock-plus
@@ -892,7 +918,9 @@ and style elements ARGS."
     (svg-text svg label
               :font-family font-family :font-weight font-weight  :font-size font-size
               :fill foreground :x text-x :y  text-y)
-    (svg-lib--image svg :ascent 'center))))
+    (svg-lib--image svg :ascent 'center)))
+  :custom
+  (svg-lib-icons-dir (no-littering-expand-var-file-name "svg-lib/cache/")))
 #+end_src
 
 **** svg-tag-mode
@@ -905,7 +933,13 @@ https://github.com/rougier/svg-tag-mode
 (use-package svg-tag-mode
   :if (display-graphic-p)
   :straight t
-  :after svg-lib)
+  :after svg-lib
+  :config
+  (define-advice refresh-theme (:after (&optional args))
+    (mapc (lambda (b)
+            (with-current-buffer b
+              (when svg-tag-mode (font-lock-flush))))
+          (buffer-list))))
 #+end_src
 
 *** completion UI
@@ -1065,6 +1099,7 @@ https://github.com/minad/vertico
 (use-package vertico
   :init
   (vertico-mode)
+  ;; normal-mode시 
   :hook (minibuffer-setup . (lambda ()
                               (setq-local evil-move-beyond-eol t)
                               (cursor-intangible-mode)))
@@ -1089,9 +1124,9 @@ https://github.com/minad/vertico
    "q" 'minibuffer-keyboard-quit
    [remap evil-goto-first-line] 'vertico-first
    [remap evil-goto-line] 'vertico-last)
-  (vertico-map
-   :states 'insert
-   "C-d" 'vertico-scroll-up)
+  ;; (vertico-map
+  ;;  :states 'insert
+  ;;  "C-d" 'vertico-scroll-up)
 
   :config/el-patch
   ;; 이거 왜 반대로 작동하게 해놓은 건지 모르겠다.
@@ -1151,7 +1186,8 @@ https://github.com/minad/vertico
 #+begin_src emacs-lisp :tangle yes
 (use-package vertico-directory
   :after vertico
-  :load-path "~/.config/emacs/straight/build/vertico/extensions/"
+  ;; :load-path "~/.config/emacs/straight/build/vertico/extensions/"
+  :load-path "straight/repos/vertico/extensions/"
   :straight vertico
   ;; More convenient directory navigation commands
   :general
@@ -1334,6 +1370,8 @@ https://github.com/minad/consult
   ;; Configure other variables and modes in the :config section,
   ;; after lazily loading the package.
   :config
+  ;; fallback for corfu
+  (setq-default completion-in-region-function 'consult-completion-in-region)
 
   ;; Optionally configure preview. The default value
   ;; is 'any, such that any key triggers the preview.
@@ -1471,6 +1509,13 @@ https://gitlab.com/OlMon/consult-projectile/
              :branch "master")
   :after consult projectile)
 #+end_src
+
+****** COMMENT consult-proj
+:PROPERTIES:
+:ID:       C47A4477-9CF0-4A59-9A59-6D8230F363E2
+:END:
+project.el 지원
+https://github.com/Qkessler/consult-proj
 
 ****** consult-yasnippet
 :PROPERTIES:
@@ -2054,6 +2099,9 @@ https://github.com/minad/corfu
                                       (evil-force-normal-state))
    [remap evil-mc-undo-all-cursors] 'corfu-quit)
 
+  ([remap evil-complete-next] 'nil
+   [remap evil-complete-previous] 'nil)
+
   (corfu-map
    :states 'motion
    "j" 'corfu-next
@@ -2087,6 +2135,9 @@ https://github.com/minad/corfu
 
 ****** DONE kind-icon
 CLOSED: [2021-12-15 Wed 19:07]
+:PROPERTIES:
+:ID:       BB37E648-72E0-4EEA-AC30-0CD92E03EC5D
+:END:
 https://github.com/jdtsmith/kind-icon
 
 company에서 company-box가 그러하듯 corfu에서 아이콘을 표시하는 패키지.
@@ -2232,71 +2283,74 @@ corfu용 quickhelp
   (corfu-map
    "M-p" 'corfu-doc-scroll-down
    "M-n" 'corfu-doc-scroll-up
-   "S-SPC" 'corfu-doc-show)
-  :config/el-patch
-  (defun corfu-doc--make-frame (x y width height content)
-    "Show child frame at X/Y with WIDTH/HEIGHT and CONTENT."
-    (let* ((window-min-height 1)
-           (window-min-width 1)
-           (x-gtk-resize-child-frames
-            (let ((case-fold-search t))
-              (and
-               ;; XXX HACK to fix resizing on gtk3/gnome taken from posframe.el
-               ;; More information:
-               ;; * https://github.com/minad/corfu/issues/17
-               ;; * https://gitlab.gnome.org/GNOME/mutter/-/issues/840
-               ;; * https://lists.gnu.org/archive/html/emacs-devel/2020-02/msg00001.html
-               (string-match-p "gtk3" system-configuration-features)
-               (string-match-p "gnome\\|cinnamon" (or (getenv "XDG_CURRENT_DESKTOP")
-                                                      (getenv "DESKTOP_SESSION") ""))
-               'resize-mode)))
-           (after-make-frame-functions)
-           (border (alist-get 'child-frame-border-width corfu-doc--frame-parameters))
-           (buffer (corfu-doc--make-buffer content)))
-      (unless (and (frame-live-p corfu-doc--frame)
-                   (eq (frame-parent corfu-doc--frame) (window-frame)))
-        (when corfu-doc--frame (delete-frame corfu-doc--frame))
-        (setq corfu-doc--frame (make-frame
-                                `((parent-frame . ,(window-frame))
-                                  (minibuffer . ,(minibuffer-window (window-frame)))
-                                  (line-spacing . ,line-spacing)
-                                  ;; Set `internal-border-width' for Emacs 27
-                                  (internal-border-width . ,border)
-                                  ,@corfu-doc--frame-parameters))))
-      ;; XXX HACK Setting the same frame-parameter/face-background is not a nop (BUG!).
-      ;; Check explicitly before applying the setting.
-      ;; Without the check, the frame flickers on Mac.
-      (el-patch-remove (let* ((face (if (facep 'child-frame-border) 'child-frame-border 'internal-border)))
-                         (internal-border-color (face-attribute 'corfu-default :background nil 'default))
-                         (bg-color (face-attribute 'corfu-default :background nil 'default)))
-                       (unless (and (equal (face-attribute face :background corfu-doc--frame 'default)
-                                           internal-border-color)
-                                    (equal (frame-parameter corfu--frame 'background-color) bg-color))
-                         (set-face-background face internal-border-color corfu-doc--frame)
-                         ;; XXX HACK We have to apply the face background before adjusting the frame parameter,
-                         ;; otherwise the border is not updated (BUG!).
-                         (set-frame-parameter corfu-doc--frame 'background-color bg-color))
-                       ;; set fringe color
-                       (unless (equal (face-attribute 'fringe :background corfu-doc--frame 'default)
-                                      bg-color)
-                         (set-face-background 'fringe bg-color corfu-doc--frame)))
-      (let ((win (frame-root-window corfu-doc--frame)))
-        (set-window-buffer win buffer)
-        ;; Mark window as dedicated to prevent frame reuse (#60)
-        (set-window-dedicated-p win t))
-      ;; XXX HACK Make the frame invisible before moving the popup in order to avoid flicker.
-      (unless (eq (cdr (frame-position corfu-doc--frame)) y)
-        (make-frame-invisible corfu-doc--frame))
-      (set-frame-position corfu-doc--frame x y)
-      (set-frame-size corfu-doc--frame width height t)
-      (make-frame-visible corfu-doc--frame)))
+   ;; "S-SPC" 'corfu-doc-show)
+   "S-SPC" 'corfu-doc-toggle)
 
-;; help에서 독스트링을 가리는 message를 제거함.
-;; (defun override-ignore-function (&rest _) nil)
-(define-advice corfu-doc-show (:around (orig) ignore-message)
-  (advice-add 'help-window-display-message :override 'ignore)
-  (funcall orig)
-  (advice-remove 'help-window-display-message 'ignore)))
+  ;; :config/el-patch
+  ;; (defun corfu-doc--make-frame (x y width height content)
+  ;;   "Show child frame at X/Y with WIDTH/HEIGHT and CONTENT."
+  ;;   (let* ((window-min-height 1)
+  ;;          (window-min-width 1)
+  ;;          (x-gtk-resize-child-frames
+  ;;           (let ((case-fold-search t))
+  ;;             (and
+  ;;              ;; XXX HACK to fix resizing on gtk3/gnome taken from posframe.el
+  ;;              ;; More information:
+  ;;              ;; * https://github.com/minad/corfu/issues/17
+  ;;              ;; * https://gitlab.gnome.org/GNOME/mutter/-/issues/840
+  ;;              ;; * https://lists.gnu.org/archive/html/emacs-devel/2020-02/msg00001.html
+  ;;              (string-match-p "gtk3" system-configuration-features)
+  ;;              (string-match-p "gnome\\|cinnamon" (or (getenv "XDG_CURRENT_DESKTOP")
+  ;;                                                     (getenv "DESKTOP_SESSION") ""))
+  ;;              'resize-mode)))
+  ;;          (after-make-frame-functions)
+  ;;          (border (alist-get 'child-frame-border-width corfu-doc--frame-parameters))
+  ;;          (buffer (corfu-doc--make-buffer content)))
+  ;;     (unless (and (frame-live-p corfu-doc--frame)
+  ;;                  (eq (frame-parent corfu-doc--frame) (window-frame)))
+  ;;       (when corfu-doc--frame (delete-frame corfu-doc--frame))
+  ;;       (setq corfu-doc--frame (make-frame
+  ;;                               `((parent-frame . ,(window-frame))
+  ;;                                 (minibuffer . ,(minibuffer-window (window-frame)))
+  ;;                                 (line-spacing . ,line-spacing)
+  ;;                                 ;; Set `internal-border-width' for Emacs 27
+  ;;                                 (internal-border-width . ,border)
+  ;;                                 ,@corfu-doc--frame-parameters))))
+  ;;     ;; XXX HACK Setting the same frame-parameter/face-background is not a nop (BUG!).
+  ;;     ;; Check explicitly before applying the setting.
+  ;;     ;; Without the check, the frame flickers on Mac.
+  ;;     (el-patch-remove (let* ((face (if (facep 'child-frame-border) 'child-frame-border 'internal-border)))
+  ;;                        (internal-border-color (face-attribute 'corfu-default :background nil 'default))
+  ;;                        (bg-color (face-attribute 'corfu-default :background nil 'default)))
+  ;;                      (unless (and (equal (face-attribute face :background corfu-doc--frame 'default)
+  ;;                                          internal-border-color)
+  ;;                                   (equal (frame-parameter corfu--frame 'background-color) bg-color))
+  ;;                        (set-face-background face internal-border-color corfu-doc--frame)
+  ;;                        ;; XXX HACK We have to apply the face background before adjusting the frame parameter,
+  ;;                        ;; otherwise the border is not updated (BUG!).
+  ;;                        (set-frame-parameter corfu-doc--frame 'background-color bg-color))
+  ;;                      ;; set fringe color
+  ;;                      (unless (equal (face-attribute 'fringe :background corfu-doc--frame 'default)
+  ;;                                     bg-color)
+  ;;                        (set-face-background 'fringe bg-color corfu-doc--frame)))
+  ;;     (let ((win (frame-root-window corfu-doc--frame)))
+  ;;       (set-window-buffer win buffer)
+  ;;       ;; Mark window as dedicated to prevent frame reuse (#60)
+  ;;       (set-window-dedicated-p win t))
+  ;;     ;; XXX HACK Make the frame invisible before moving the popup in order to avoid flicker.
+  ;;     (unless (eq (cdr (frame-position corfu-doc--frame)) y)
+  ;;       (make-frame-invisible corfu-doc--frame))
+  ;;     (set-frame-position corfu-doc--frame x y)
+  ;;     (set-frame-size corfu-doc--frame width height t)
+  ;;     (make-frame-visible corfu-doc--frame)))
+
+  :config
+  ;; help에서 독스트링을 가리는 message를 제거함.
+  ;; (defun override-ignore-function (&rest _) nil)
+  (define-advice corfu-doc-show (:around (orig) ignore-message)
+    (advice-add 'help-window-display-message :override 'ignore)
+    (funcall orig)
+    (advice-remove 'help-window-display-message 'ignore)))
 #+end_src
 
 ***** dabbrev
@@ -2464,7 +2518,7 @@ Magit, code-review와 같은 version control 패키지에 대한 지원
 (use-package avy-embark-collect)
 #+end_src
 
-**** accent
+**** TODO accent
 :PROPERTIES:
 :ID:       F0C2998E-ED55-4618-81D7-2E7AD79A5DD1
 :END:
@@ -3251,6 +3305,7 @@ https://github.com/emacs-evil/evil-surround
   :config
   (global-evil-surround-mode 1))
 #+end_src
+
 ***** embrace
 :PROPERTIES:
 :ID:       44B20B76-7CBA-4B21-A6B4-87267874723F
@@ -3619,6 +3674,7 @@ https://github.com/redguardtoo/evil-nerd-commenter
   - HTML
 - objed
   https://github.com/clemera/objed
+- 
 
 ***** lispy
 :PROPERTIES:
@@ -3993,6 +4049,37 @@ abbrev를 사용해서 스니펫을 입력할 수 있고, 템플릿을 elisp로 
   ;; function name (or by tag/abbrev if they were defined).
   (skempo-define-tempo (defvar :tag t :mode lisp-interaction-mode)
     "(defvar var" p n> r> ")"))
+#+end_src
+
+***** tempel
+:PROPERTIES:
+:ID:       462EE750-EB3C-409B-BBF0-FB47F95AD615
+:END:
+https://github.com/minad/tempel
+
+#+begin_src emacs-lisp
+(use-package tempel
+  ;; :bind (("M-+" . tempel-complete) ;; Alternative tempel-expand
+  ;;        ("M-*" . tempel-insert))
+  :hook ((prog-mode text-mode) . tempel-setup-capf)
+  :init
+  ;; Setup completion at point
+  (defun tempel-setup-capf ()
+    ;; Add the Tempel Capf to `completion-at-point-functions'.
+    ;; The depth is set to -1, such that `tempel-expand' is tried *before* the
+    ;; programming mode Capf. If a template name can be completed it takes
+    ;; precedence over the programming mode completion. `tempel-expand' only
+    ;; triggers on exact matches. Alternatively use `tempel-complete' if you
+    ;; want to see all matches, but then Tempel will probably trigger too
+    ;; often when you don't expect it.
+
+    (add-hook 'completion-at-point-functions #'tempel-expand -1 'local))
+
+  ;; Optionally make the Tempel templates available to Abbrev,
+  ;; either locally or globally. `expand-abbrev' is bound to C-x '.
+  ;; (add-hook 'prog-mode-hook #'tempel-abbrev-mode)
+  ;; (tempel-global-abbrev-mode)
+  )
 #+end_src
 
 *** UI
@@ -4843,6 +4930,7 @@ https://github.com/alexmurray/evil-vimish-fold
 #+begin_src emacs-lisp :tangle yes
 (use-package hideshow
   :straight (:type built-in)
+  :hook (prog-mode . hs-minor-mode)
   :config/el-patch
   ;; evil과의 호환 문제인지 hideshow가 만든 접힘 표시가 접을때와 펼 때 커서의 위치가 다르다. 그 부분을 수정했다.
   (defun hs-toggle-hiding (&optional e)
@@ -5772,6 +5860,7 @@ https://github.com/jtamagnan/magit-reviewboard
 :CUSTOM_ID: git-gutter
 :END:
 https://github.com/emacsorphanage/git-gutter
+
 git 변경 내용을 표시하는 패키지
 #+begin_src emacs-lisp :tangle yes
 (use-package git-gutter
@@ -5856,6 +5945,9 @@ git 변경 내용을 표시하는 패키지
     [[("j" "next-hunk" git-gutter:next-hunk :transient t)]
      [("k" "previous-hunk" git-gutter:previous-hunk :transient t)]]))
 #+end_src
+
+margin 영역을 사용한다. 그래서 margin 영역을 수정하는 패키지들과 같이 사용하면 표시가 보이지 않는다.
+- visual-fill-column
 
 **** TODO diff-hl
 :PROPERTIES:
@@ -6071,6 +6163,7 @@ https://github.com/emacs-lsp/lsp-ui
 (use-package lsp-ui
   :straight t
   :hook (lsp-mode . lsp-ui-mode)
+  :commands lsp-ui-mode
   :custom
   (lsp-ui-sideline-enable t)
   ;; (lsp-ui-sideline-show-hover nil)
@@ -6346,22 +6439,25 @@ https://gitlab.com/emacs-geiser/geiser
 #+begin_src emacs-lisp :tangle yes
 (use-package nvm
   :defer t)
-
 #+end_src
+
 ****** typescript-mode
 #+begin_src emacs-lisp :tangle yes
 (use-package typescript-mode
   :mode "\\.ts\\'"
-  :config
-  (setq typescript-indent-level 2))
-
+  :custom
+  (typescript-indent-level 2))
 #+end_src
+
 ****** js-doc
 #+begin_src emacs-lisp :tangle yes
 (use-package js-doc)
-
 #+end_src
+
 ****** js2-mode
+:PROPERTIES:
+:ID:       D9B1C369-DEFB-4CC9-8D6F-7752AE0DE0CD
+:END:
 #+begin_src emacs-lisp :tangle yes
 (use-package js2-mode
   ;; :mode "\\.jsx?\\'"
@@ -6404,7 +6500,6 @@ https://gitlab.com/emacs-geiser/geiser
 (use-package ccls
   :hook ((c-mode c++-mode objc-mode cuda-mode) .
          (lambda () (require 'ccls) (lsp))))
-
 #+end_src
 
 ***** markdown
@@ -6415,19 +6510,18 @@ https://gitlab.com/emacs-geiser/geiser
   :mode "\\.md\\'"
   :config
   (setq markdown-command "marked"))
-
 #+end_src
+
 ***** web
 ****** web-mode
 #+begin_src emacs-lisp :tangle yes
 (use-package web-mode
   ;; :mode "(\\.\\(html?\\|ejs\\|tsx\\|jsx\\)\\'"
   :mode "(\\.\\(html?\\|ejs\\|tsx\\)\\'"
-  :config
-  (setq-default web-mode-code-indent-offset 2)
-  (setq-default web-mode-markup-indent-offset 2)
-  (setq-default web-mode-attribute-indent-offset 2))
-
+  :custom
+  (web-mode-code-indent-offset 2)
+  (web-mode-markup-indent-offset 2)
+  (web-mode-attribute-indent-offset 2))
 #+end_src
 
 ****** impatient-mode
@@ -6437,8 +6531,8 @@ live HTML server
 (use-package impatient-mode
   :defer t
   :straight t)
-
 #+end_src
+
 1. Start the server with ​=httpd-start=
 2. Use ​=impatient-mode=​ on any buffer
 
@@ -6471,7 +6565,6 @@ HTTP REST API 테스트용
         ("C-n" . restclient-jump-next)
         ("C-p" . restclient-jump-prev))
   :hook (restclient-mode . display-line-numbers-mode))
-
 #+end_src
 
 ***** emmet-mode
@@ -6485,15 +6578,15 @@ https://github.com/smihica/emmet-mode
   ;; (emmet-insert-flash-time 0.1)
   ;; (emmet-move-cursor-between-quote t)
   :hook (web-mode css-mode))
-
 #+end_src
+
 ***** vue-mode
 #+begin_src emacs-lisp :tangle yes
 (use-package vue-mode
   :mode "\\.vue\\'"
   :commands (vue-mode))
-
 #+end_src
+
 ***** yaml
 ****** yaml-mode
 :PROPERTIES:
@@ -6502,8 +6595,8 @@ https://github.com/smihica/emmet-mode
 #+begin_src emacs-lisp :tangle yes
 (use-package yaml-mode
   :mode "\\.ya?ml\\'")
-
 #+end_src
+
 **** code formatter
 :PROPERTIES:
 :ID:       060D652D-7014-4748-8FF4-AEFB93F0183E
@@ -6569,9 +6662,6 @@ auto code formatter
 #+begin_src emacs-lisp :tangle yes
 (use-package org
   :hook ((org-mode . org-mode-setup)
-         ;; (org-mode . org-icons)
-         ;; (org-mode . svg-lib-on)
-         ;; (org-mode . svg-tag-mode)
 ;; https://emacs.stackexchange.com/questions/16845/expand-org-mode-subtree-with-point-after-ellipsis/44568
 ;; expand when press TAB after ellipsis.
          (org-tab-first-hook . org-end-of-line))
