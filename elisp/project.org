@@ -1,0 +1,143 @@
+#+auto_tangle: t
+
+* COMMENT projectile
+:PROPERTIES:
+:ID:       925F67EF-1235-4DD1-B8FC-CF1CBA159CFE
+:END:
+https://github.com/bbatsov/projectile
+[[https://docs.projectile.mx/projectile/index.html][메뉴얼]]
+
+#+begin_src emacs-lisp :tangle yes
+(use-package projectile
+  ;; :diminish projectile-mode
+  :config (projectile-mode)
+  :demand t
+  ;; :bind-keymap
+  ;; ("C-c p" . projectile-command-map)
+  ;; :init
+  ;; (when (file-directory-p "~/Projects/Code")
+  ;;   (setq projectile-project-search-path '("~/Projects/Code")))
+  :config
+  (defun dw/switch-project-action ()
+    "Switch to a workspace with the project name and start `magit-status'."
+    (persp-switch (projectile-project-name))
+    (magit-status))
+  (setq projectile-switch-project-action #'dw/switch-project-action)
+  :general
+  (spc
+    :states '(normal insert visual emacs motion)
+    "p" '(:ignore t :which-key "projectile/perspective")
+    "pc" 'projectile-compile-project
+    "pd" 'projectile-dired))
+#+end_src
+
+** COMMENT counsel과 통합
+:PROPERTIES:
+:ID:       061E5048-1454-4713-9AED-284FA7FF5038
+:END:
+#+begin_src emacs-lisp :tangle yes
+(use-package counsel-projectile
+  :after counsel projectile
+  ;; :bind (("C-M-p" . counsel-projectile-find-file))
+  :config
+  (counsel-projectile-mode)
+  :general
+  (spc
+   :states '(normal insert visual emacs motion)
+   "p" '(:ignore t :which-key "projectile/perspective")
+   "pf" 'counsel-projectile-find-file
+   "ps" 'counsel-projectile-switch-project
+   ;; "p s-f" 'counsel-projectile-rg
+   "pF" 'counsel-projectile-rg
+   ;; "pF"  'consult-ripgrep
+   "po" 'counsel-projectile))
+#+end_src
+
+* TODO project [0/1]
+:PROPERTIES:
+:ID:       0AD52E23-1F1C-4DA1-85CD-526CBF90C363
+:END:
+built-in 프로젝트 관리 패키지
+
+- [ ] 키바인딩
+
+** project-x
+:PROPERTIES:
+:ID:       45A0E05B-FF5C-42E5-A159-C1E9AA5A8712
+:END:
+https://github.com/karthink/project-x
+
+기본 project의 라이브러리에 몇가지 기능을 추가함.
+- 책갈피, 바탕화면, 창 구성 등을 저장하고 복원하는 기능
+
+** persp-mode-project-bridge
+:PROPERTIES:
+:ID:       C74085F3-FE2B-4ACB-BC5E-6271A3BAD7CD
+:END:
+https://github.com/CIAvash/persp-mode-project-bridge
+
+** project-tab-groups
+:PROPERTIES:
+:ID:       9B678C25-CDBD-4B72-912A-3B8175AEFDE7
+:END:
+https://github.com/fritzgrabo/project-tab-groups
+
+* perspective
+:PROPERTIES:
+:ID:       655B7D4D-D359-4D54-801B-EF10EC30519C
+:END:
+https://github.com/nex3/perspective-el
+
+persp-mode보다 좀 더 관리가 잘 되는 듯 하다.
+기능도 다양하게 많지만 winner-mode와 잘 맞지 않는다. 
+#+begin_src emacs-lisp :tangle yes
+(use-package perspective
+  :init
+  (defvar persp-auto-save-keep-day 7 "how long keep old perspective state")
+  :custom
+  (persp-state-default-file (expand-file-name "perspective.el" persp-save-dir))
+  :config
+  (persp-mode)
+
+  ;; (with-eval-after-load 'consult
+  ;;   (defvar consult--source-perspective
+  ;;     (list :name "Perspective"
+  ;;           :narrow ?s
+  ;;           :category 'buffer
+  ;;           :history buffer-name-history
+  ;;           :state #'consult--buffer-state
+  ;;           :default t
+  ;;           :items #'persp-get-buffer-names))
+  ;;   (push consult--source-perspective consult-buffer-sources))
+
+  (defun persp-save-persp-state ()
+    "Save persp state to file, and keep newer backup files and remove olds."
+    (let ((last-save
+           (concat persp-state-default-file
+                   (format-time-string ".%y%m%d-%H%M%S" (current-time)))))
+      (when (file-exists-p persp-state-default-file)
+        (rename-file persp-state-default-file
+                     last-save))
+      (mapc (lambda (file) (delete-file file))
+            (-filter
+             (lambda (file)
+               (file-modified-before-p persp-auto-save-keep-day file))
+             (directory-files persp-save-dir t "perspective.el.")))
+      (condition-case nil
+          (persp-state-save persp-state-default-file)
+        (rename-file last-save persp-state-default-file))))
+
+  (defun persp-load-persp-state ()
+    "load latest persp state"
+    (persp-state-load persp-state-default-file))
+
+  :hook ((kill-emacs . persp-save-persp-state)
+         (after-init . persp-load-persp-state)))
+#+end_src
+
+** treemacs-perspective
+#+begin_src emacs-lisp :tangle yes
+(use-package treemacs-perspective
+  :after (treemacs perspective)
+  :config (treemacs-set-scope-type 'Perspectives))
+#+end_src

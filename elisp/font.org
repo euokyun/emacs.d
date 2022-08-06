@@ -1,0 +1,213 @@
+#+auto_tangle: t
+
+* Sarasa-Gothic 
+:PROPERTIES:
+:ID:       39759F8F-FF90-4550-A25C-A19D7B12E3B4
+:END:
+https://picaq.github.io/sarasa/
+
+Iosevka와 Source Han Sans 폰트 기반의 한글 지원 폰트.
+
+- mono 코딩용 고정폭 폰트.
+- term 터미널용 폰트
+  + fixed 터미널용 non-ligature 폰트
+
+- Slab 세리프 폰트 
+
+#+begin_src emacs-lisp :tangle yes
+(when (display-graphic-p)
+  (unless (member "Sarasa Mono K" (font-family-list))
+    (system-packages-ensure "font-sarasa-gothic")))
+#+end_src
+
+* ligature
+:PROPERTIES:
+:ID:       E19D2990-DF29-49C0-BE37-3759AB7E022A
+:END:
+https://github.com/mickeynp/ligature.el
+
+합자(리가추어) 지원
+
+#+begin_src emacs-lisp :tangle yes
+(use-package ligature
+  :straight (ligature
+             :type git
+             :host github
+             :repo "mickeynp/ligature.el")
+  :config
+  ;; for Sarasa font
+  (ligature-set-ligatures 't
+   '("|||>" "<|||" "<==>" "<!--" "~~>" "||=" "||>" ":::"
+     "=:=" "===" "==>" "=>>" "!==" "!!." ">=>" ">>>" "->>"
+     "-->" "<~~" "<~>" "<*>" "<||" "<|>" "<==" "<=>" "<->"
+     "<--" "<<-" "<<<" "..." "+++" "///" "^=" "~>" "*>" "||"
+     "|>" "::" ":=" ":>" ":<" "==" "=>" "!=" "!!" ">:" ">="
+     ">>" "->" "<~" "<*" "<|" "<:" "<=" "<-" "<<" ".." ".?"
+     "++" "?:" "?." "??" ";;" "//" "\\\\" "://"))
+  
+  ;; ;; Enable the "www" ligature in every possible major mode
+  ;; (ligature-set-ligatures 't '("www"))
+  ;; ;; Enable traditional ligature support in eww-mode, if the
+  ;; ;; `variable-pitch' face supports it
+  ;; (ligature-set-ligatures 'eww-mode '("ff" "fi" "ffi"))
+  ;; ;; Enable all Cascadia Code ligatures in programming modes
+  ;; (ligature-set-ligatures
+  ;;  'prog-mode
+  ;;  '("|||>" "<|||" "<==>" "<!--" "####" "~~>" "***" "||=" "||>"
+  ;;    ":::" "::=" "=:=" "===" "==>" "=!=" "=>>" "=<<" "=/=" "!=="
+  ;;    "!!." ">=>" ">>=" ">>>" ">>-" ">->" "->>" "-->" "---" "-<<"
+  ;;    "<~~" "<~>" "<*>" "<||" "<|>" "<$>" "<==" "<=>" "<=<" "<->"
+  ;;    "<--" "<-<" "<<=" "<<-" "<<<" "<+>" "</>" "###" "#_(" "..<"
+  ;;    "..." "+++" "/==" "///" "_|_" "www" "&&" "^=" "~~" "~@" "~="
+  ;;    "~>" "~-" "**" "*>" "*/" "||" "|}" "|]" "|=" "|>" "|-" "{|"
+  ;;    "[|" "]#" "::" ":=" ":>" ":<" "$>" "==" "=>" "!=" "!!" ">:"
+  ;;    ">=" ">>" ">-" "-~" "-|" "->" "--" "-<" "<~" "<*" "<|" "<:"
+  ;;    "<$" "<=" "<>" "<-" "<<" "<+" "</" "#{" "#[" "#:" "#=" "#!"
+  ;;    "##" "#(" "#?" "#_" "%%" ".=" ".-" ".." ".?" "+>" "++" "?:"
+  ;;    "?=" "?." "??" ";;" "/*" "/=" "/>" "//" "__" "~~" "(*" "*)"
+  ;;    "\\\\" "://"))
+  ;; ;; Enables ligature checks globally in all buffers. You can also do it
+  ;; ;; per mode with `ligature-mode'.
+  (global-ligature-mode t))
+#+end_src
+
+* all-the-icons
+:PROPERTIES:
+:ID:       DF07644C-8C20-4200-90AF-7E8D840F9392
+:END:
+https://github.com/domtronn/all-the-icons.el
+fancy한 유니코드 아이콘을 추가함.
+#+begin_src emacs-lisp :tangle yes
+(use-package all-the-icons
+  :config
+  (when (display-graphic-p)
+    (unless (member "all-the-icons" (font-family-list))
+      (all-the-icons-install-fonts t))))
+#+end_src
+
+* font-lock-plus
+:PROPERTIES:
+:ID:       565BB617-7CFD-44DB-A8EF-D013C70DE0E7
+:END:
+https://gitlab.com/thomasluquet/font-lock-plus
+#+begin_src emacs-lisp :tangle yes
+(use-package font-lock+)
+#+end_src
+
+* icons-in-terminal
+:PROPERTIES:
+:ID:       90EA68DA-1E5C-4C50-B45F-AECAE7607F82
+:END:
+https://github.com/sebastiencs/icons-in-terminal
+
+#+begin_src emacs-lisp :tangle yes
+(use-package icons-in-terminal
+  :straight (icons-in-terminal
+              :type git
+              :host github
+              :repo "sebastiencs/icons-in-terminal"
+              :files ("build/icons-in-terminal.el"))
+  :after font-lock+)
+#+end_src
+
+#+begin_example emacs-lisp :tangle no
+(insert (icons-in-terminal 'fa_bookmark))
+#+end_example
+
+* svg-lib
+:PROPERTIES:
+:ID:       DC77F587-E837-49E5-A268-E5D012F6C5B6
+:END:
+https://github.com/rougier/svg-lib
+
+#+begin_src emacs-lisp :tangle yes
+(use-package svg-lib
+  :if (display-graphic-p)
+  :config/el-patch
+  (defun svg-lib-tag (label &optional style &rest args)
+  "Create an image displaying LABEL in a rounded box using given STYLE
+and style elements ARGS."
+
+  (let* ((default svg-lib-style-default)
+         (style (if style (apply #'svg-lib-style nil style) default))
+         (style (if args  (apply #'svg-lib-style style args) style))
+
+         (foreground  (plist-get style :foreground))
+         (background  (plist-get style :background))
+
+         (crop-left   (plist-get style :crop-left))
+         (crop-right  (plist-get style :crop-right))
+
+         (alignment   (plist-get style :alignment))
+         (stroke      (plist-get style :stroke))
+
+         (height      (plist-get style :height))
+         (radius      (plist-get style :radius))
+
+         (margin      (plist-get style :margin))
+         (padding     (plist-get style :padding))
+         (font-size   (plist-get style :font-size))
+         (font-family (plist-get style :font-family))
+         (font-weight (plist-get style :font-weight))
+
+         (txt-char-width  (window-font-width))
+         (txt-char-height (window-font-height))
+         (txt-char-height (if line-spacing
+                              (+ txt-char-height line-spacing)
+                            txt-char-height))
+         (font-info       (font-info (format "%s-%d" font-family font-size)))
+         (font-size       (aref font-info 2)) ;; redefine font-size
+         (ascent          (aref font-info 8))
+         (tag-char-width  (aref font-info 11))
+         ;; (tag-char-height (aref font-info 3))
+         (tag-width       (* (el-patch-wrap 1 (1- (+ (length label) padding))) txt-char-width))
+         (tag-height      (* txt-char-height height))
+
+         (svg-width       (+ tag-width (* margin txt-char-width)))
+         (svg-height      tag-height)
+
+         (tag-x  (* (- svg-width tag-width)  alignment))
+         (text-x (+ tag-x (/ (- tag-width (* (length label) tag-char-width)) 2)))
+         (text-y ascent)
+
+         (tag-x      (if crop-left  (- tag-x     txt-char-width) tag-x))
+         (tag-width  (if crop-left  (+ tag-width txt-char-width) tag-width))
+         (text-x     (if crop-left  (- text-x (/ stroke 2)) text-x))
+         (tag-width  (if crop-right (+ tag-width txt-char-width) tag-width))
+         (text-x     (if crop-right (+ text-x (/ stroke 2)) text-x))
+
+         (svg (svg-create svg-width svg-height)))
+
+    (if (>= stroke 0.25)
+        (svg-rectangle svg tag-x 0 tag-width tag-height
+                           :fill foreground :rx radius))
+    (svg-rectangle svg (+ tag-x (/ stroke 2.0)) (/ stroke 2.0)
+                       (- tag-width stroke) (- tag-height stroke)
+                       :fill background :rx (- radius (/ stroke 2.0)))
+    (svg-text svg label
+              :font-family font-family :font-weight font-weight  :font-size font-size
+              :fill foreground :x text-x :y  text-y)
+    (svg-lib--image svg :ascent 'center)))
+  :custom
+  (svg-lib-icons-dir (no-littering-expand-var-file-name "svg-lib/cache/")))
+#+end_src
+
+* svg-tag-mode
+:PROPERTIES:
+:ID:       9B558CD5-45B0-4C62-8F64-7E3986E939F7
+:END:
+https://github.com/rougier/svg-tag-mode
+
+#+begin_src emacs-lisp :tangle yes
+(use-package svg-tag-mode
+  :if (display-graphic-p)
+  :straight t
+  :after svg-lib
+  :config
+  (define-advice refresh-theme (:after (&optional args))
+    (mapc (lambda (b)
+            (with-current-buffer b
+              (when svg-tag-mode (font-lock-flush))))
+          (buffer-list))))
+#+end_src
+

@@ -1,0 +1,668 @@
+#+auto_tangle: t
+
+* indicators
+** display-line-numbers
+:PROPERTIES:
+:ID:       698D2C53-85FB-480C-9EA8-644D2EB7DAF8
+:END:
+#+begin_src emacs-lisp :tangle yes
+(use-package display-line-numbers
+  :hook ((prog-mode text-mode) . (lambda ()
+                                   (setq-local display-line-numbers 'visual)))
+  :custom
+  ;; (display-line-numbers 'visual)
+  (display-line-numbers-widen t)
+  (display-line-numbers-current-absolute t)
+  :config
+;; insert state일땐 일반적인 줄 번호를, 그 외에는 motion을 활용하기 편한 상대 줄번호를 표시한다.
+  (defun noct:relative ()
+     (if display-line-numbers (setq-local display-line-numbers 'visual)))
+  (defun noct:absolute ()
+    (if display-line-numbers (setq-local display-line-numbers t)))
+  (add-hook 'evil-insert-state-entry-hook #'noct:absolute)
+  (add-hook 'evil-insert-state-exit-hook #'noct:relative))
+#+end_src
+
+** paren [1/1]
+:PROPERTIES:
+:ID:       1ED87A96-8E28-4647-8BA3-E26AB55177A4
+:END:
+괄호의 양 끝을 강조표시한다.
+#+begin_src emacs-lisp :tangle yes
+(use-package paren
+  :defer t
+  :custom
+  (show-paren-style 'parenthesis)
+  ;; (show-paren-style 'expression)
+  (show-paren-delay 0)
+  ;; (flash-matching-paren nil)
+  (show-paren-when-point-inside-paren t)
+  :config
+  ;; (set-face-attribute 'show-paren-match-expression nil :background (gruvbox-color 'gruvbox-gray))
+  (show-paren-mode 1))
+#+end_src
+
+** whitespace
+:PROPERTIES:
+:ID:       30DEFACA-0125-4C26-9362-852E25605D44
+:END:
+공백 문자를 표시해줌
+#+begin_src emacs-lisp :tangle yes
+(use-package whitespace
+  ;; :demand t
+  ;; :init
+  ;; (global-whitespace-mode t)
+  ;; :custom-face
+  :custom
+  (whitespace-global-modes '(not magit-diff-mode org-mode))
+  (whitespace-line-column nil)
+  (whitespace-display-mappings
+   ;; all numbers are Unicode codepoint in decimal. ⁖ (insert-char 182 1)
+   '((space-mark 32 [183] [46]) ; 32 SPACE 「 」, 183 MIDDLE DOT 「·」, 46 FULL STOP 「.」
+     ;; (newline-mark 10 [8617 10]) ; 10 LINE FEED
+     ;; (lines-tail 10 [8617 10]) ; 10 LINE FEED
+     (tab-mark 9 [8594 9] [183 9]) ; 9 TAB, 9655 WHITE RIGHT-POINTING TRIANGLE 「▷」
+     ))
+  (whitespace-style '(face              ; use faces
+                      trailing
+                      spaces
+                      ;; lines-tail        ; 80 column rule
+                      empty
+                      indentation::tab
+                      indentation::space
+                      tabs
+                      ;; newline
+                      space-mark
+                      tab-mark
+                      ;; newline-mark
+                      )))
+#+end_src
+
+** beacon
+:PROPERTIES:
+:ID:       405531A6-F8BA-45A0-BBAB-D867BF3EFC21
+:END:
+https://github.com/Malabarba/beacon
+
+스크롤링시 커서 위치를 강조표시함
+#+BEGIN_SRC emacs-lisp :tangle yes
+(use-package beacon
+  :defer 3
+  :custom
+  (beacon-mode 1))
+#+END_SRC
+
+** page-break-lines
+:PROPERTIES:
+:ID:       C8F6BE12-853A-4C42-A935-6FD3F60ED8E6
+:END:
+https://github.com/purcell/page-break-lines
+#+begin_src emacs-lisp :tangle yes
+(use-package page-break-lines
+  :diminish
+  :hook (dashboard-mode . page-break-lines-mode)
+  ;; :config
+  ;; (global-page-break-lines-mode)
+  )
+
+#+end_src
+
+* highlights
+:PROPERTIES:
+:ID:       C03CC354-1BDB-4409-9BDB-9C78D746A840
+:END:
+** COMMENT hl-line+
+:PROPERTIES:
+:ID:       CF6869A5-405F-47AF-BF37-4CC134E458EA
+:END:
+#+begin_src emacs-lisp :tangle yes
+(use-package hl-line+
+  :straight t
+  :custom-face
+  ;; subtle highlighting
+  (hl-line ((t (:inherit highlight))))
+  :custom
+  (global-hl-line-mode nil)
+  (hl-line-flash-show-period 1.0)
+  (hl-line-inhibit-highlighting-for-modes '(dired-mode))
+  (hl-line-when-idle-interval 2)
+  :config
+  (toggle-hl-line-when-idle 1 t)
+  )
+#+end_src
+
+** crosshairs
+:PROPERTIES:
+:ID:       57F54A7C-E1D8-4BD5-B0D7-F80EE21C8558
+:END:
+#+begin_src emacs-lisp :tangle yes
+(use-package crosshairs
+  :straight t
+  :commands (crosshairs-highlight
+             crosshairs-mode
+             crosshairs 
+             flash-crosshairs)
+  :custom-face
+  (col-highlight ((t (:inherit hl-line))))
+  :custom
+  ;; same colors for both hlines
+  (col-highlight-vline-face-flag t))
+#+end_src
+
+** volatile-highlights
+:PROPERTIES:
+:ID:       2FE81916-EA2E-4DF7-9573-B756864E3C47
+:END:
+https://github.com/k-talo/volatile-highlights.el
+변경 영역을 하이라이트함
+#+begin_src emacs-lisp :lexical no
+(use-package volatile-highlights
+  :config
+  (vhl/define-extension 'undo-tree
+                        'undo-tree-yank 'undo-tree-move)
+  (vhl/install-extension 'undo-tree)
+  (vhl/define-extension 'evil
+                        'evil-paste-after 'evil-paste-before 'evil-paste-pop 'evil-move)
+  (vhl/install-extension 'evil)
+  (volatile-highlights-mode t))
+#+end_src
+
+** COMMENT highlight-thing
+:PROPERTIES:
+:ID:       F5AE411B-FFA9-44D9-8EEA-0A002AA07855
+:END:
+https://github.com/fgeller/highlight-thing.el
+현재 커서 위치와 같은 단어를 강조 표시함
+#+begin_src emacs-lisp :tangle yes
+(use-package highlight-thing
+  :diminish
+  :commands (highlight-thing-mode highlight-thing-do)
+  :custom
+  (highlight-thing-exclude-thing-under-point t)
+  ;; :custom-face
+  ;; (highlight-thing ((t (;; :box (:line-width -1)
+  ;;                       :background "orange"
+  ;;                       :foreground "black"))))
+  ;; :hook (prog-mode . highlight-thing-mode)
+  )
+#+end_src
+
+** COMMENT region-occurrences-highlighter [0/1]
+:PROPERTIES:
+:ID:       00283B73-B2B8-4E90-AB1B-A15742C83152
+:END:
+https://github.com/alvarogonzalezsotillo/region-occurrences-highlighter
+
+영역 선택시 같은 텍스트를 강조 표시함
+#+begin_src emacs-lisp :tangle yes
+(use-package region-occurrences-highlighter
+  :defer t
+  ;; :hook ((prog-mode org-mode text-mode) . #'region-occurrences-highlighter-mode)
+  :config/el-patch
+  ;; evil compatible
+  (defun region-occurrences-highlighter--change-hook ()
+  "Called each time the region is changed."
+
+  ;;; REMOVE PREVIOUS HIGHLIGHTED REGION
+  (when region-occurrences-highlighter--previous-region
+    (unhighlight-regexp region-occurrences-highlighter--previous-region)
+    (setq region-occurrences-highlighter--previous-region nil)
+    (region-occurrences-highlighter-nav-mode -1))
+
+  (when region-occurrences-highlighter-mode
+
+    ;;; HIGHLIGHT THE CURRENT REGION
+    (when (and (region-active-p)
+               (not deactivate-mark))
+      (let ((begin (region-beginning))
+            (end (el-patch-wrap 2 0 (+ 1 (region-end)))))
+        (when (region-occurrences-highlighter--accept begin end)
+          (let ((str (regexp-quote (buffer-substring-no-properties begin end))))
+            (setq region-occurrences-highlighter--previous-region str)
+            (highlight-regexp str 'region-occurrences-highlighter-face)
+            (region-occurrences-highlighter-nav-mode 1))))))))
+#+end_src
+
+- 긴 org-mode에서 퍼포먼스 저하를 발견함.(fold 때문인 듯)
+- [ ] on/off 키 추가
+
+** hl-block-mode
+:PROPERTIES:
+:ID:       5A79ED5F-C2D1-4A63-A21A-289F87C24ED7
+:END:
+https://gitlab.com/ideasman42/emacs-hl-block-mode
+
+커서가 위치한 블럭을 강조 표시함
+#+begin_src emacs-lisp :tangle yes
+(use-package hl-block-mode
+  :custom
+  (hl-block-bracket nil)
+  ;; (hl-block-single-level t)
+  ;; (hl-block-style 'color-tint)
+  ;; (hl-block-color-tint "#040404")
+  (hl-block-style 'bracket)             ; color tint mode disables rainbow mode.
+  (hl-block-bracket-face '(:inverse-video t)) ; and this fix face t problem.
+  :commands (hl-block-mode)
+  :hook ((prog-mode . hl-block-mode)))
+#+end_src
+
+color-tint와 bracket 두가지 모드가 있다.
+
+- color-tint는 rainbow-mode 등 몇가지 background face를 사용하는 모드를 덮어쓴다.
+- bracket은 t라는 face를 찾지 못한다는 에러를 띄우고, 의도와는 반대로 커서 위치가 헷갈리는 문제가 있다.(수정함)
+
+** highlight-indent-guides
+:PROPERTIES:
+:ID:       4CBD3996-76FE-42D5-80BE-44E1E776E20D
+:CUSTOM_ID: highlight-indent-guides
+:END:
+https://github.com/darthfennec/highlight-indent-guides
+
+indent 레벨을 라인으로 표시해줌
+#+begin_src emacs-lisp :tangle yes
+(use-package highlight-indent-guides
+  :diminish
+  :if (display-graphic-p)
+  :hook (prog-mode . highlight-indent-guides-mode)
+  :custom
+  ;; (highlight-indent-guides-suppress-auto-error t) ; supress errors.
+  (highlight-indent-guides-responsive 'stack)
+  (highlight-indent-guides-bitmap-function
+   #'highlight-indent-guides--bitmap-line)
+  (highlight-indent-guides-method 'bitmap) ; bitmap line only works in gui mode
+  ;; (highlight-indent-guides-method 'character)     ; character has bug : sometimes copy character line too.
+  ;; (highlight-indent-guides-method 'column)
+  (highlight-indent-guides-auto-character-face-perc 5)
+  (highlight-indent-guides-delay 0)
+  :config
+  ;; 테마 변경시
+  (define-advice refresh-theme (:after (&optional args))
+    (mapc (lambda (b)
+            (with-current-buffer b
+              (when highlight-indent-guides-mode
+                (highlight-indent-guides-mode -1)
+                (highlight-indent-guides-mode 1))))
+          (buffer-list))))
+#+end_src
+
+** rainbow-delimiters
+:PROPERTIES:
+:ID:       07C706EC-5E53-4201-977C-32417FE72DD2
+:END:
+https://github.com/Fanael/rainbow-delimiters
+
+여닫는 괄호를 색상 강조함.
+#+begin_src emacs-lisp :tangle yes
+(use-package rainbow-delimiters
+  :defer 3
+  :hook ((prog-mode lisp-interaction-mode) . rainbow-delimiters-mode))
+#+end_src
+
+** rainbow-mode
+:PROPERTIES:
+:ID:       21DFA738-5666-487C-A4E6-0AE3315B464F
+:END:
+https://elpa.gnu.org/packages/rainbow-mode.html
+
+색상 코드, 스트링의 배경색을 색상에 맞게 칠함
+#+begin_src emacs-lisp :tangle yes
+(use-package rainbow-mode
+  :diminish
+  :defer t
+  :hook (org-mode
+         help-mode
+         helpful-mode
+         emacs-lisp-mode
+         web-mode
+         typescript-mode
+         js2-mode))
+#+end_src
+
+* modeline
+** diminish
+:PROPERTIES:
+:ID:       E1EBBC1E-C394-47A2-BE8B-24CEAF97EAAB
+:END:
+https://github.com/emacsmirror/diminish
+
+모드 라인에서 minor 모드를 가리는 패키지
+#+begin_src emacs-lisp :tangle yes
+(use-package diminish)
+#+end_src
+
+** minions
+:PROPERTIES:
+:ID:       EC485605-3264-473D-9C48-D8A86911B932
+:CUSTOM_ID: minions
+:END:
+https://github.com/tarsius/minions
+
+마이너 모드들을 묶어서 표시함
+#+begin_src emacs-lisp :tangle yes
+(use-package minions
+  :defer 3
+  :custom
+  (minions-mode t))
+
+#+end_src
+** mlscroll
+:PROPERTIES:
+:CUSTOM_ID: mlscroll
+:ID:       118778CD-F8F1-4235-90C7-CA2A87FB7661
+:END:
+https://github.com/jdtsmith/mlscroll
+
+모드라인에 화면 위치를 보여주는 스크롤 바를 생성함
+#+begin_src emacs-lisp :tangle yes
+(use-package mlscroll
+  ;; :defer t
+  :custom
+  (mlscroll-width-chars 7)
+  ;; (mlscroll-shortfun-min-width 11) ; truncate which-func, for default mode-line-format's
+  :config
+  ;; (mlscroll-mode 1)
+  (defun mlscroll-apply-theme (orig &rest args)
+    (mlscroll-mode -1)
+    (apply orig args)
+    (setq mlscroll-in-color (face-attribute 'region :background nil t))
+    (setq mlscroll-out-color (face-attribute 'default :background))
+    (mlscroll-mode 1))
+  (advice-add 'refresh-theme :around #'mlscroll-apply-theme))
+#+end_src
+
+** keycast
+:PROPERTIES:
+:ID:       A6AD0EC8-834F-4F54-9778-195CE1B79621
+:END:
+https://github.com/tarsius/keycast
+
+누른 키를 모드라인에 표시해주는 기능
+#+begin_src emacs-lisp :tangle yes
+(use-package keycast
+  :straight t
+  :defer 3
+  :custom-face
+  (keycast-key ((t (:weight bold :inverse-video t :height 0.85))))
+  :custom
+  (keycast-mode-line-format "%k")
+  (keycast-remove-tail-elements nil)
+  :config
+  (keycast-mode))
+#+end_src
+
+** COMMENT tb-keycast
+:PROPERTIES:
+:ID:       57FA0334-82DC-4439-9655-E3E83960A681
+:END:
+https://github.com/ir33k/tb-keycast
+
+keycast를 모드라인 대신 tab-bar에 표시한다.
+#+begin_src emacs-lisp :tangle yes
+(use-package tb-keycast
+  :straight (tb-keycast
+             :type git
+             :host github
+             :repo "ir33k/tb-keycast")
+  :config
+  (tb-keycast-mode 1))
+#+end_src
+
+* help
+** helpful
+:PROPERTIES:
+:ID:       9C7CB170-288C-4EDC-8D5C-74D19B80D0E4
+:END:
+https://github.com/Wilfred/helpful
+
+help-mode 도움말을 를 더 유용하게 바꿈
+#+begin_src emacs-lisp :tangle yes
+(use-package helpful
+  ;; :custom
+  ;; (counsel-describe-function-function #'helpful-callable)
+  ;; (counsel-describe-variable-function #'helpful-variable)
+  :bind
+  ([remap describe-function] . helpful-function)
+  ([remap describe-symbol] . helpful-symbol)
+  ([remap describe-variable] . helpful-variable)
+  ([remap describe-command] . helpful-command)
+  ([remap describe-key] . helpful-key)
+  ;; :config
+  ;; https://xenodium.com/basic-imenu-in-helpful-mode/
+  ;; (defun helpful--create-imenu-index ()
+  ;;   "Create an `imenu' index for helpful."
+  ;;   (beginning-of-buffer)
+  ;;   (let ((imenu-items '()))
+  ;;     (while (progn
+  ;;              (beginning-of-line)
+  ;;              ;; Not great, but determine if looking at heading:
+  ;;              ;; 1. if it has bold face.
+  ;;              ;; 2. if it is capitalized.
+  ;;              (when (and (eq 'bold (face-at-point))
+  ;;                         (string-match-p
+  ;;                          "[A-Z]"
+  ;;                          (buffer-substring (line-beginning-position)
+  ;;                                            (line-end-position))))
+  ;;                (add-to-list 'imenu-items
+  ;;                             (cons (buffer-substring (line-beginning-position)
+  ;;                                                     (line-end-position))
+  ;;                                   (line-beginning-position))))
+  ;;              (= 0 (forward-line 1))))
+  ;;     imenu-items))
+
+  ;; (defun helpful-mode-hook-function ()
+  ;;   "A hook function for `helpful-mode'."
+  ;;   (setq imenu-create-index-function #'helpful--create-imenu-index))
+
+  ;; (add-hook 'helpful-mode-hook
+  ;;           #'helpful-mode-hook-function)
+  )
+#+end_src
+
+** elisp-demos
+:PROPERTIES:
+:ID:       8FDA0791-F789-4A01-8673-1A4073D411A7
+:END:
+https://github.com/xuchunyang/elisp-demos
+
+#+begin_src emacs-lisp :tangle yes
+(use-package elisp-demos
+  :defer 1
+  :config
+  ;; inject demos into helpful
+  (advice-add 'helpful-update :after #'elisp-demos-advice-helpful-update))
+#+end_src
+
+** info-colors
+:PROPERTIES:
+:ID:       098C8571-A6DA-476E-851F-EF6305476D91
+:END:
+https://github.com/ubolonton/info-colors
+
+#+begin_src emacs-lisp :tangle yes
+(use-package info-colors
+  :straight (:host github :repo "ubolonton/info-colors")
+  :defer t
+  :hook
+  (info-selection . info-colors-fontify-node))
+#+end_src
+
+** eldoc
+:PROPERTIES:
+:ID:       8AB7399E-DF27-45BA-BF60-5E64A93751E8
+:END:
+
+#+begin_src emacs-lisp :tangle yes
+(use-package eldoc
+  :straight (:type built-in)
+  :commands eldoc-mode
+  :hook (emacs-lisp-mode . turn-on-eldoc-mode)
+  :diminish t
+  :custom
+  (eldoc-idle-delay 0))
+#+end_src
+
+* transpose-frame
+:PROPERTIES:
+:ID:       C76C1A0C-BDAD-47BB-9791-850AD31D4AD5
+:END:
+http://emacswiki.org/emacs/download/transpose-frame.el
+
+#+begin_src emacs-lisp :tangle yes
+(use-package transpose-frame
+  :defer t)
+#+end_src
+
+* ace-window [3/5]
+:PROPERTIES:
+:ID:       C7AF82D9-BD0C-4081-A1BF-92D5CEA14296
+:END:
+https://github.com/abo-abo/ace-window
+
+단축키로 윈도우를 조작하는 패키지
+#+begin_src emacs-lisp :tangle yes
+(use-package ace-window
+  :straight (ace-window
+             :host github
+             :repo "abo-abo/ace-window"
+             :fork (:host github
+                    :repo "rdiaz02/ace-window"
+                    :branch "posframe-notmgsk"))
+
+  :config/el-patch
+  (defun aw--remove-leading-chars-posframe ()
+    ;; Hide rather than delete. See aw--lead-overlay-posframe for why.
+    ((el-patch-swap map cl-map) nil #'posframe-hide aw--posframe-frames)
+    (setq aw--posframe-frames '()))
+  
+  (defun aw--switch-buffer ()
+    (cond ((bound-and-true-p ivy-mode)
+           (ivy-switch-buffer))
+          ((bound-and-true-p ido-mode)
+           (ido-switch-buffer))
+          (el-patch-add
+            ((and (featurep 'consult) (featurep 'persp-mode))
+             (with-persp-buffer-list () (consult-buffer)))
+            ;; ((and (featurep 'consult) (featurep 'perspective))
+            ;;  ())
+            ((featurep 'consult)
+             (consult-buffer)))
+          (t (call-interactively 'switch-to-buffer))))
+  :general
+  ;; ("s-`" 'ace-window)
+  ;; ("M-o" 'ace-window)
+  ;; ("M-`" 'ace-window)
+  ("M-`" 'ace-window)
+  :custom
+  (aw-minibuffer-flag t)                ; minibuffer도 표시함
+  (aw-dispatch-always t)
+  (aw-background nil)                   ; disable dim background
+
+  :config
+  ;; (define-advice ace-window (:before (arg)) (set-input-method nil))
+  (setq aw-keys '(?a ?s ?d ?g ?h ?i ?n ?p ?w ?y ?z ?b))
+  (setq aw-dispatch-alist
+        '((?k aw-delete-window "delete Window")
+          (?M aw-swap-window "Swap Windows")
+          (?m aw-move-window "Move Window")
+          (?c aw-copy-window "Copy Window")
+          (?o aw-switch-buffer-in-window "Select Buffer")
+          ;; (?` aw-flip-window)
+          (?` switch-between-minibuffer)
+          (?O aw-switch-buffer-other-window "Switch Buffer Other Window")
+          (?e aw-execute-command-other-window "Execute Command Other Window")
+          ;; (?f aw-split-window-fair "Split Fair Window")
+          (?j aw-split-window-vert "Split Vert Window")
+          (?l aw-split-window-horz "Split Horz Window")
+          (?K delete-other-windows "Delete Other Windows")
+          (?t aw-transpose-frame "Transpose Frame")
+          (?! aw--vterm "open vTerm")
+          (?v hydra-window-scroll/body)
+          (?u aw--winner-undo)
+          (?r winner-redo)
+          ;; (?x )
+          (27 aw--done)
+          (?q aw--done)
+          (?? aw-show-dispatch-help)))
+
+  (defun switch-between-minibuffer (&rest _)
+    (when (active-minibuffer-window)
+      (if (minibufferp)
+          (select-window (minibuffer-selected-window))
+        (select-window (active-minibuffer-window)))))
+
+  (defun joe-scroll-other-window ()
+    (interactive)
+    (scroll-other-window 1))
+  (defun joe-scroll-other-window-down ()
+    (interactive)
+    (scroll-other-window-down 1))
+  (defhydra hydra-window-scroll (:color red)
+    "Scroll other window"
+    ("j" joe-scroll-other-window "scroll")
+    ("k" joe-scroll-other-window-down "scroll down"))
+
+  (defun aw--vterm (window)
+    (select-window window)
+    (vterm))
+
+  (defun aw--winner-undo ()
+    (progn (winner-undo)
+           (setq this-command 'winner-undo)))
+
+  ;; (setq aw-ignore-current t) ; 이러면 split이 현재 윈도우에서 작동하지 않는다.
+  (ace-window-display-mode t)           ; showing window identifier on modeline.
+  (when (display-graphic-p)
+    (ace-window-posframe-mode t))
+
+  ;; 테마 변경시 망가지는 ace-window-posframe 재설정
+  (define-advice refresh-theme
+      (:after (&optional _))
+    (if ace-window-posframe-mode
+        (kill-matching-buffers "*aw-posframe-buffer-*" t t))))
+#+end_src
+
+- [X] posframe 추가
+- [X] posframe face 변경
+- [-] window size, scroll-other-window의 transient map 만들기.
+  왠지 transient로는 scroll-other-window가 작동하지 않는다.
+  - [X] scroll-other-window
+  - [ ] window size
+- [X] display-buffer-base-action 설정
+  + [X] display-buffer-alist 설정
+  + embark로 대체했음
+- [ ] x에 kill-buffer-and-window 추가하기
+
+* dashboard
+:PROPERTIES:
+:ID:       E4EBA189-2A87-4602-B002-0616B8F804A1
+:END:
+https://github.com/emacs-dashboard/emacs-dashboard
+대시보드를 추가함
+#+begin_src emacs-lisp :tangle yes
+(use-package dashboard
+  :custom
+  ;; (dashboard-projects-switch-function 'counsel-projectile-switch-project-by-name)
+  (dashboard-set-init-info t)
+  ;; (dashboard-banner-logo-title "Welcome to Emacs Dashboard")
+  (dashboard-banner-logo-title nil)
+  (dashboard-startup-banner 2)
+  (dashboard-set-heading-icons t)
+  (dashboard-set-file-icons t)
+  (dashboard-center-content t)
+  (dashboard-set-navigator t)
+  (dashboard-set-footer nil)
+  (dashboard-page-separator "\n\f\n")
+
+  :config
+  (setq dashboard-navigator-buttons
+        `(;; line1
+          ((,(all-the-icons-octicon "mark-github" :height 1.1 :v-adjust 0.0)
+            "GitHub" "Go to GitHub"
+            (lambda (&rest _) (browse-url "https://github.com")))
+
+           (,(all-the-icons-octicon "tools" :height 1.1 :v-adjust 0.0)
+            "Config" "Open Configuration"
+            (lambda (&rest _) (find-file (expand-file-name "init.org" user-emacs-directory)))))))
+  (dashboard-setup-startup-hook))
+#+end_src
+

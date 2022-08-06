@@ -1,0 +1,145 @@
+#+auto_tangle: t
+
+* snippet
+** yasnippet
+:PROPERTIES:
+:ID:       8AB07E8C-E91E-49BA-BBF5-9641FB9BC029
+:END:
+*** yasnippet
+:PROPERTIES:
+:ID:       3E8740EC-E273-42BE-889A-8B52ABE28392
+:END:
+https://github.com/joaotavora/yasnippet
+#+begin_src emacs-lisp :tangle yes
+(use-package yasnippet
+  :hook ((prog-mode org-mode) . yas-minor-mode)
+  :general
+  (yas-minor-mode-map
+   "TAB" nil
+   "<tab>" nil)
+  :config
+  ;; (setq yas-fallback-behavior '(apply tab-jump-out 1))
+  (yas-reload-all)
+  ;; Add yasnippet support for all company backends
+  ;; https://github.com/syl20bnr/spacemacs/pull/179
+  (with-eval-after-load
+      (defvar company-mode/enable-yas t
+        "Enable yasnippet for all backends.")
+    (defun company-mode/backend-with-yas (backend)
+      (if (or (not company-mode/enable-yas) (and (listp backend) (member 'company-yasnippet backend)))
+          backend
+        (append (if (consp backend) backend (list backend))
+                '(:with company-yasnippet))))))
+#+end_src
+
+*** yasnippet-snippets
+https://github.com/AndreaCrotti/yasnippet-snippets
+
+#+begin_src emacs-lisp :tangle yes
+(use-package yasnippet-snippets
+  :after yasnippet)
+#+end_src
+
+*** TODO auto-yasnippet
+:PROPERTIES:
+:ID:       1FA141DD-D92B-4E10-ABAC-A93E76CB4083
+:END:
+https://github.com/abo-abo/auto-yasnippet
+
+*** consult-yasnippet
+:PROPERTIES:
+:ID:       0A6A96BF-A325-4784-9CA9-D349F1E3BB17
+:END:
+https://github.com/mohkale/consult-yasnippet
+
+#+begin_src emacs-lisp :tangle yes
+(use-package consult-yasnippet
+  :after (consult yasnippet))
+#+end_src
+
+** COMMENT skempo
+:PROPERTIES:
+:ID:       033BF532-929E-42E1-8CF3-B7D6F3FE14D3
+:END:
+https://github.com/xFA25E/skempo
+
+이맥스 내장 기능인 skeleton과 tempo 탬플릿을 사용하는 스니펫 패키지.
+abbrev를 사용해서 스니펫을 입력할 수 있고, 템플릿을 elisp로 정의할 수 있다.
+
+#+begin_src emacs-lisp :tangle yes
+(use-package skempo
+  :straight (skempo
+             :type git
+             :host github
+             :repo "xFA25E/skempo")
+  :hook ((emacs-lisp-mode lisp-interaction-mode) . skempo-mode)
+  :custom
+  (skempo-completing-read t)
+  (skempo-delete-duplicate-marks t)
+  (skempo-update-identical-tags t)
+  (skempo-skeleton-marks-support t)
+  (skempo-always-create-tag t)
+  (skempo-always-create-abbrev t)
+  (skempo-mode-lighter " Sk")
+  :bind
+  (:map skempo-mode-map
+   ("C-z" . skempo-complete-tag-or-call-on-region)
+   ("M-g M-e" . skempo-forward-mark)
+   ("M-g M-a" . skempo-backward-mark))
+  :config
+  ;; Multiple modes!
+  (skempo-define-tempo (let :tag t :abbrev t :mode (emacs-lisp-mode lisp-mode))
+    "(let ((" p "))" n> r> ")")
+
+  ;; Skeletons too! With mark jumping!
+  (skempo-define-skeleton (defun :tag t :abbrev t :mode emacs-lisp-mode)
+    "Name: "
+    "(defun " str " (" @ - ")" n
+    @ _ ")" n)
+
+  ;; Clever tempo templates!
+  (skempo-define-tempo (defvar :tag t :abbrev t :mode emacs-lisp-mode)
+    "(defvar " (string-trim-right (buffer-name) (rx ".el" eos)) "-" p n>
+    r> ")")
+
+  ;; Define tags and abbrevs for existing skeletons and tempo templates!
+  (skempo-define-function (shcase :tag t :abbrev t :mode sh-mode)
+    sh-case)
+
+  ;; This will override emacs-lisp's "defvar", but you can always call it by
+  ;; function name (or by tag/abbrev if they were defined).
+  (skempo-define-tempo (defvar :tag t :mode lisp-interaction-mode)
+    "(defvar var" p n> r> ")"))
+#+end_src
+
+** tempel
+:PROPERTIES:
+:ID:       462EE750-EB3C-409B-BBF0-FB47F95AD615
+:END:
+https://github.com/minad/tempel
+
+#+begin_src emacs-lisp
+(use-package tempel
+  ;; :bind (("M-+" . tempel-complete) ;; Alternative tempel-expand
+  ;;        ("M-*" . tempel-insert))
+  ;; :custom
+  ;; (tempel-trigger-prefix "<")
+  :hook ((prog-mode text-mode) . tempel-setup-capf)
+  :init
+  (defun tempel-setup-capf ()
+    ;; Add the Tempel Capf to `completion-at-point-functions'.
+    ;; `tempel-expand' only triggers on exact matches. Alternatively use
+    ;; `tempel-complete' if you want to see all matches, but then you
+    ;; should also configure `tempel-trigger-prefix', such that Tempel
+    ;; does not trigger too often when you don't expect it. NOTE: We add
+    ;; `tempel-expand' *before* the main programming mode Capf, such
+    ;; that it will be tried first.
+    (setq-local completion-at-point-functions
+                (cons
+                 ;; #'tempel-expand
+                 #'tempel-complete
+                      completion-at-point-functions))))
+#+end_src
+
+- 바인딩을 따로 하는 편이 속 편할 듯 하다. 근데 그럼 yasnippet과 차이가?
+- tempel-complete를 하면 아무것도 쓰지 않은 상황에서 tab으로 표시할 수 있다.

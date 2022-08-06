@@ -1,0 +1,779 @@
+#+auto_tangle: t
+
+* programming
+:PROPERTIES:
+:ID:       DA4A6780-B676-4166-ABD1-13D04C7549B7
+:END:
+
+** dumb-jump
+:PROPERTIES:
+:ID:       7C1E54EA-E074-47B1-BC32-C78B2D30E6E3
+:END:
+https://github.com/jacktasia/dumb-jump
+#+begin_src emacs-lisp :tangle yes
+(use-package rg
+  :ensure-system-package rg
+  :defer t)
+(use-package ag
+  :ensure-system-package (ag . the_silver_searcher)
+  :defer t)
+;; https://github.com/jacktasia/dumb-jump
+;; this package requires `silver_searcher' and `ripgrep'
+;; https://github.com/ggreer/the_silver_searcher#installing
+;; https://github.com/BurntSushi/ripgrep#installation
+(use-package dumb-jump
+  :after (rg ag)
+  :defer t
+  :hook (xref-backend-functions #'dumb-jump-xref-activate))
+#+end_src
+
+** easy-escape
+:PROPERTIES:
+:ID:       1717A3FE-2F7C-414A-AADA-78EBE38B0A95
+:END:
+https://github.com/cpitclaudel/easy-escape
+이맥스의 정규표현식을 읽기 쉽게 보여줌
+#+begin_src emacs-lisp :tangle yes
+(use-package easy-escape
+  :defer t
+  :hook ((lisp-mode lisp-interaction-mode emacs-lisp-mode) . easy-escape-minor-mode))
+#+end_src
+
+** syntax checker
+*** flycheck
+:PROPERTIES:
+:ID:       71C7705C-D26E-41D0-9CA0-6A97B6DF25A7
+:END:
+https://github.com/flycheck/flycheck
+#+begin_src emacs-lisp :tangle yes
+(use-package flycheck
+  :defer t
+  :hook (lsp-mode . flycheck-mode))
+#+end_src
+
+*** TODO flycheck-inline
+:PROPERTIES:
+:ID:       C9B601F0-27FC-40C9-BC9C-95F8992ABE6A
+:END:
+https://github.com/flycheck/flycheck-inline
+#+begin_src emacs-lisp :tangle yes
+(use-package flycheck-inline
+  ;; :hook (flycheck-mode . flycheck-inline-mode)
+  :config
+  ;; (add-hook 'flycheck-mode-hook #'flycheck-inline-mode)
+  (global-flycheck-inline-mode)
+  )
+#+end_src
+
+** TODO COMMENT tree-sitter
+:PROPERTIES:
+:ID:       BF940CDE-7558-4C97-8F73-0B2D4B35FBF0
+:END:
+*** tree-sitter
+:PROPERTIES:
+:ID:       E79633EC-159E-48FF-9D3E-8B5DFA471963
+:END:
+https://emacs-tree-sitter.github.io/
+syntax
+#+begin_src emacs-lisp :tangle yes
+(use-package tree-sitter
+  :straight (tree-sitter
+             :host github
+                         :repo "ubolonton/emacs-tree-sitter"
+                         :files ("lisp/*.el"))
+  :hook (tree-sitter-after-on-hook . tree-sitter-hl-mode-hook)
+  :config
+
+  (use-package tree-sitter-langs
+    :straight (tree-sitter-langs
+               :host github
+               :repo "ubolonton/emacs-tree-sitter"
+               :files ("langs/*.el" "langs/queries")))
+  (global-tree-sitter-mode))
+#+end_src
+*** tree-sitter-indent
+:PROPERTIES:
+:ID:       8CC57744-22CB-4F03-B4B7-663A4268675F
+:END:
+https://codeberg.org/FelipeLema/tree-sitter-indent.el
+
+#+begin_src emacs-lisp :tangle yes
+(use-package tree-sitter-indent
+  :straight (tree-sitter-indent
+             :type git
+             :repo "https://codeberg.org/FelipeLema/tree-sitter-indent.el.git"
+             :branch "main"
+             :files ("tree-sitter-indent.el")))
+#+end_src
+*** evil-textobj-tree-sitter
+:PROPERTIES:
+:ID:       6DECF728-105D-485E-97AB-00C97962510A
+:END:
+https://github.com/meain/evil-textobj-tree-sitter
+#+begin_src emacs-lisp :tangle yes
+(use-package evil-textobj-tree-sitter :straight t)
+
+#+end_src
+- Rust
+** lsp
+:PROPERTIES:
+:ID:       B40025E2-A645-4B1F-94B2-89A2ACCDA874
+:END:
+*** lsp
+:PROPERTIES:
+:ID:       97990823-2975-4267-BABE-7B1C52739179
+:END:
+https://github.com/emacs-lsp/lsp-mode
+#+begin_src emacs-lisp :tangle yes
+(use-package lsp-mode
+  :straight t
+  :defer t
+  :commands lsp
+  :hook (((java-mode
+           typescript-mode ; https://github.com/typescript-language-server/typescript-language-server
+           js2-mode
+           web-mode
+           racket-mode) . lsp-deferred)
+         (lsp-completion-mode . my/lsp-mode-setup-completion))
+
+  ;; :bind (:map lsp-mode-map
+  ;;             ;; ("TAB" . completion-at-point)
+  ;;             ("C-c C-f" . lsp-format-buffer))
+  :general
+  (lsp-mode-map
+    :states 'normal
+    "SPC l" '(:ignore t :which-key "lsp")
+    ;; "ld" 'xref-find-definitions
+    ;; "lr" 'xref-find-references
+    "SPC ld" 'lsp-ui-peek-find-definitions
+    "SPC lr" 'lsp-ui-peek-find-references
+    "SPC ln" 'lsp-ui-find-next-reference
+    "SPC lp" 'lsp-ui-find-prev-reference
+    ;; "SPC ls" 'counsel-imenu
+    "SPC le" 'lsp-ui-flycheck-list
+    "SPC lS" 'lsp-ui-sideline-mode
+    "SPC lX" 'lsp-execute-code-action
+    "SPC lf" 'lsp-format-buffer)
+  :init
+  (defun my/lsp-mode-setup-completion ()
+    (setf (alist-get 'styles (alist-get 'lsp-capf completion-category-defaults))
+          '(orderless))) ;; Configure orderless
+  :custom
+  (lsp-completion-provider :none)       ; use corfu
+  (lsp-keymap-prefix "C-x l")
+  (lsp-auto-guess-root nil)
+  (lsp-prefer-flymake nil)              ; Use flycheck instead of flymake
+  (lsp-enable-file-watchers nil)
+  (lsp-enable-folding nil)              ; use evil-matchit instead
+  (lsp-enable-semantic-highlighting t)
+  (read-process-output-max (* 1024 1024))
+  (lsp-keep-workspace-alive nil)
+  ;; (lsp-headerline-breadcrumb-enable nil)
+  (lsp-treemacs-sync-mode 1)            ; https://github.com/emacs-lsp/lsp-treemacs
+  :config
+  (defun lsp-update-server ()
+    "Update LSP server."
+    (interactive)
+    ;; Equals to `C-u M-x lsp-install-server'
+    (lsp-install-server t)))
+#+end_src
+*** lsp-ui
+:PROPERTIES:
+:ID:       82B70BBB-D721-411A-9881-6E5DB5BD050E
+:END:
+https://github.com/emacs-lsp/lsp-ui
+#+begin_src emacs-lisp :tangle yes
+(use-package lsp-ui
+  :straight t
+  :hook (lsp-mode . lsp-ui-mode)
+  :commands lsp-ui-mode
+  :custom
+  (lsp-ui-sideline-enable t)
+  ;; (lsp-ui-sideline-show-hover nil)
+  (lsp-ui-sideline-show-hover t)
+  (lsp-ui-doc-position 'bottom)
+  :config
+  (lsp-ui-doc-show))
+#+end_src
+
+*** dap-mode
+https://github.com/emacs-lsp/dap-mode
+lsp의 디버거
+#+begin_src emacs-lisp :tangle yes
+(use-package dap-mode
+  :straight t
+  :after (company lsp)
+  :custom
+  (lsp-enable-dap-auto-configure nil)
+  :config
+  (dap-ui-mode 1)
+  (dap-tooltip-mode 1)
+  (require 'dap-node)
+  (dap-node-setup))
+
+#+end_src
+** languages
+*** emacs-lisp
+**** emacs-lisp indent
+:PROPERTIES:
+:ID:       B4957536-7F95-426F-899A-DE999C4F6C60
+:END:
+https://emacs.stackexchange.com/questions/10230/how-to-indent-keywords-aligned
+https://github.com/Fuco1/.emacs.d/blob/af82072196564fa57726bdbabf97f1d35c43b7f7/site-lisp/redef.el#L20-L94
+​~:keyword~​ 정렬이 이상하게 되는 것을 고침
+#+begin_src emacs-lisp :tangle yes
+(defun Fuco1/lisp-indent-function (indent-point state)
+  "This function is the normal value of the variable `lisp-indent-function'.
+The function `calculate-lisp-indent' calls this to determine
+if the arguments of a Lisp function call should be indented specially.
+
+INDENT-POINT is the position at which the line being indented begins.
+Point is located at the point to indent under (for default indentation);
+STATE is the `parse-partial-sexp' state for that position.
+
+If the current line is in a call to a Lisp function that has a non-nil
+property `lisp-indent-function' (or the deprecated `lisp-indent-hook'),
+it specifies how to indent.  The property value can be:
+
+,* `defun', meaning indent `defun'-style
+  \(this is also the case if there is no property and the function
+  has a name that begins with \"def\", and three or more arguments);
+
+,* an integer N, meaning indent the first N arguments specially
+  (like ordinary function arguments), and then indent any further
+  arguments like a body;
+
+,* a function to call that returns the indentation (or nil).
+  `lisp-indent-function' calls this function with the same two arguments
+  that it itself received.
+
+This function returns either the indentation to use, or nil if the
+Lisp function does not specify a special indentation."
+  (let ((normal-indent (current-column))
+        (orig-point (point)))
+    (goto-char (1+ (elt state 1)))
+    (parse-partial-sexp (point) calculate-lisp-indent-last-sexp 0 t)
+    (cond ((and (elt state 2) ; car of form doesn't seem to be a symbol, or is a keyword
+                (or (not (looking-at "\\sw\\|\\s_"))
+                    (looking-at ":")))
+           (if (not (> (save-excursion (forward-line 1) (point))
+                       calculate-lisp-indent-last-sexp))
+               (progn (goto-char calculate-lisp-indent-last-sexp)
+                      (beginning-of-line)
+                      (parse-partial-sexp (point)
+                                          calculate-lisp-indent-last-sexp 0 t)))
+           ;; Indent under the list or under the first sexp on the same
+           ;; line as calculate-lisp-indent-last-sexp.  Note that first
+           ;; thing on that line has to be complete sexp since we are
+           ;; inside the innermost containing sexp.
+           (backward-prefix-chars)
+           (current-column))
+          ((and (save-excursion
+                  (goto-char indent-point)
+                  (skip-syntax-forward " ")
+                  (not (looking-at ":")))
+                (save-excursion
+                  (goto-char orig-point)
+                  (looking-at ":")))
+           (save-excursion
+             (goto-char (+ 2 (elt state 1)))
+             (current-column)))
+          (t (let (#'(buffer-substring (point) (progn (forward-sexp 1) (point)))
+                   method)
+               (setq method
+                     (or (function-get (intern-soft function) 'lisp-indent-function)
+                         (get (intern-soft function) 'lisp-indent-hook)))
+               (cond ((or (eq method 'defun)
+                          (and (null method) (> (length function) 3)
+                               (string-match "\\`def" function)))
+                      (lisp-indent-defform state indent-point))
+                     ((integerp method)
+                      (lisp-indent-specform method state indent-point normal-indent))
+                     (method (funcall method indent-point state))))))))
+(add-hook 'emacs-lisp-mode-hook
+          (lambda () (setq-local lisp-indent-function #'Fuco1/lisp-indent-function)))
+#+end_src
+
+**** highlight-defined
+:PROPERTIES:
+:ID:       B49933AE-1A4C-479B-A4F2-4596EDC08AB5
+:END:
+https://github.com/Fanael/highlight-defined
+
+emacs lisp의 문법 강조
+#+begin_src emacs-lisp :tangle yes
+(use-package highlight-defined
+  :hook (emacs-lisp-mode . highlight-defined-mode))
+#+end_src
+
+**** highlight-quoted
+:PROPERTIES:
+:ID:       A26CDB21-70B9-4229-9D33-84FC1F463624
+:END:
+https://github.com/Fanael/highlight-quoted
+
+emacs lisp의 문법 강조
+#+begin_src emacs-lisp :tangle yes
+(use-package highlight-quoted
+  :hook (emacs-lisp-mode . highlight-quoted-mode))
+#+end_src
+
+**** highlight-numbers
+:PROPERTIES:
+:ID:       F0625FFD-CFEC-4B38-A153-22120CC5EF7C
+:END:
+https://github.com/Fanael/highlight-numbers
+
+emacs lisp의 문법 강조
+#+begin_src emacs-lisp :tangle yes
+(use-package highlight-numbers
+  :hook (emacs-lisp-mode . highlight-numbers-mode))
+#+end_src
+
+*** java
+:PROPERTIES:
+:ID:       7F718805-2323-4782-9AF1-97B5A5749FD5
+:END:
+**** lsp-java
+https://github.com/emacs-lsp/lsp-java
+#+begin_src emacs-lisp :tangle yes
+(use-package lsp-java
+  :after lsp-mode
+  :if (executable-find "mvn")
+  :hook (java-mode . #'lsp)
+  ;; :init
+  ;; (use-package request :defer t)
+  :custom
+  (lsp-java-server-install-dir (expand-file-name "eclipse.jdt.ls/server/" user-emacs-directory))
+  (lsp-java-workspace-dir (expand-file-name "eclipse.jdt.ls/workspace/" user-emacs-directory))
+  (lsp-java-format-settings-url "https://raw.githubusercontent.com/google/styleguide/gh-pages/eclipse-java-google-style.xml")
+  (lsp-java-format-settings-profile "GoogleStyle")
+  :config
+  (require 'lsp-java-boot)
+  ;; to enable the lenses
+  (add-hook 'lsp-mode-hook #'lsp-lens-mode)
+  (add-hook 'java-mode-hook #'lsp-java-boot-lens-mode))
+
+#+end_src
+**** dap-java
+#+begin_src emacs-lisp :tangle yes
+(use-package dap-java
+  :after dap-mode
+  :straight (:type built-in))
+
+#+end_src
+*** latex
+**** lsp-latex
+#+begin_src emacs-lisp :tangle yes
+(use-package lsp-latex
+  :after lsp
+  :config
+  (with-eval-after-load "tex-mode"
+    (add-hook 'tex-mode-hook 'lsp)
+    (add-hook 'latex-mode-hook 'lsp)))
+#+end_src
+
+**** TODO listex
+https://github.com/alejandrogallo/listex
+s-expression to latex
+*** clojure
+**** cider
+:PROPERTIES:
+:ID:       4FBFA3BB-85DA-43FC-BBA5-BAD5BBCD3191
+:END:
+#+begin_src emacs-lisp :tangle yes
+(use-package cider
+  :mode "\\.clj[sc]?\\'"
+  :config
+  (evil-collection-cider-setup))
+#+end_src
+
+*** racket
+**** racket-mode
+:PROPERTIES:
+:ID:       55D3C92B-C1CE-4C52-87FB-A9CBE3EB323A
+:END:
+https://github.com/greghendershott/racket-mode/
+
+#+begin_src emacs-lisp :tangle yes
+(use-package racket-mode
+  :defer t
+  :load-path "straight/repos/racket-mode/"
+  :hook (racket-mode . racket-xp-mode)
+  :general
+  (repl-mode
+   :states '(normal insert)
+   "C-n")
+  (racket-mode-map
+    :states '(normal visual)
+    "SPC eb" 'racket-run-module-at-point
+    "SPC ex" 'racket-send-last-sexp
+    "SPC ed" 'racket-send-definition)
+  (racket-mode-map
+    :states 'visual
+    "SPC er" 'racket-send-region)
+  :config
+  (advice-add 'racket-send-last-sexp :before #'my/move-forward-char)
+  (advice-add 'racket-send-definition :before #'my/move-forward-char))
+#+end_src
+
+**** COMMENT lsp-racket
+:PROPERTIES:
+:ID:       58E9D2E8-E5DF-4D15-A0AB-BFD0112224CE
+:END:
+https://mullikine.github.io/posts/setting-up-lsp-with-emacs-attempt-2/
+
+#+begin_src emacs-lisp :tangle yes
+(use-package lsp-racket
+  :after (lsp-mode racket-mode)
+  :straight (lsp-racket
+             :type git
+             :host github
+             :repo "mullikine/lsp-racket-el"))
+#+end_src
+
+**** racket-langserver
+:PROPERTIES:
+:ID:       84CBE2B5-85F8-4529-8A6B-897BAD05BF3D
+:END:
+https://github.com/jeapostrophe/racket-langserver
+
+**** geiser
+:PROPERTIES:
+:ID:       CF24EB74-DE9E-4AF8-9E7E-3382619421C7
+:END:
+https://gitlab.com/emacs-geiser/geiser
+#+begin_src emacs-lisp :tangle yes
+(use-package geiser
+  :commands (geiser run-geiser geiser-repl)
+  :defer t
+  :general
+  (geiser-mode-map
+   "M-`" nil)
+  (geiser-repl-mode-map
+   "M-`" nil)
+  :config
+  ;; https://gitlab.com/jaor/geiser/-/issues/224
+  (defun cooldown-flycheck-on-racket (&rest _)
+    (if (eq geiser-impl--implementation 'racket)
+        (setq-local flycheck-check-syntax-automatically '(save mode-enabled))
+      (setq flycheck-check-syntax-automatically (default-value 'flycheck-check-syntax-automatically))))
+
+  (advice-add 'geiser-set-scheme :after 'cooldown-flycheck-on-racket)
+  (add-hook 'geiser-mode-hook 'cooldown-flycheck-on-racket))
+#+end_src
+
+*** javascript/typescript
+**** nvm
+#+begin_src emacs-lisp :tangle yes
+(use-package nvm
+  :defer t)
+#+end_src
+
+**** typescript-mode
+#+begin_src emacs-lisp :tangle yes
+(use-package typescript-mode
+  :mode "\\.ts\\'"
+  :custom
+  (typescript-indent-level 2))
+#+end_src
+
+**** js-doc
+#+begin_src emacs-lisp :tangle yes
+(use-package js-doc)
+#+end_src
+
+**** js2-mode
+:PROPERTIES:
+:ID:       D9B1C369-DEFB-4CC9-8D6F-7752AE0DE0CD
+:END:
+#+begin_src emacs-lisp :tangle yes
+(use-package js2-mode
+  ;; :mode "\\.jsx?\\'"
+  :mode (rx ".js" eos)
+  :custom
+  (js2-mode-show-strict-warnings nil) ; Don't use built-in syntax checking
+  (js-switch-indent-offset 2)
+  (js2-highlight-level 3)
+  (js2-idle-timer-delay 0)
+  (js2-mode-show-parse-errors nil)
+  (js-indent-level 2)
+  :config
+  (add-to-list 'magic-mode-alist '("#!/usr/bin/env node" . js2-mode)))
+#+end_src
+
+**** json-mode
+#+begin_src emacs-lisp :tangle yes
+(use-package json-mode
+  :mode "\\.json\\'")
+#+end_src
+
+**** rjax-mode
+:PROPERTIES:
+:ID:       C2054DCA-2535-4D57-94EB-7CF234C08DAC
+:END:
+#+begin_src emacs-lisp :tangle yes
+(use-package rjsx-mode
+  :mode
+  (rx (or ".jsx"
+          (and (or "components" "pages") "/" (* anything) ".js"))
+      eos))
+#+end_src
+
+*** C/C++
+**** ccls
+:PROPERTIES:
+:ID:       1AF863BB-42B0-4832-B6AF-5B53A6C69CF8
+:END:
+#+begin_src emacs-lisp :tangle yes
+(use-package ccls
+  :hook ((c-mode c++-mode objc-mode cuda-mode) .
+         (lambda () (require 'ccls) (lsp))))
+#+end_src
+
+*** markdown
+**** markdown-mode
+#+begin_src emacs-lisp :tangle yes
+(use-package markdown-mode
+  :straight t
+  :mode "\\.md\\'"
+  :config
+  (setq markdown-command "marked"))
+#+end_src
+
+*** web
+**** web-mode
+#+begin_src emacs-lisp :tangle yes
+(use-package web-mode
+  ;; :mode "(\\.\\(html?\\|ejs\\|tsx\\|jsx\\)\\'"
+  :mode "(\\.\\(html?\\|ejs\\|tsx\\)\\'"
+  :custom
+  (web-mode-code-indent-offset 2)
+  (web-mode-markup-indent-offset 2)
+  (web-mode-attribute-indent-offset 2))
+#+end_src
+
+**** impatient-mode
+https://github.com/skeeto/impatient-mode
+live HTML server
+#+begin_src emacs-lisp :tangle yes
+(use-package impatient-mode
+  :defer t
+  :straight t)
+#+end_src
+
+1. Start the server with ​=httpd-start=
+2. Use ​=impatient-mode=​ on any buffer
+
+**** skewer-mode
+https://github.com/skeeto/skewer-mode
+#+begin_src emacs-lisp :tangle yes
+(use-package skewer-mode
+  :defer t
+  :straight t
+  :hook
+  ((js2-mode-hook . skewer-mode)
+  (css-mode-hook . skewer-css-mode)
+  (html-mode-hook . skewer-html-mode)))
+#+end_src
+
+1. `run-skewer' to attach a brower to emacs
+2. from `js2-mode' buffer with `skewer-mode' minor mode enabled,
+   send forms to the brower to evaluate.
+
+**** restclient
+https://github.com/pashky/restclient.el
+HTTP REST API 테스트용
+#+begin_src emacs-lisp :tangle yes
+(use-package restclient
+  :mode ((rx ".http" eos) . restclient-mode)
+  :bind
+  (:map restclient-mode-map
+        ([remap restclient-http-send-current]
+         . restclient-http-send-current-stay-in-window)
+        ("C-n" . restclient-jump-next)
+        ("C-p" . restclient-jump-prev))
+  :hook (restclient-mode . display-line-numbers-mode))
+#+end_src
+
+*** emmet-mode
+:PROPERTIES:
+:ID:       B3A02BB3-E68B-4F5E-87AD-2A8626CB1FCA
+:END:
+https://github.com/smihica/emmet-mode
+#+begin_src emacs-lisp :tangle yes
+(use-package emmet-mode
+  ;; :custom
+  ;; (emmet-insert-flash-time 0.1)
+  ;; (emmet-move-cursor-between-quote t)
+  :hook (web-mode css-mode))
+#+end_src
+
+*** vue-mode
+#+begin_src emacs-lisp :tangle yes
+(use-package vue-mode
+  :mode "\\.vue\\'"
+  :commands (vue-mode))
+#+end_src
+
+*** yaml
+**** yaml-mode
+:PROPERTIES:
+:ID:       E49DD1A7-4162-48C5-8F34-DAD57018A36E
+:END:
+#+begin_src emacs-lisp :tangle yes
+(use-package yaml-mode
+  :mode "\\.ya?ml\\'")
+#+end_src
+
+** code formatter
+:PROPERTIES:
+:ID:       060D652D-7014-4748-8FF4-AEFB93F0183E
+:END:
+*** COMMENT ws-butler
+:PROPERTIES:
+:ID:       27517D93-C940-4314-827E-D341DEF14EC9
+:END:
+https://github.com/lewang/ws-butler
+
+공백 문자를 제거함
+#+begin_src emacs-lisp :tangle yes
+(use-package ws-butler
+  :diminish
+  :defer t
+  :hook ((text-mode prog-mode) . ws-butler-mode)
+  :config
+  (ws-butler-mode))
+#+end_src
+
+- 또는 ​=delete-trailing-whitespace=
+
+*** apheleia
+:PROPERTIES:
+:ID:       AFFD7462-28C1-4F12-BA1D-45E29BC8EBA6
+:END:
+https://github.com/radian-software/apheleia
+auto code formatter
+#+begin_src emacs-lisp :tangle yes
+(use-package apheleia
+  :straight (apheleia
+             :host github
+             :repo "radian-software/apheleia")
+  :config
+  (apheleia-global-mode +1))
+#+end_src
+
+** COMMENT compile
+:PROPERTIES:
+:ID:       DA4726BD-A0E6-4884-8ED0-BF1EC8635C9F
+:END:
+#+begin_src emacs-lisp :tangle yes
+(use-package compile
+  :straight (:type built-in)
+  :custom
+  (compilation-scroll-output t)
+  :config 
+  (defun auto-recompile-buffer ()
+    (interactive)
+    (if (member #'recompile after-save-hook)
+        (remove-hook 'after-save-hook #'recompile t)
+      (add-hook 'after-save-hook #'recompile nil t))))
+#+end_src
+
+
+* terminal thing
+:PROPERTIES:
+:ID:       5AEA32D6-AC78-444E-9A2A-41126C23BA2C
+:END:
+** vterm
+:PROPERTIES:
+:ID:       6FA3C506-86CC-4302-84A3-2E8920657DCE
+:END:
+https://github.com/akermu/emacs-libvterm
+
+#+begin_src emacs-lisp :tangle yes
+(use-package vterm
+  :commands vterm
+  :defer t
+  :config
+  (with-eval-after-load 'counsel
+   (defun vterm-counsel-yank-pop-action (orig-fun &rest args)
+     (if (equal major-mode 'vterm-mode)
+         (let ((inhibit-read-only t)
+               (yank-undo-function (lambda (_start _end) (vterm-undo))))
+           (cl-letf (((symbol-function 'insert-for-yank)
+                      (lambda (str) (vterm-send-string str t))))
+             (apply orig-fun args)))
+       (apply orig-fun args)))
+   (advice-add 'counsel-yank-pop-action :around #'vterm-counsel-yank-pop-action))
+
+  (defun evil-collection-vterm-escape-stay ()
+    "Go back to normal state but don't move
+cursor backwards. Moving cursor backwards is the default vim behavior but it is
+not appropriate in some cases like terminals."
+    (setq-local evil-move-cursor-back nil))
+  (add-hook 'vterm-mode-hook #'evil-collection-vterm-escape-stay))
+#+end_src
+
+** TODO vterm-toggle
+:PROPERTIES:
+:ID:       A02462BA-F34B-4A1C-91A6-FF21E4DE5BC8
+:END:
+https://github.com/jixiuf/vterm-toggle
+** comint
+:PROPERTIES:
+:ID:       2CCBC1BC-C677-4E8F-A1BA-EB65F6B3EDDE
+:END:
+comint는 외부 프로세스를 이맥스 모드로 감싸는 패키지다.
+#+begin_src emacs-lisp :tangle yes
+(use-package comint
+  :straight (:type built-in)
+  :commands (comint-mode shell-command-at-line)
+  :bind
+  ("C-!" . shell-command-at-line)
+  ;; :general
+  ;; (:keymaps 'shell-mode-map
+  ;;           :states  '(insert emacs)
+  ;;           "SPC"    'comint-magic-space)
+  :config
+  ;; Arrange for Emacs to notice password prompts and turn off echoing for them, as follows:
+  (add-hook 'comint-output-filter-functions
+            'comint-watch-for-password-prompt)
+  (setq ansi-color-for-comint-mode t)   ; package ansi-color
+  ;; Auto-kill buffer and window of comint process when done
+  (advice-add 'comint-send-eof :after
+    (defun comint-kill-after-finish-a (&rest _args)
+      (let (confirm-kill-processes kill-buffer-query-functions)
+        ;; (set-process-query-on-exit-flag (get-buffer-process (current-buffer)) nil)
+        (ignore-errors (kill-buffer-and-window)))))
+
+  (defun shell-command-at-line (&optional prefix)
+    "Run contents of line around point as a shell command and
+replace the line with output. With a prefix argument, append the
+output instead."
+    (interactive "P")
+    (let ((command (thing-at-point 'line)))
+      (cond ((null prefix)
+             (kill-whole-line)
+             (indent-according-to-mode))
+            (t (newline-and-indent)))
+      (shell-command command t nil)
+      (exchange-point-and-mark))))
+#+end_src
+
+** TODO dtache
+*** dtache
+:PROPERTIES:
+:ID:       06BAE0F9-C903-4B35-BA42-B2851AE0E6CF
+:END:
+https://gitlab.com/niklaseklund/dtache
+
+shell command를 이맥스에서 완전히 분리된 상태로 실행할 수 있는 패키지.(tmux, GNU screen의 대체제로 사용할 수 있음)
+
+핵심 개념은 =dtache-session=​. 세션의 명령어, 작업 디렉토리, 시작 위치, output, socket, 프로세스 위치 등의 정보를 캡슐화하는 객체다.
+
+*** dtache-consult
+:PROPERTIES:
+:ID:       3E05458E-A087-4C22-9F7C-6D805E60B929
+:END:
+https://niklaseklund.gitlab.io/blog/posts/dtache_consult/

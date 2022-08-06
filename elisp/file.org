@@ -1,0 +1,693 @@
+#+auto_tangle: t
+
+* auto-revert
+파일의 변경을 버퍼에 반영한다.
+#+BEGIN_SRC emacs-lisp :tangle yes
+(use-package autorevert
+  :straight (:type built-in)
+  :defer 1
+  :custom
+  (global-auto-revert-mode t))
+#+END_SRC
+
+* dired
+:PROPERTIES:
+:ID:       0351A87D-4075-40C0-ADA0-F5C68E7CD637
+:END:
+#+begin_src emacs-lisp :tangle yes
+(use-package dired
+  :straight (:type built-in)
+  :defer t
+  :commands (dired dired-jump dired-jump-other-window)
+  :hook ((dired-mode-hook . auto-revert-mode)
+         ;; (dired-load-hook . (lambda () (interactive) (dired-collapse)))
+         )
+  :general
+  (dired-mode-map
+   :states 'normal
+   "SPC" nil
+   "SPC d" '(nil :which-key "dired")
+   "SPC do" '(dired-omit-mode :which-key "omit mode(hide)")
+   "h" 'evil-backward-char
+   "l" 'evil-forward-char)
+  :custom
+  ;; (dired-listing-switches "-agho --group-directories-first")
+  ;; (dired-omit-files "^\\.[^.].*")
+  (dired-omit-verbose nil)
+  (dired-hide-details-hide-symlink-targets nil)
+  ;; copy&delete subfolders
+  (dired-recursive-deletes 'always)
+  (dired-recursive-copies 'always)
+  (dired-dwim-target t)
+  ;; (dired-listing-switches "-AGhlv --group-directories-first --time-style=long-iso")
+  ;; Make sure to use the long name of flags when exists
+  ;; eg. use "--almost-all" instead of "-A"
+  ;; Otherwise some commands won't work properly
+  (dired-listing-switches "-l --almost-all --human-readable --time-style=long-iso --group-directories-first --no-group")
+  (wdired-allow-to-change-permissions t)
+  :config
+  (when (string= system-type "darwin")
+    (setq dired-use-ls-dired t
+          insert-directory-program "/usr/local/bin/gls"
+          ;; dired-listing-switches "-aBhl --group-directories-first"
+          ))
+  (setq dired-mouse-drag-files t)                   ; added in Emacs 29
+  (setq mouse-drag-and-drop-region-cross-program t) ; added in Emacs 29
+  )
+#+end_src
+
+** dired-x
+:PROPERTIES:
+:ID:       4A5FD459-B438-4714-85D3-88B34F3C9558
+:END:
+#+begin_src emacs-lisp :tangle yes
+(use-package dired-x
+  :straight (:type built-in)
+  :ensure nil
+  ;; Enable dired-omit-mode by default
+  ;; :hook
+  ;; (dired-mode . dired-omit-mode)
+  :config
+  ;; Make dired-omit-mode hide all "dotfiles"
+  (setq dired-omit-files
+        (concat dired-omit-files "\\|^\\..*$")))
+#+end_src
+
+** dired-hacks
+:PROPERTIES:
+:ID:       E33901A6-7CAE-483C-BA0B-2EB2D25191EA
+:END:
+https://github.com/Fuco1/dired-hacks
+
+*** dired-narrow
+:PROPERTIES:
+:ID:       92322C5D-40DE-40E7-BD82-C84315FF34F4
+:END:
+문자열 검색 결과로 narrow
+
+#+begin_src emacs-lisp :tangle yes
+(use-package dired-narrow
+  :commands (dired-narrow)
+  :general
+  (dired-mode-map
+   "/" 'dired-narrow)
+  (dired-narrow-map
+   :states 'normal
+    "q" 'exit-minibuffer))
+#+end_src
+
+*** COMMENT dired-ranger
+:PROPERTIES:
+:ID:       B072D4F7-340E-4542-B972-F58A131C4A26
+:END:
+#+begin_src emacs-lisp :tangle yes
+  (use-package dired-ranger
+    :defer t)
+#+end_src
+
+*** COMMENT dired-collapse
+:PROPERTIES:
+:ID:       8E157000-EF17-4368-ACB4-B1DFC5247F88
+:END:
+단일 자식 디렉토리만 있을 경우 함께 연결되어 표시됨
+#+begin_src emacs-lisp :tangle yes
+  (use-package dired-collapse
+    :defer t)
+#+end_src
+
+** dirvish
+:PROPERTIES:
+:ID:       1CFD91CC-BEB4-4EDC-AEBF-4696C85A2A13
+:END:
+https://github.com/alexluigit/dirvish
+
+#+begin_src emacs-lisp :tangle yes
+(use-package dirvish
+  :load-path "straight/repos/dirvish/extensions/"
+  :general
+  ;; (dirvish-mode-map
+  ;;  :states 'normal
+  ;;  "H" 'dirvish-up-directory
+  ;;  [remap dired-do-copy] 'dirvish-yank
+  ;;  [remap evil-goto-first-line] 'dirvish-go-top
+  ;;  [remap evil-goto-line] 'dirvish-go-bottom
+  ;;  "SPC dh" 'dirvish-show-history
+  ;;  "S-SPC" 'dirvish-toggle-preview)
+  (dirvish-mode-map
+   "C-c f" 'dirvish-fd
+   ;; Dirvish has all the keybindings (except `dired-summary') in `dired-mode-map' already
+   ;; ("h" . dired-up-directory)
+   ;; ("j" . dired-next-line)
+   ;; ("k" . dired-previous-line)
+   ;; ("l" . dired-find-file)
+   ;; ("i" . wdired-change-to-wdired-mode)
+   ;; ("." . dired-omit-mode)
+   "b" 'dirvish-bookmark-jump
+   "f" 'dirvish-file-info-menu
+   "y" 'dirvish-yank-menu
+   "N" 'dirvish-narrow
+   "^" 'dirvish-history-last
+   "h" 'dirvish-history-jump           ; remapped `describe-mode'
+   "s" 'dirvish-quicksort              ; remapped `dired-sort-toggle-or-edit'
+   "TAB" 'dirvish-subtree-toggle
+   "M-n" 'dirvish-history-go-forward
+   "M-p" 'dirvish-history-go-backward
+   "M-l" 'dirvish-ls-switches-menu
+   "M-m" 'dirvish-mark-menu
+   "M-f" 'dirvish-toggle-fullscreen
+   "M-s" 'dirvish-setup-menu
+   "M-e" 'dirvish-emerge-menu
+   "M-j" 'dirvish-fd-jump)
+  :init 
+  (system-packages-ensure "gls")
+  (dirvish-override-dired-mode t)
+  :custom
+  (dirvish-attributes '(all-the-icons file-size collapse subtree-state vc-state git-msg))
+  :config
+  ;; (require 'dirvish-minibuffer-preview)
+  ;; (dirvish-minibuf-preview-mode)
+  ;; (require 'dirvish-yank)
+  (dirvish-peek-mode))
+#+end_src
+
+** dirvish의 외부 의존성
+:PROPERTIES:
+:ID:       718255B1-676C-428B-8318-D296D0CA1679
+:END:
+#+begin_src emacs-lisp :tangle yes
+(system-packages-ensure "exa") ; 디렉토리 프리뷰 생성
+#+end_src
+
+** diredfl
+#+begin_src emacs-lisp
+문법 강조를 추가함
+(use-package diredfl
+  :hook (dired-mode . diredfl-mode))
+#+end_src
+
+* tramp
+:PROPERTIES:
+:ID:       8EA86969-A19B-4779-A7B3-F21F1BF0D49E
+:END:
+#+begin_src emacs-lisp
+(use-package tramp
+  :custom
+  (tramp-verbose 0)
+  (tramp-auto-save-directory (locate-user-emacs-file "tramp/"))
+  (tramp-chunksize 2000)
+  (tramp-default-method "ssh")             ; remote connection default.
+  (tramp-use-ssh-controlmaster-options nil)
+  :config
+  (add-to-list 'tramp-connection-properties
+               (list (regexp-quote "/ssh:YOUR_HOSTNAME:")
+                     "direct-async-process" t)))
+#+end_src
+
+* treemacs
+:PROPERTIES:
+:ID:       644A8915-94AD-45C0-92D9-4E862AECDF67
+:END:
+https://github.com/Alexander-Miller/treemacs
+
+트리 레이아웃 파일 탐색기. lsp에 딸려온다.
+#+begin_src emacs-lisp :tangle yes
+(use-package treemacs
+  ;; :defer t
+  :custom
+  (treemacs-indent-guide-style 'line)
+  (treemacs-indentation 1)
+  ;; (treemacs-indentation-string "\t\t")
+  ;; (treemacs-fringe-indicator-mode 'always)
+  :general
+  ("s-b" 'treemacs-select-window)
+  (:keymaps '(treemacs-mode-map evil-treemacs-state-map)
+   [mouse-1] #'treemacs-single-click-expand-action ; allow click to expand/collapse node.
+   "s-b" 'treemacs
+   "<escape>" 'treemacs
+   "nf" 'treemacs-create-file
+   "nd" 'treemacs-create-dir)
+
+;;   :config/el-patch
+;; ;;;###autoload
+;;   (defun treemacs-finish-edit ()
+;;     "Finish editing your workspaces and apply the change."
+;;     (interactive)
+;;     (treemacs-block
+;;      (treemacs-error-return-if (not (equal (buffer-name) treemacs--org-edit-buffer-name))
+;;        "This is not a valid treemacs workspace edit buffer")
+;;      (treemacs--org-edit-remove-validation-msg)
+;;      (widen)
+;;      (whitespace-cleanup)
+;;      (-let [lines (treemacs--read-persist-lines (buffer-string))]
+;;        (treemacs-error-return-if (null (buffer-string))
+;;          "The buffer is empty, there is nothing here to save.")
+;;        (pcase (treemacs--validate-persist-lines lines)
+;;          (`(error ,err-line ,err-msg)
+;;           (treemacs--org-edit-display-validation-msg err-msg err-line))
+;;          ('success
+;;           (treemacs--invalidate-buffer-project-cache)
+;;           (write-region
+;;            (apply #'concat (--map (concat it "\n") lines))
+;;            nil
+;;            treemacs-persist-file
+;;            nil :silent)
+;;           (treemacs--restore)
+;;           (-if-let (ws (treemacs--select-workspace-by-name
+;;                         (treemacs-workspace->name (treemacs-current-workspace))))
+;;               (setf (treemacs-current-workspace) ws)
+;;             (treemacs--find-workspace))
+;;           (treemacs--consolidate-projects)
+;;           (if (and (treemacs-get-local-window) (= 2 (length (window-list))))
+;;               (kill-buffer)
+;;             (quit-window)
+;;             (el-patch-remove (kill-buffer-and-window)))
+;;           (run-hooks 'treemacs-workspace-edit-hook)
+;;           (when treemacs-hide-gitignored-files-mode
+;;             (treemacs--prefetch-gitignore-cache 'all))
+;;           (treemacs-log "Edit completed successfully."))))))
+
+;;   (defun treemacs-edit-workspaces ()
+;;     "Edit your treemacs workspaces and projects as an `org-mode' file."
+;;     (interactive)
+;;     (require 'org)
+;;     (require 'outline)
+;;     (treemacs--persist)
+;;     (switch-to-buffer (get-buffer-create treemacs--org-edit-buffer-name))
+;;     (erase-buffer)
+;;     (org-mode)
+;;     (use-local-map (copy-keymap (with-no-warnings org-mode-map)))
+;;     (local-set-key (el-patch-swap (kbd "C-c C-c") (kbd "s-s")) #'treemacs-finish-edit)
+;;     (insert "#+TITLE: Edit Treemacs Workspaces & Projects\n")
+;;     (when treemacs-show-edit-workspace-help
+;;       (insert (el-patch-concat "# Call ~treemacs-finish-edit~ or press " (el-patch-swap "~C-c C-c~" "~s-s~") " when done.\n"))
+;;       (insert "# [[https://github.com/Alexander-Miller/treemacs#conveniently-editing-your-projects-and-workspaces][Click here for detailed documentation.]]\n")
+;;       (insert "# To cancel you can simply kill this buffer.\n\n"))
+;;     (insert-file-contents treemacs-persist-file)
+;;     (with-no-warnings
+;;       (outline-show-all))
+;;     (goto-char 0))
+#+end_src
+
+#+begin_src emacs-lisp :tangle yes
+(el-patch-feature treemacs)
+(with-eval-after-load 'treemacs
+  (el-patch-defun treemacs-finish-edit ()
+    "Finish editing your workspaces and apply the change."
+    (interactive)
+    (treemacs-block
+     (treemacs-error-return-if (not (equal (buffer-name) treemacs--org-edit-buffer-name))
+                               "This is not a valid treemacs workspace edit buffer")
+     (treemacs--org-edit-remove-validation-msg)
+     (widen)
+     (whitespace-cleanup)
+     (-let [lines (treemacs--read-persist-lines (buffer-string))]
+       (treemacs-error-return-if (null (buffer-string))
+                                 "The buffer is empty, there is nothing here to save.")
+       (pcase (treemacs--validate-persist-lines lines)
+         (`(error ,err-line ,err-msg)
+          (treemacs--org-edit-display-validation-msg err-msg err-line))
+         ('success
+          (treemacs--invalidate-buffer-project-cache)
+          (write-region
+           (apply #'concat (--map (concat it "\n") lines))
+           nil
+           treemacs-persist-file
+           nil :silent)
+          (treemacs--restore)
+          (-if-let (ws (treemacs--select-workspace-by-name
+                        (treemacs-workspace->name (treemacs-current-workspace))))
+              (setf (treemacs-current-workspace) ws)
+            (treemacs--find-workspace))
+          (treemacs--consolidate-projects)
+          (if (and (treemacs-get-local-window) (= 2 (length (window-list))))
+              (kill-buffer)
+            (quit-window)
+            (el-patch-remove (kill-buffer-and-window)))
+          (run-hooks 'treemacs-workspace-edit-hook)
+          (when treemacs-hide-gitignored-files-mode
+            (treemacs--prefetch-gitignore-cache 'all))
+          (treemacs-log "Edit completed successfully."))))))
+
+  (el-patch-defun treemacs-edit-workspaces ()
+    "Edit your treemacs workspaces and projects as an `org-mode' file."
+    (interactive)
+    (require 'org)
+    (require 'outline)
+    (treemacs--persist)
+    (switch-to-buffer (get-buffer-create treemacs--org-edit-buffer-name))
+    (erase-buffer)
+    (org-mode)
+    (use-local-map (copy-keymap (with-no-warnings org-mode-map)))
+    (local-set-key (el-patch-swap (kbd "C-c C-c") (kbd "s-s")) #'treemacs-finish-edit)
+    (insert "#+TITLE: Edit Treemacs Workspaces & Projects\n")
+    (when treemacs-show-edit-workspace-help
+      (insert (el-patch-concat "# Call ~treemacs-finish-edit~ or press " (el-patch-swap "~C-c C-c~" "~s-s~") " when done.\n"))
+      (insert "# [[https://github.com/Alexander-Miller/treemacs#conveniently-editing-your-projects-and-workspaces][Click here for detailed documentation.]]\n")
+      (insert "# To cancel you can simply kill this buffer.\n\n"))
+    (insert-file-contents treemacs-persist-file)
+    (with-no-warnings
+      (outline-show-all))
+    (goto-char 0)))
+#+end_src
+
+- treemacs-edit-workspaces의 동작을 수정했다.
+
+** config
+:PROPERTIES:
+:ID:       D4511770-9D96-47F7-B22A-4B0DB3E585E8
+:END:
+#+begin_src emacs-lisp :tangle yes
+  :config
+  (require 'treemacs-persistence)
+  (pcase (cons (not (null (executable-find "git")))
+               (not (null treemacs-python-executable)))
+    (`(t . t)
+     (treemacs-git-mode 'deferred))
+    (`(t . _)
+     (treemacs-git-mode 'simple)))
+
+  (treemacs-tag-follow-mode t)
+#+end_src
+
+** COMMENT treemacs-all-the-icons
+:PROPERTIES:
+:ID:       F02E0A0A-66C8-4D0C-8EA9-7AB38BC57ABE
+:END:
+#+begin_src emacs-lisp :tangle yes
+(use-package treemacs-all-the-icons
+  :after treemacs
+  ;; :custom
+  ;; (treemacs-load-all-the-icons-with-workaround-font "Iosevka SS08")
+  :config
+  (treemacs-load-theme "all-the-icons"))
+#+end_src
+
+** treemacs icons
+:PROPERTIES:
+:ID:       B3D6E06E-8A5A-49BD-8BB0-B24976D8C9CB
+:END:
+doom-themes를 기반으로 약간 수정함
+
+#+begin_src emacs-lisp :tangle yes
+(defface treemacs-all-the-icons-root-face
+  '((t (:inherit font-lock-string-face)))
+  "Face used for the root icon in all-the-icons theme."
+  :group 'treemacs-faces)
+
+(defface treemacs-all-the-icons-file-face
+  '((t (:inherit font-lock-doc-face)))
+  "Face used for the directory and file icons in all-the-icons theme."
+  :group 'treemacs-faces)
+
+
+(let ((face-spec 'treemacs-all-the-icons-file-face))
+  (treemacs-create-theme "doom-atom"
+    :config
+    (progn
+      (treemacs-create-icon
+       :icon (format " %s\t" (all-the-icons-octicon "repo" :height 1.2 :v-adjust -0.1 :face  'treemacs-all-the-icons-root-face))
+       :extensions (root-open))
+      (treemacs-create-icon
+       :icon (format " %s\t" (all-the-icons-octicon "repo" :height 1.2 :v-adjust -0.1 :face 'treemacs-all-the-icons-root-face))
+       :extensions (root-closed))
+      (treemacs-create-icon
+       :icon (format "%s\t%s\t"
+                     (all-the-icons-octicon "chevron-down" :height 0.75 :v-adjust 0.1 :face face-spec)
+                     (all-the-icons-octicon "file-directory" :v-adjust 0 :face face-spec))
+       :extensions (dir-open))
+      (treemacs-create-icon
+       :icon (format "%s\t%s\t"
+                     (all-the-icons-octicon "chevron-right" :height 0.75 :v-adjust 0.1 :face face-spec)
+                     (all-the-icons-octicon "file-directory" :v-adjust 0 :face face-spec))
+       :extensions (dir-closed))
+      (treemacs-create-icon
+       :icon (format "%s\t%s\t"
+                     (all-the-icons-octicon "chevron-down" :height 0.75 :v-adjust 0.1 :face face-spec)
+                     (all-the-icons-octicon "package" :v-adjust 0 :face face-spec)) :extensions (tag-open))
+      (treemacs-create-icon
+       :icon (format "%s\t%s\t"
+                     (all-the-icons-octicon "chevron-right" :height 0.75 :v-adjust 0.1 :face face-spec)
+                     (all-the-icons-octicon "package" :v-adjust 0 :face face-spec))
+       :extensions (tag-closed))
+      (treemacs-create-icon
+       :icon (format "%s\t" (all-the-icons-octicon "tag" :height 0.9 :v-adjust 0 :face face-spec))
+       :extensions (tag-leaf))
+      (treemacs-create-icon
+       :icon (format "%s\t" (all-the-icons-octicon "flame" :v-adjust 0 :face face-spec))
+       :extensions (error))
+      (treemacs-create-icon
+       :icon (format "%s\t" (all-the-icons-octicon "stop" :v-adjust 0 :face face-spec))
+       :extensions (warning))
+      (treemacs-create-icon
+       :icon (format "%s\t" (all-the-icons-octicon "info" :height 0.75 :v-adjust 0.1 :face face-spec))
+       :extensions (info))
+      (treemacs-create-icon
+       :icon (format "  %s\t" (all-the-icons-octicon "file-media" :v-adjust 0 :face face-spec))
+       :extensions ("ai" "aiff" "avi" "bmp" "eps" "flac" "gif" "ico" "indd"
+                    "jpeg" "jpg" "midi" "mkv" "mov" "mp3" "mp4" "ogg" "png"
+                    "psd" "svg" "tif" "tiff" "wav" "webm" "webp"))
+      (treemacs-create-icon
+       :icon (format "  %s\t" (all-the-icons-octicon "file-code" :v-adjust 0 :face face-spec))
+       :extensions ("accdb" "accdt" "actionscript" "adoc" "adoc" "ansible"
+                    "antlr" "applescript" "asciidoc" "asm" "c" "cask" "cc"
+                    "cc" "clj" "cljc" "cljs" "cmake" "coffee" "cpp" "css"
+                    "cxx" "cython" "d" "dart" "diet" "diff" "dml"
+                    "docker-compose.yml" "dockerfile" "dscript" "edn" "eex"
+                    "el" "elm" "ex" "exs" "fennel" "fortran"
+                    "fortran-modern" "fortranfreeform" "fsharp" "gdscript"
+                    "go" "gradle" "graphql" "h" "hh" "hpp" "hs" "htm" "html"
+                    "hy" "iced" "inc" "ino" "j2" "j2" "java" "jinja" "jinja2"
+                    "jl" "js" "jsx" "kt" "kts" "ledger" "less" "lhs" "lisp"
+                    "lua" "makefile" "matlab" "merlin" "mips" "ml" "mli"
+                    "moonscript" "nim" "nims" "nix" "objectpascal" "ocaml"
+                    "pascal" "patch" "pde" "perl" "pgsql" "php" "php4" "php5"
+                    "phps" "pl" "plt" "pm" "pm6" "pony" "pp" "pp" "pro"
+                    "prolog" "ps1" "purs" "py" "pyc" "r" "racket" "rb" "rd"
+                    "rdx" "re" "rei" "rkt" "rktd" "rktl" "rs" "rsx" "sass"
+                    "sbt" "scala" "scm" "scpt" "scrbl" "scribble" "scss"
+                    "sql" "styles" "sv" "tex" "tpp" "ts" "tsx" "v"
+                    "vagrantfile" "vh" "vhd" "vhdl" "vhms" "vim" "vue"
+                    "xsl"))
+      (treemacs-create-icon
+       :icon (format "  %s\t" (all-the-icons-alltheicon "terminal" :v-adjust 0 :height 0.85 :face 'all-the-icons-lcyan))
+       :extensions ("sh" "zsh" "zshrc" "zshenv" "fish" "zprofile" "zlogin" "zlogout" "bash"
+                    "bash_profile" "bashrc" "bash_login" "profile" "bash_aliases")
+       :fallback 'same-as-icon)
+      (treemacs-create-icon
+       :icon (format "  %s\t" (all-the-icons-octicon "book" :v-adjust 0 :face face-spec))
+       :extensions ("azw" "azw3" "cb7" "cba" "cbr" "cbt" "cbz" "ceb" "chm"
+                    "djvu" "doc" "docx" "exe" "fb2" "inf" "kf8" "kfx" "lit"
+                    "lrf" "lrx" "mobi" "opf" "or" "oxps" "pdb" "pdb" "pdb"
+                    "pdg" "pkg" "prc" "ps" "rtf" "tr2" "tr3" "txt" "xeb" "xps"
+                    "pot" "potx" "potm" "pps" "ppsx" "ppsm" "ppt" "pptx"
+                    "pptm" "pa" "ppa" "ppam" "sldm" "sldx" ))
+      (treemacs-create-icon
+       :icon (format "  %s\t" (all-the-icons-faicon "cogs" :height 0.85 :v-adjust 0 :face face-spec))
+       :extensions ("Vagrantfile" "babel.config.js" "babelignore" "babelrc"
+                    "babelrc.js" "babelrc.json" "bashrc" "bazel" "bazelrc"
+                    "bower.json" "bowerrc" "cabal" "cfg" "conf" "config"
+                    "cson" "csv" "editorconfig" "envrc" "eslintignore"
+                    "eslintrc" "feature" "gemfile" "git" "gitattributes"
+                    "gitconfig" "gitignore" "gitmodules" "ideavimrc" "iml"
+                    "ini" "inputrc" "json" "ledgerrc" "lock" "nginx"
+                    "npm-shrinkwrap.json" "npmignore" "npmrc"
+                    "package-lock.json" "package.json" "phpunit" "pkg" "plist"
+                    "properties" "terminalrc" "toml" "tridactylrc"
+                    "vimperatorrc" "vimrc" "vrapperrc" "xdefaults" "xml"
+                    "xresources" "yaml" "yarn-integrity" "yarnclean"
+                    "yarnignore" "yarnrc" "yml"))
+
+      (treemacs-create-icon
+       :icon (format "  %s\t" (all-the-icons-octicon "file-text" :v-adjust 0 :face face-spec))
+       :extensions ("md" "markdown" "rst" "org" "log" "txt" "contribute"
+                    "license" "readme" "changelog"))
+      (treemacs-create-icon
+       :icon (format "  %s\t" (all-the-icons-octicon "file-binary" :v-adjust 0 :face face-spec))
+       :extensions ("exe" "dll" "obj" "so" "o" "out" "elc" "cmake-cache" "csr"
+                    "eslintcache" "crt" "cer" "der" "pfx" "p12" "p7b" "p7r"
+                    "DS_STORE" "key" "pem" "src" "crl" "sst" "stl" "ipynb"))
+      (treemacs-create-icon
+       :icon (format "  %s\t" (all-the-icons-octicon "file-pdf" :v-adjust 0 :face face-spec))
+       :extensions ("pdf"))
+      (treemacs-create-icon
+       :icon (format "  %s\t" (all-the-icons-octicon "file-zip" :v-adjust 0 :face face-spec))
+       :extensions ("zip" "xz" "7z" "tar" "gz" "rar" "tgz" "jar"))
+      (treemacs-create-icon
+       :icon (format "  %s\t" (all-the-icons-octicon "file-text" :v-adjust 0 :face face-spec))
+       :extensions (fallback))))
+
+  (treemacs-create-theme "doom-colors"
+    :extends "doom-atom"
+    :config
+    (progn
+      (treemacs-create-icon
+       :icon (format " %s\t" (all-the-icons-octicon "repo" :height 1.2 :v-adjust -0.1 :face 'treemacs-all-the-icons-root-face))
+       :extensions (root-open))
+      (treemacs-create-icon
+       :icon (format " %s\t" (all-the-icons-octicon "repo" :height 1.2 :v-adjust -0.1 :face 'treemacs-all-the-icons-root-face))
+       :extensions (root-closed))
+      (treemacs-create-icon
+       :icon (format "%s\t" (all-the-icons-octicon "flame" :height 0.8 :v-adjust 0 :face 'all-the-icons-red))
+       :extensions (error))
+      (treemacs-create-icon
+       :icon (format "%s\t" (all-the-icons-octicon "stop" :height 0.8 :v-adjust 0 :face 'all-the-icons-yellow))
+       :extensions (warning))
+      (treemacs-create-icon
+       :icon (format "%s\t" (all-the-icons-octicon "info" :height 0.75 :v-adjust 0.1 :face 'all-the-icons-green))
+       :extensions (info))
+      (treemacs-create-icon
+       :icon (format "  %s\t" (all-the-icons-alltheicon "git" :height 0.85 :v-adjust 0.0 :face 'all-the-icons-red))
+       :extensions ("gitignore" "git" "gitattributes" "gitconfig" "gitmodules"))
+      (treemacs-create-icon
+       :icon (format "%s\t" (all-the-icons-octicon "book" :height 1.0 :v-adjust 0.0 :face 'all-the-icons-blue))
+       :extensions (license))
+
+      (dolist (item all-the-icons-extension-icon-alist)
+        (let* ((extension (car item))
+               (func (cadr item))
+               (args (append (list (cadr (cdr item))) '(:v-adjust -0.05 :height 0.85) (cdr (cddr item))))
+               (icon (apply func args)))
+          (let* ((icon-pair (cons (format "  %s\t" icon) " "))
+                 (gui-icons (treemacs-theme->gui-icons treemacs--current-theme))
+                 (tui-icons (treemacs-theme->tui-icons treemacs--current-theme))
+                 (gui-icon  (car icon-pair))
+                 (tui-icon  (cdr icon-pair)))
+            (ht-set! gui-icons extension gui-icon)
+            (ht-set! tui-icons extension tui-icon))))
+
+      ;; File extensions for whom the above did not work (likely because their
+      ;; regexp is too complicated to be reversed with
+      ;; `doom-themes--get-treemacs-extensions' -- which is too naive)
+      (treemacs-create-icon
+       :icon (format "  %s\t" (all-the-icons-fileicon "R" :v-adjust 0 :face 'all-the-icons-dblue))
+       :extensions ("r"))
+      (treemacs-create-icon
+       :icon (format "  %s\t" (all-the-icons-octicon "file-code" :v-adjust 0 :face face-spec))
+       :extensions ("elc")))))
+
+(treemacs-load-theme "doom-colors")
+#+end_src
+
+** end
+:PROPERTIES:
+:ID:       AF3900BE-49D5-4EB6-B987-5AB3A6BAA0FF
+:END:
+#+begin_src emacs-lisp :tangle yes
+)
+#+end_src
+
+** 호환성 패키지
+#+begin_src emacs-lisp :tangle yes
+(use-package treemacs-projectile
+  :after treemacs projectile)
+#+end_src
+
+#+begin_src emacs-lisp :tangle yes
+(use-package treemacs-magit
+  :after treemacs magit)
+#+end_src
+
+#+begin_src emacs-lisp :tangle yes
+(use-package treemacs-evil
+  :after treemacs evil)
+#+end_src
+
+* persistent-scratch
+:PROPERTIES:
+:ID:       B34FB60C-4A6E-4F40-97DB-4BB675153919
+:END:
+https://github.com/Fanael/persistent-scratch
+
+​~*scratch*~​ 버퍼의 내용을 계속 보관한다.
+#+begin_src emacs-lisp :tangle yes
+(use-package persistent-scratch
+  :init
+  (defvar persistent-scratch-backup-keep 7 "How long keep scratch backup(day)")
+  :custom
+  (persistent-scratch-backup-file-name-format "%Y%m%dT%H%M%S")
+  (persistent-scratch-backup-directory
+   (expand-file-name "scratch" no-littering-var-directory))
+  (persistent-scratch-backup-filter
+   #'(lambda (files)
+       (-filter
+        (lambda (file)
+          (ignore-errors
+            (time-less-p
+             (encode-time (parse-time-string file))
+             (time-subtract (current-time)
+                            (days-to-time persistent-scratch-backup-keep)))))
+        files)))
+  :config
+  (persistent-scratch-setup-default))
+#+end_src
+
+* osx-trash
+:PROPERTIES:
+:ID:       EBA9857C-06A3-4DE4-93B3-6763A9CD57FD
+:END:
+https://github.com/emacsorphanage/osx-trash/
+
+osx의 휴지통을 사용
+
+https://github.com/ali-rantakari/trash
+
+trash를 brew로 설치해서 사용할 수도 있다. trash가 설치되지 않았다면 애플스크립트 헬퍼로 작동하고, 약간 느릴 수 있지만 둘 다 잘 작동한다고 함.
+#+begin_src emacs-lisp :tangle yes
+(use-package osx-trash
+  :if (eq system-type 'darwin)
+  :custom
+  (trash-directory "~/.Trash")
+  :config
+  (system-packages-ensure "trash")
+  (osx-trash-setup))
+#+end_src
+
+* reveal-in-osx-finder
+:PROPERTIES:
+:ID:       2419831E-033D-4D6B-A054-BD89F2907251
+:END:
+https://github.com/kaz-yos/reveal-in-osx-finder
+
+#+begin_src emacs-lisp :tangle yes
+(use-package reveal-in-osx-finder
+  :defer t
+  :commands (reveal-in-osx-finder))
+#+end_src
+
+* grab-mac-link
+:PROPERTIES:
+:ID:       7749E4D6-9A34-44EF-9A21-6C8FF799F687
+:END:
+https://github.com/xuchunyang/grab-mac-link.el
+
+#+begin_src emacs-lisp :tangle yes
+(use-package grab-mac-link
+  :defer t
+  :commands (grab-mac-link))
+#+end_src
+
+* COMMENT super-save
+:PROPERTIES:
+:ID:       761E243A-C7C2-454F-9820-AC8691ED8657
+:END:
+https://github.com/bbatsov/super-save
+트리거에 따라서 자동저장하는 기능.
+
+#+begin_src emacs-lisp :tangle yes
+(use-package super-save
+  ;; :disabled
+  :defer 1
+  :diminish super-save-mode
+  :custom
+  (auto-save-default nil)
+  (super-save-auto-save-when-idle t)   ; save when idle.
+  (auto-save-visited-mode t)
+  (super-save-remote-files nil)        ; do not autosave remote files.
+  (super-save-exclude '(".gpg"))
+  :config
+  ;; add integration with ace-window
+  ;; (add-to-list 'super-save-triggers 'ace-window)
+  ;; save on find-file
+  (add-to-list 'super-save-hook-triggers 'find-file-hook)
+  (super-save-mode +1))
+#+end_src

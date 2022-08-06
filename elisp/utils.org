@@ -1,0 +1,82 @@
+#+auto_tangle: t
+
+* xwidget
+:PROPERTIES:
+:ID:       1D46A65E-F786-4D10-9207-A69EB06452A6
+:END:
+내장 웹 브라우저
+
+#+begin_src emacs-lisp :tangle yes
+(use-package xwidget
+  :general
+  (xwidget-webkit-mode-map
+   :states 'normal
+   "g u" nil
+   "g f" 'xwidget-webkit-browse-url
+   "esc" 'xwidget-webkit-end-edit-textarea)
+  :config
+  (defun xwidget-papago-translate ()
+    "Open papago translate for this xwidget page"
+    (xwidget-webkit-goto-url
+     (concat
+      "https://papago.naver.net/website?locale=ko&source=auto&target=ko&url="
+      (xwidget-webkit-uri (xwidget-webkit-current-session))))))
+#+end_src
+
+* COMMENT restart-emacs
+:PROPERTIES:
+:ID:       817FB6FC-1344-4137-90D8-CD134B78B36A
+:END:
+#+begin_src emacs-lisp :tangle yes
+(use-package restart-session
+  :straight nil
+  :general
+  ("s-q" 'cmd-q-transient)
+  :init
+  (load (expand-file-name "restart-session" elisp-dir))
+  (transient-define-prefix cmd-q-transient ()
+    "cmd-q keymap"
+    :incompatible '(("-Q" "--debug-init"))
+    [["Restart Arguments"
+      ("-Q" "do not load init file" "-Q")
+      ("d" "debug init file" "--debug-init")]]
+    [:description "Restart/Quit?"
+     [("r" "Restart Emacs"
+       (lambda (&optional args)
+         (interactive (list (transient-args transient-current-command)))
+         ;; (restart-emacs args)
+         (restart-session args)
+         ;; (save-buffers-kill-emacs nil t)
+         ))]
+     [("s-q" "Quit Emacs" save-buffers-kill-emacs)]]))
+#+end_src
+
+* redacted
+:PROPERTIES:
+:ID:       057373BD-41EC-488D-BDD8-89089D74CE76
+:END:
+https://github.com/bkaestner/redacted.el
+
+버퍼의 텍스트를 가리는 마이너 모드
+#+begin_src emacs-lisp :tangle yes
+(use-package redacted
+  :hook
+  ;; Enable `read-only-mode' to ensure that we don't change what we can't read.
+  (redacted-mode . (lambda () (read-only-mode (if redacted-mode 1 -1)))))
+#+end_src
+
+* psession
+:PROPERTIES:
+:ID:       E2FBD1E0-3380-4EDE-A25B-AFBBF67E2C52
+:END:
+https://github.com/thierryvolpiatto/psession
+
+emacs의 세션을 저장하고 유지하는 기능. 버퍼, 윈도우 구성 뿐 아니라 이맥스 내부 변수들과 히스토리(savehist-mode를 대체), 레지스터 등을 저장하고 복원한다. 자동저장도 지원.
+#+begin_src emacs-lisp :tangle yes
+(use-package psession
+  :init
+  (require 'psession)
+  (psession-mode          1)
+  (psession-savehist-mode 1)
+  (psession-autosave-mode 1))
+#+end_src

@@ -1,0 +1,1421 @@
+#+auto_tangle: t
+
+* org
+:PROPERTIES:
+:ID:       59B0FC24-3214-4802-ABA4-31A9A5F02789
+:END:
+#+begin_src emacs-lisp :tangle yes
+(use-package org
+  :hook ((org-mode . org-mode-setup)
+;; https://emacs.stackexchange.com/questions/16845/expand-org-mode-subtree-with-point-after-ellipsis/44568
+;; expand when press TAB after ellipsis.
+         (org-tab-first-hook . org-end-of-line))
+#+end_src
+
+* 키바인딩 [2/6]
+:PROPERTIES:
+:ID:       F1716479-97B0-44F2-8F99-E5B987F12882
+:END:
+#+begin_src emacs-lisp :tangle yes
+:general
+(spc
+  :keymaps 'org-mode-map
+  :states '(normal insert visual emacs motion)
+  "o"      '(:ignore t :which-key "org-mode")
+  "op"     '(org-pomodoro :which-key "pomodoro")
+  "on"     '(org-toggle-narrow-to-subtree :which-key "toggle narrow")
+  ;; "of"  '(dw/search-org-files :which-key "search notes")
+  "of"     '(consult-org-heading :which-key "search heading")
+  ;; "os"  '(counsel-rg :which-key "search notes")
+  "os"     '(org-agenda :which-key "status")
+  "ot"     '(org-todo-list :which-key "todos")
+  "oc"     '(org-capture t :which-key "capture")
+  "ox"     '(org-export-dispatch t :which-key "export")
+  ;; insert
+  "oi"     '(:ignore t :which-key "insert")
+  "oil"    '(org-insert-link :which-key "insert link")
+  "oi,"    '(org-insert-structure-template :which-key "insert structure")
+  "oii"    '(org-emphasize :which-key "emphasize")
+  ;; transclusion
+  "oit"    'org-transclusion-add
+  ;; whitespace
+  "oi SPC" '(insert-zero-width-space :which-key "zero width space"))
+(org-mode-map
+ "C-j" 'org-next-visible-heading
+ "C-k" 'org-previous-visible-heading)
+
+(org-src-mode-map
+ "s-s" 'org-edit-src-save
+ "s-k" 'org-edit-src-exit)
+
+(org-mode-map
+  :states 'normal
+  "SPC ee" '(my/org-edit-this :which-key "edit-this")
+  "SPC eb" '(org-babel-execute-src-block :which-key "execute this block"))
+
+;; $를 한번 누르면 보이는 라인 끝으로, 두번 누르면 실제 라인 끝으로 보낸다.
+(org-mode-map
+ :states '(normal motion visual)
+ "$" (general-key-dispatch '(lambda () (interactive) (evil-org-end-of-line))
+       :timeout 0.25
+       "$" 'evil-end-of-line))
+#+end_src
+
+- [X] org-toggle-comment
+- [ ] org-store-link
+- [ ] org-insert-last-stored-link
+- [ ] 체크박스 생성
+- [ ] fold - unfold는 불편하지 않음
+- [X] org-block 진입시 insert 대신 normal 모드로
+
+* el-patch
+:PROPERTIES:
+:ID:       43012DD8-79D3-4BD1-80AC-F5E00B91F11D
+:END:
+#+begin_src emacs-lisp :tangle yes
+:config/el-patch
+#+end_src
+** org-emphasize
+:PROPERTIES:
+:ID:       DDF2E6F6-3147-4859-AD24-0AF071CD772B
+:END:
+#+begin_src emacs-lisp :tangle yes
+  (defun org-emphasize (&optional char)
+    "Insert or change an emphasis, i.e. a font like bold or italic.
+If there is an active region, change that region to a new emphasis.
+If there is no region, just insert the marker characters and position
+the cursor between them.
+CHAR should be the marker character.  If it is a space, it means to
+remove the emphasis of the selected region.
+If CHAR is not given (for example in an interactive call) it will be
+prompted for."
+    (interactive)
+    (let ((erc org-emphasis-regexp-components)
+          (string "") beg end move s)
+      (if (org-region-active-p)
+          (setq beg (region-beginning)
+                end (region-end)
+                string (buffer-substring beg end))
+        (setq move t))
+      (unless char
+        (message "Emphasis marker or tag: [%s]"
+                 (mapconcat #'car org-emphasis-alist ""))
+        (setq char (read-char-exclusive)))
+      (if (equal char ?\s)
+          (setq s ""
+                move nil)
+        (unless (assoc (char-to-string char) org-emphasis-alist)
+          (user-error "No such emphasis marker: \"%c\"" char))
+        (setq s (char-to-string char)))
+      (while (and (> (length string) 1)
+                  (equal (substring string 0 1) (substring string -1))
+                  (assoc (substring string 0 1) org-emphasis-alist))
+        (setq string (substring string 1 -1)))
+      (setq string (concat (el-patch-add "​") s string s (el-patch-add "​")))
+      (when beg (delete-region beg end))
+      (unless (or (bolp)
+                  (string-match (concat "[" (nth 0 erc) "\n]")
+                                (char-to-string (char-before (point)))))
+        (insert (el-patch-swap " " "")) (el-patch-add (forward-char 1)))
+      (unless (or (eobp)
+                  (string-match (concat "[" (nth 1 erc) "\n]")
+                                (char-to-string (char-after (point)))))
+        (insert (el-patch-swap " " " ")) (el-patch-remove (backward-char 1)))
+      (insert string)
+      (and move (backward-char (el-patch-swap 1 2)))))
+#+end_src
+
+* custom
+:PROPERTIES:
+:ID:       C91448C2-3FDC-42FF-B77A-1988CABE99C9
+:END:
+#+begin_src emacs-lisp :tangle yes
+:custom
+(org-id-link-to-org-use-id 'create-if-interactive-and-no-custom-id)    ; create ID if need to make link.
+;; (org-startup-indented t)         ; Keep the indentation
+(org-startup-indented nil)         ; Keep the indentation
+(org-src-tab-acts-natively t)    ; indentation setting
+(org-log-done t)                 ; Automatically log done times in todo items.
+;; (org-log-into-drawer t)         ; Log stuff into the LOGBOOK drawer by default
+(org-hide-emphasis-markers t)         ; hide markup indicator
+(org-ellipsis "​")                     ; change ellipsis shape.
+(prettify-symbols-unprettify-at-point 'right-edge)
+(org-fontify-done-headline t)         ; apply special face to DONE
+(org-pretty-entities t)               ; show entities as UTF-8 char.
+;; (org-odd-levels-only t)               ; odd levels only
+(org-hide-leading-stars t)            ; hide the stars.
+;; (org-ellipsis "⋱")                    ; change ellipsis shape.
+(org-src-fontify-natively t)
+(org-fontify-quote-and-verse-blocks t) ; fontify quote, verse too
+(org-src-tab-acts-natively t)
+;; (org-edit-src-content-indentation 4)   ; indentation for contents of code block.
+(org-edit-src-content-indentation 0) ; indentation for contents of code block. if `org-src-preserve-indentation' is `non-nil' this will be ignored.
+;; (org-src-preserve-indentation nil)     ;
+(org-hide-block-startup nil)
+(org-startup-folded 'content)         ; start with folded content.
+(org-confirm-babel-evaluate nil) ; do not ask confirmation when evaluate code block.
+;; (org-return-follows-link t)           ; open link with enter key
+(org-refile-targets '((nil :maxlevel . 1)
+                      (org-agenda-files :maxlevel . 1)))
+(org-refile-use-outline-path t)
+(org-outline-path-complete-in-steps nil)
+;; emphasis using zero with space
+(org-emphasis-regexp-components '("   ('\"{\x200B" "-     .,:!?;'\")}\\[\x200B" " ,\"'" "." 1)) ; " for matching 
+(org-startup-with-inline-images t)    ; start with inline images
+;; (org-startup-with-latex-preview t)                ; start with latex preview
+(org-latex-create-formula-image-program 'dvisvgm) ; latex to svg
+(org-agenda-restore-windows-after-quit t)
+(org-list-demote-modify-bullet '(("+" . "-") ("-" . "+")))
+#+end_src
+
+** clock 설정
+:PROPERTIES:
+:ID:       2930C0CF-2119-4574-A720-7A2EBBCDB1C3
+:END:
+#+begin_src emacs-lisp :tangle yes
+(org-clock-persist t)
+(org-clock-in-resume t)
+(org-clock-persist-query-resume nil)
+#+end_src
+
+자리비움 상태로 간주할 시간(분 단위)
+#+begin_src emacs-lisp :tangle yes
+;; (org-clock-idle-time 15)
+#+end_src
+
+** evil
+:PROPERTIES:
+:ID:       BA9CE973-9F59-4DEF-8831-1B617708DC5B
+:END:
+#+begin_src emacs-lisp :tangle yes
+(evil-cross-lines t)
+(evil-respect-visual-line-mode t)
+#+end_src
+
+* config
+:PROPERTIES:
+:ID:       095B0BE2-F8BD-42A7-A8E1-88AF24C46090
+:END:
+#+begin_src emacs-lisp :tangle yes
+:config
+#+end_src
+
+** keymap
+#+begin_src emacs-lisp :tangle yes
+(with-eval-after-load 'org-mode
+  (general-define-key
+   :keymaps 'org-mode-map
+   :states 'normal
+   :predicate (eq (org-element-type (org-element-context)) 'headline)
+   "s-/" 'org-toggle-comment))
+#+end_src
+
+** org 키워드 아이콘화
+:PROPERTIES:
+:ID:       C87F5E88-5E5D-4ADE-A242-CD73E6A2BA0A
+:END:
+*** pretty-babel-src-blocks
+:PROPERTIES:
+:ID:       26CE090F-CCC8-4584-BED6-BE78708D86F8
+:END:
+#+begin_src emacs-lisp :tangle yes
+(setq org-icons-list
+      '(("#+begin_src" . "")
+        ("#+end_src" . "")
+        ("#+begin_quote" . "")
+        ("#+end_quote" . "")
+        ("#+begin_example" . "")
+        ("#+end_example" . "")
+        ;; (":properties:" . "")
+        (":end:" . "")
+        ("#+startup:" . "")
+        ("#+title:" . "")
+        ("#+results:" . "")
+        ("#+tag:" . "")
+        ("#+name:" . "")
+        ("#+roam_tags:" . "")
+        ("#+filetags:" . "")
+        ("#+html_head:" . "")
+        ("#+subtitle:" . "")
+        ("#+author:" . " ")
+        ("#+header:" . " ")
+        ("scheduled:" . "")
+        ("deadline:" . "")
+        (":Effort:" . "")
+        ;; ("TODO" . "")
+        ;; ("WAIT" . "")
+        ;; ("NOPE" . "")
+        ;; ("DONE" . "")
+        ;; ("[#A]" . "")
+        ;; ("[#B]" . "")
+        ;; ("[#C]" . "")
+        ("[ ]" . "")
+        ("[X]" . "")
+        ("[-]" . "")))
+#+end_src
+**** COMMENT rasmus/org-prettify-src
+:PROPERTIES:
+:ID:       957C3294-3829-44C8-B29A-645A570094F2
+:END:
+https://pank.eu/blog/pretty-babel-src-blocks.html
+
+org-src-block의 기타 파라미터를 숨기는 기능
+#+begin_src emacs-lisp :tangle yes
+(defvar-local rasmus/org-at-src-begin -1
+  "Variable that holds whether last position was a ")
+
+(defvar rasmus/ob-header-symbol ?
+  "Symbol used for babel headers")
+
+(defun rasmus/org-prettify-src--update ()
+  (let ((case-fold-search t)
+        (re "^[ \t]*#\\+begin_src[ \t]+[^ \f\t\n\r\v]+[ \t]*")
+        found)
+    (save-excursion
+      (goto-char (point-min))
+      (while (re-search-forward re nil t)
+        (goto-char (match-end 0))
+        (let ((args (org-trim
+                     (buffer-substring-no-properties (point)
+                                                     (line-end-position)))))
+          (when (org-string-nw-p args)
+            (let ((new-cell (cons args rasmus/ob-header-symbol)))
+              (cl-pushnew new-cell prettify-symbols-alist :test #'equal)
+              (cl-pushnew new-cell found :test #'equal)))))
+      (setq prettify-symbols-alist
+            (cl-set-difference prettify-symbols-alist
+                               (cl-set-difference
+                                (cl-remove-if-not
+                                 (lambda (elm)
+                                   (eq (cdr elm) rasmus/ob-header-symbol))
+                                 prettify-symbols-alist)
+                                found :test #'equal)))
+      ;; Clean up old font-lock-keywords.
+      (font-lock-remove-keywords nil prettify-symbols--keywords)
+      (setq prettify-symbols--keywords (prettify-symbols--make-keywords))
+      (font-lock-add-keywords nil prettify-symbols--keywords)
+      (while (re-search-forward re nil t)
+        (font-lock-flush (line-beginning-position) (line-end-position))))))
+
+(defun rasmus/org-prettify-src ()
+  "Hide src options via `prettify-symbols-mode'.
+
+  `prettify-symbols-mode' is used because it has uncollpasing. It's
+  may not be efficient."
+  (let* ((case-fold-search t)
+         (at-src-block (save-excursion
+                         (beginning-of-line)
+                         (looking-at "^[ \t]*#\\+begin_src[ \t]+[^ \f\t\n\r\v]+[ \t]*"))))
+    ;; Test if we moved out of a block.
+    (when (or (and rasmus/org-at-src-begin
+                   (not at-src-block))
+              ;; File was just opened.
+              (eq rasmus/org-at-src-begin -1))
+      (rasmus/org-prettify-src--update))
+    ;; Remove composition if at line; doesn't work properly.
+    ;; (when at-src-block
+    ;;   (with-silent-modifications
+    ;;     (remove-text-properties (match-end 0)
+    ;;                             (1+ (line-end-position))
+    ;;                             '(composition))))
+    (setq rasmus/org-at-src-begin at-src-block)))
+
+(defun rasmus/org-prettify-symbols ()
+  (mapc (apply-partially 'add-to-list 'prettify-symbols-alist)
+        (cl-reduce 'append
+                   (mapcar (lambda (x) (list x (cons (upcase (car x)) (cdr x))))
+                           org-icons-list)))
+  (turn-on-prettify-symbols-mode)
+  (add-hook 'post-command-hook 'rasmus/org-prettify-src t t))
+(add-hook 'org-mode-hook #'rasmus/org-prettify-symbols)
+#+end_src
+**** 옛날 버전
+:PROPERTIES:
+:ID:       A5E5E03E-C696-4A4C-B31B-571C8A411499
+:END:
+#+begin_src emacs-lisp :tangle yes
+(defun org-icons ()
+  "Beautify org mode keywords."
+  (setq prettify-symbols-alist org-icons-list)
+  (prettify-symbols-mode t))
+(add-hook 'org-mode-hook #'org-icons)
+#+end_src
+
+*** COMMENT org-checkbox-done-text
+:PROPERTIES:
+:ID:       B7170108-06A4-4687-B1B9-4D7D261A5FF0
+:END:
+done 시에 헤드라인의 이름에도 색상을 적용함.
+#+begin_src emacs-lisp :tangle yes
+(font-lock-add-keywords
+ 'org-mode
+ `(("^[ \t]*\\(?:[-+*]\\|[0-9]+[).]\\)[ \t]+\\(\\(?:\\[@\\(?:start:\\)?[0-9]+\\][ \t]*\\)?\\[\\(?:X\\|\\([0-9]+\\)/\\2\\)\\][^\n]*\n\\)"
+    ;; 1 'org-checkbox-done-text prepend
+    1 'org-done))
+'append)
+#+end_src
+
+- doom-themes의 ​=doom-themes-org-config=​에 포함되어 있음
+
+***** DONE 이렇게
+CLOSED: [2021-11-30 Tue 19:28]
+
+*** COMMENT 리스트 표시
+:PROPERTIES:
+:ID:       243F886D-5B88-470B-A14A-E60EB46A8864
+:END:
+#+begin_src emacs-lisp :tangle no
+(font-lock-add-keywords 'org-mode '(("^ *\\([-]\\) " (0 (prog1 () (compose-region (match-beginning 1) (match-end 1) "•"))))))
+#+end_src
+- org-superstar나 org-bars 때문인지 작동하지 않는다.
+- org-superstart가 대체
+*** COMMENT svg-lib
+:PROPERTIES:
+:ID:       4980071A-A28C-4840-BB7A-5FF24F9D4126
+:END:
+#+begin_src emacs-lisp :tangle yes
+(defvar svg-font-lock-keywords
+  `(("TODO"
+     (0 (list 'face nil 'display (svg-font-lock-todo))))
+    ("\\:\\([0-9a-zA-Z]+\\)\\:"
+     (0 (list 'face nil 'display (svg-font-lock-tag (match-string 1)))))
+    ("DONE"
+     (0 (list 'face nil 'display (svg-font-lock-done))))
+    ("\\[\\([0-9]\\{1,3\\}\\)%\\]"
+     (0 (list 'face nil 'display (svg-font-lock-progress_percent (match-string 1)))))
+    ;; ("\\[\\([0-9]+/[0-9]+\\)\\]"
+    ;;  (0 (list 'face nil 'display (svg-font-lock-progress_count (match-string 1)))))
+    ))
+
+(defun svg-font-lock-tag (label)
+  (svg-lib-tag label nil))
+
+(defun svg-font-lock-todo ()
+  (svg-lib-tag "TODO" nil :margin 0
+               :font-weight 400
+               ;; :foreground "#ebdbb2"
+               :background "#fb4933"))
+
+(defun svg-font-lock-done ()
+  (svg-lib-tag "DONE" nil :margin 0
+               :font-weight 400
+               ;; :foreground "#ebdbb2"
+               :background "#8ec07c"))
+
+(defun svg-font-lock-progress_percent (value)
+  (svg-image (svg-lib-concat
+              (svg-lib-progress-bar (/ (string-to-number value) 100.0)
+                                nil :margin 0 :stroke 2 :radius 3 :padding 2 :width 6)
+              (svg-lib-tag (concat value "%")
+                           nil :stroke 2 :margin 0)) :ascent 'center))
+
+(defun svg-font-lock-progress_count (value)
+  (let* ((seq (mapcar #'string-to-number (split-string value "/")))
+         (count (float (car seq)))
+         (total (float (cadr seq))))
+  (svg-image (svg-lib-concat
+              (svg-lib-progress-bar (/ count total) nil
+                                :margin 0 :stroke 2 :radius 3 :padding 2 :width 6)
+              (svg-lib-tag value nil
+                           :stroke 2 :margin 0)) :ascent 'center)))
+
+(defvar svg-lib-status nil "")
+
+;; Activate
+(defun svg-lib-on ()
+  (when (and (boundp 'svg-font-lock-keywords) svg-font-lock-keywords)
+    (push 'display font-lock-extra-managed-props)
+    (font-lock-add-keywords nil svg-font-lock-keywords)
+    (setq svg-lib-status t)
+    (font-lock-flush (point-min) (point-max))
+    (message "svg-lib on")))
+
+;; Deactivate
+(defun svg-lib-off ()
+  (font-lock-remove-keywords nil svg-font-lock-keywords)
+  (setq svg-lib-status nil)
+  (font-lock-flush (point-min) (point-max))
+  (message "svg-lib off"))
+
+(defun svg-lib-toggle ()
+  (interactive)
+  (if svg-lib-status (svg-lib-off) (svg-lib-on)))
+#+end_src
+
+*** svg-tag-mode
+:PROPERTIES:
+:ID:       94528775-2AC0-463A-A907-BB85B5D0C2DB
+:END:
+#+begin_src emacs-lisp :tangle yes
+(defconst date-re "[0-9]\\{4\\}-[0-9]\\{2\\}-[0-9]\\{2\\}")
+(defconst time-re "[0-9]\\{2\\}:[0-9]\\{2\\}")
+(defconst day-re "[A-Za-z]\\{3\\}")
+
+(defun svg-progress-percent (value)
+  (svg-image (svg-lib-concat
+              (svg-lib-progress-pie (/ (string-to-number value) 100.0)
+                                nil :stroke 2 :radius 3 :padding 2 :width 10)
+              (svg-lib-tag (concat value "%") nil :stroke 0))
+             :ascent 'center))
+
+(defun svg-progress-count (value)
+  (let* ((seq (mapcar #'string-to-number (split-string value "/")))
+         (count (float (car seq)))
+         (total (float (cadr seq))))
+  (svg-image (svg-lib-concat
+              (svg-lib-progress-pie
+               (/ count total) nil :stroke 2 :radius 3 :padding 2 :width 10)
+              (svg-lib-tag value nil :stroke 0))
+             :ascent 'center)))
+
+(setq svg-tag-tags
+      `(
+        ;; Org tags
+        ;; (":\\([A-Za-z0-9]+\\)" .
+        ;;  ((lambda (tag) (svg-tag-make tag))))
+        (":\\([A-Za-z0-9]+[ \-]\\)" .
+         ((lambda (tag) tag)))
+        
+        ;; Task priority
+        ("\\[#[A-Z]\\]" .
+         ((lambda (tag)
+            (svg-tag-make tag :face 'org-priority :beg 1 :end -1 :padding 3))))
+
+        ;; Progress
+        ("\\(\\[[0-9]\\{1,3\\}%\\]\\)" .
+         ((lambda (tag)
+            (svg-progress-percent (substring tag 1 -2)))))
+        ("\\(\\[[0-9]+/[0-9]+\\]\\)" .
+         ((lambda (tag)
+            (svg-progress-count (substring tag 1 -1)))))
+        
+        ;; TODO / DONE
+        ("TODO" . ((lambda (tag) 
+                     (svg-tag-make "TODO" :face 'org-todo :inverse t))))
+        ("DONE" . ((lambda (tag) 
+                     (svg-tag-make "DONE" :face 'org-done))))
+        ("COMMENT" . ((lambda (tag)
+                        (svg-tag-make "COMMENT" :face 'org-special-keyword))))
+
+        ;; Citation of the form [cite:@Knuth:1984] 
+        ("\\(\\[cite:@[A-Za-z]+:\\)" .
+         ((lambda (tag)
+            (svg-tag-make tag :inverse t :beg 7 :end -1 :crop-right t))))
+        ("\\[cite:@[A-Za-z]+:\\([0-9]+\\]\\)" .
+         ((lambda (tag)
+            (svg-tag-make tag :end -1 :crop-left t))))
+        
+        ;; Active date (without day name, with or without time)
+        (,(format "\\(<%s>\\)" date-re) .
+         ((lambda (tag)
+            (svg-tag-make tag :beg 1 :end -1 :padding 2))))
+        (,(format "\\(<%s *\\)%s>" date-re time-re) .
+         ((lambda (tag)
+            (svg-tag-make tag :beg 1 :inverse nil :crop-right t :padding 2))))
+        (,(format "<%s *\\(%s>\\)" date-re time-re) .
+         ((lambda (tag)
+            (svg-tag-make tag :end -1 :inverse t :crop-left t :padding 3))))
+
+        ;; Inactive date  (without day name, with or without time)
+         (,(format "\\(\\[%s\\]\\)" date-re) .
+          ((lambda (tag)
+             (svg-tag-make tag :beg 1 :end -1 :face 'org-date :padding 2))))
+         (,(format "\\(\\[%s *\\)%s\\]" date-re time-re) .
+          ((lambda (tag)
+             (svg-tag-make tag :beg 1 :inverse nil :crop-right t :face 'org-date :padding 2))))
+
+         (,(format "\\[%s *\\(%s\\]\\)" date-re time-re) .
+          ((lambda (tag)
+             (svg-tag-make tag :end -1 :inverse t :crop-left t :face 'org-date :padding 3))))))
+#+end_src
+
+** 패키지
+:PROPERTIES:
+:ID:       95AC3B12-9644-4F46-9F7A-B3AF833C1215
+:END:
+*** UI
+**** org-bars
+:PROPERTIES:
+:ID:       1A3F717B-789D-47E1-82D0-8DDB9276B77B
+:END:
+https://github.com/tonyaldon/org-bars
+
+[[highlight-indent-guides][highlight-indent]]처럼 org의 아웃라인을 표시한다.
+#+begin_src emacs-lisp :tangle yes
+(use-package org-bars
+  :straight (org-bars
+             :type git
+             :host github
+             :repo "tonyaldon/org-bars")
+  :hook (org-mode . org-bars-mode)
+  ;; (org-bars-extra-pixels-height 7)
+  ;; :custom-face
+  ;; (org-bars-star-empty ((t (:weight bold))))
+  ;; (org-bars-star-invisible ((t (:weight bold))))
+  ;; (org-bars-star-visible ((t (:weight bold))))
+  :config
+  (setq org-bars-stars '(:empty ""
+                         :invisible ""
+                         :visible ""))
+  ;; (setq org-bars-with-dynamic-stars-p nil)
+  ;; (setq org-bars-color-options '(:desaturate-level-faces 50
+  ;;                                :darken-level-faces 25))
+  (setq org-bars-color-options `(:only-one-color t
+                                 :bar-color ,(face-foreground 'font-lock-comment-face)))
+  (define-advice refresh-theme (:after (&optional args))
+    (when org-bars-mode
+      (org-bars-mode 1)))
+  )
+#+end_src
+
+**** COMMENT org-superstar
+:PROPERTIES:
+:ID:       E7BA895E-08C5-4DD8-9D06-87EF6E413F42
+:END:
+https://github.com/integral-dw/org-superstar-mode
+
+heading, bullet을 prettify-symbols 처럼 꾸미는 패키지
+#+begin_src emacs-lisp :tangle yes
+(use-package org-superstar
+  :hook (org-mode . org-superstar-mode)
+  :custom
+  ;; (org-superstar-prettify-item-bullets t)
+  (org-superstar-prettify-item-bullets nil)
+  (org-superstar-item-bullet-alist '((?+ . ?•)
+                                     ;; (?+ . ?‣)
+                                     (?- . ?•)))
+  (org-superstar-headline-bullets-list '("◉" "●" "○" "◆"))
+  ;; (org-superstar-headline-bullets-list nil)
+  (org-superstar-remove-leading-stars t)
+;;   :config/el-patch
+;;   (defun org-superstar--prettify-main-hbullet ()
+;;     "Prettify the trailing star in a headline.
+
+;; This function uses ‘org-superstar-headline-or-inlinetask-p’ to avoid
+;; prettifying bullets in (for example) source blocks."
+;;     (el-patch-swap
+;;       (when (org-superstar-headline-or-inlinetask-p)
+;;         (let ((bullet (org-superstar--hbullet (org-superstar--heading-level))))
+;;           (if bullet
+;;               (compose-region (match-beginning 1) (match-end 1)
+;;                               bullet)
+;;             (org-superstar--make-invisible 1)))
+;;         'org-superstar-header-bullet)
+;;       nil))
+  )
+#+end_src
+
+- doom-themes를 쓸 경우 ​=doom-themes-org-config=​가 이 기능을 대체함
+
+**** org-appear
+:PROPERTIES:
+:ID:       D7AC8D50-A4D8-44A9-B771-3431EB062262
+:END:
+https://github.com/awth13/org-appear
+org의 강조 구문에 커서를 올리면 원본 텍스트를 표시함
+#+begin_src emacs-lisp :tangle yes
+(use-package org-appear
+  :hook (org-mode . (lambda () (org-appear-mode t)))
+  :custom
+  (org-appear-autolinks t))
+#+end_src
+
+- 가끔씩 ​=org-appear=​가 죽는 문제가 발생함
+- 죽는건지 초기 설정에 실패한건지 모르겠음. variable은 설정됨
+- [X] hook을 org-appear-mode t로 변경
+  - 해결되지 않음
+- [ ] 명확한 조건을 찾아보기
+
+**** org-sticky-header
+:PROPERTIES:
+:ID:       87CFE711-61FD-4B65-AB22-E70D0441C3E5
+:END:
+https://github.com/alphapapa/org-sticky-header
+
+headline에 헤더를 표시함
+#+begin_src emacs-lisp :tangle yes
+(use-package org-sticky-header
+  :custom
+  (org-sticky-header-full-path 'full)
+  (org-sticky-header-heading-star nil)
+  (org-sticky-header-show-keyword nil)  ; todo keyword
+  :hook (org-mode . org-sticky-header-mode)
+  :config/el-patch
+  (defun org-sticky-header--fetch-stickyline ()
+    "Return string of Org heading or outline path for display in header line."
+    (org-with-wide-buffer
+     (el-patch-remove (goto-char (window-start)))
+     (if (org-before-first-heading-p)
+         ""
+       (progn
+         ;; No non-header lines above top displayed header
+         (when (or org-sticky-header-always-show-header
+                   (not (org-at-heading-p)))
+           ;; Header should be shown
+           (when (fboundp 'org-inlinetask-in-task-p)
+             ;; Skip inline tasks
+             (while (and (org-back-to-heading)
+                         (org-inlinetask-in-task-p))
+               (forward-line -1)))
+           (propertize
+            (string-trim
+             (pcase org-sticky-header-full-path
+               ((pred null)
+                (concat (org-sticky-header--get-prefix)
+                        (org-sticky-header--heading-string)))
+               ('full
+                (concat (org-sticky-header--get-prefix)
+                        (mapconcat 'identity
+                                   (nreverse
+                                    (save-excursion
+                                      (cl-loop collect (org-sticky-header--heading-string)
+                                               while (org-up-heading-safe))))
+                                   org-sticky-header-outline-path-separator)))
+               ('reversed
+                (let ((s (concat
+                          (org-sticky-header--get-prefix)
+                          (mapconcat 'identity
+                                     (save-excursion
+                                       (cl-loop collect (org-sticky-header--heading-string)
+                                                while (org-up-heading-safe)))
+                                     org-sticky-header-outline-path-reversed-separator))))
+                  (if (> (string-width s) (window-width))
+                      (concat (substring s 0 (- (window-width) 2))
+                              "..")
+                    s)))
+               (_ " ")))
+            'face '())))))))
+#+end_src
+
+**** org-sidebar
+:PROPERTIES:
+:ID:       9EF3EF9E-D255-45B8-85F7-0015A28A9075
+:END:
+https://github.com/alphapapa/org-sidebar
+
+upcoming, todo와 heading 구조를 볼 수 있는 사이드바를 추가하는 패키지.
+
+#+begin_src emacs-lisp :tangle yes
+(use-package org-sidebar
+  :general
+  (org-agenda-keymap
+   "j" 'org-agenda-next-line
+   "k" 'org-agenda-previous-line)
+  (org-agenda-mode-map
+   "j" 'org-agenda-next-line
+   "k" 'org-agenda-previous-line)
+  (org-super-agenda-header-map
+   "j" 'org-agenda-next-line
+   "k" 'org-agenda-previous-line)
+  (spc
+    :states '(normal insert visual emacs motion)
+    "ob" 'org-sidebar-toggle
+    "oB" 'org-sidebar-tree-toggle)
+  :config
+  ;; org-sidebar는 기본적으로 점프시 indirect buffer로 버퍼를 여는데 persp-mode에는 해당 indirect buffer가 추가되지 않는다. `org-sidebar-tree-jump-fn'을 변경하거나 advice로 persp-mode에 자동으로 indirect buffer를 추가하도록 바꾸면 된다.
+  ;; https://www.reddit.com/r/emacs/comments/fnstjj/perspmode_adding_indirect_buffers/
+  (with-eval-after-load 'persp-mode
+    (defun my/add-this-buf-to-persp ()
+      "Add current buffer to current perspective."
+      (interactive)
+      (persp-add-buffer (current-buffer)))
+    (advice-add #'org-sidebar-tree-jump :after #'my/add-this-buf-to-persp)))
+#+end_src
+
+*** org-indent
+:PROPERTIES:
+:ID:       292FBD89-AA71-440A-BB6E-F5FC41412E79
+:END:
+#+begin_src emacs-lisp :tangle yes
+(use-package org-indent
+  :ensure nil
+  :straight (:type built-in)
+  :diminish
+  :custom
+  (org-indent-indentation-per-level 1))
+#+end_src
+
+*** TODO org-download
+:PROPERTIES:
+:ID:       B4B859AD-5AE0-46CA-96B1-B6D353DBDE0C
+:END:
+https://github.com/abo-abo/org-download
+
+이미지를 drag&drop으로 삽입할 수 있게 해준다.
+#+begin_src emacs-lisp :tangle yes
+(use-package org-download
+  :after org
+  :custom
+  (org-download-screenshot-method "/usr/local/bin/pngpaste %s")
+  :config
+  (system-packages-ensure "pngpaste"))
+#+end_src
+
+*** org-bookmark-heading
+:PROPERTIES:
+:ID:       C0D0C96D-B00A-4AAF-9C7C-B0DECC74612E
+:END:
+https://github.com/alphapapa/org-bookmark-heading
+org heading을 이맥스 내장 북마크로 저장할 수 있는 기능
+#+begin_src emacs-lisp :tangle yes
+  (use-package org-bookmark-heading
+    :custom
+    (org-bookmark-jump-indirect t))
+#+end_src
+
+*** TODO org-src [1/2]
+:PROPERTIES:
+:ID:       5199CA35-4768-42B0-AF8A-D9E186E2F912
+:END:
+#+begin_src emacs-lisp :tangle yes
+(use-package org-src
+  :straight (:type built-in)
+  :custom
+  (org-src-window-setup 'split-window-below) ; show edit buffer below current buffer
+  ;; :init/el-patch
+  :init/el-patch
+  (defvar org-src-mode-map
+    (let ((map (make-sparse-keymap)))
+      (define-key map (el-patch-swap "\C-c'" [(super s)]) 'org-edit-src-exit)
+      (define-key map
+        ;; (el-patch-swap "\C-c\C-k" [(super k)])
+        "\C-c\C-k"
+        'org-edit-src-abort)
+      (define-key map (el-patch-swap "\C-x\C-s" [(super s)]) 'org-edit-src-save)
+      map)))
+#+end_src
+
+- [X] 키매핑을 쓰기 쉬운 것으로 변경해야 함
+- [ ] 키매핑이 src edit buffer에서 표시되어야 함
+
+*** org-fragtog
+:PROPERTIES:
+:ID:       679FE824-E0DB-4BB1-9A59-C7CBA6CB60DB
+:END:
+https://github.com/io12/org-fragtog
+latex 프리뷰에 커서를 가져다 대면 원본을 토글하는 기능
+#+begin_src emacs-lisp :tangle yes
+  (use-package org-fragtog
+    :hook (org-mode . org-fragtog-mode))
+#+end_src
+
+*** org-babel
+:PROPERTIES:
+:ID:       6FB92E61-75D2-4072-9075-29D29B39E384
+:END:
+#+begin_src emacs-lisp :tangle yes
+  (push '("conf-unix" . conf-unix) org-src-lang-modes)
+#+end_src
+**** ob-racket
+:PROPERTIES:
+:ID:       AC2BB7C9-AE9C-4D83-803A-1015827DB163
+:END:
+https://github.com/DEADB17/ob-racket
+https://github.com/togakangaroo/ob-racket
+
+#+begin_src emacs-lisp :tangle yes
+(use-package ob-racket
+  :straight (ob-racket
+             :type git
+             :host github
+             ;; :repo "hasu/emacs-ob-racket"
+             :repo "togakangaroo/ob-racket"
+             ;; :repo "DEADB17/ob-racket"
+             :files ("*.el"))
+  :defer t
+  :custom
+  ;; (org-babel-command:racket "/usr/local/bin/glsn/racket")
+  (org-babel-command:racket "/usr/local/bin/racket")
+  :commands (org-babel-execute:racket
+             org-babel-expand-body:racket))
+#+end_src
+
+**** ox-latex
+:PROPERTIES:
+:ID:       7803E2A7-0314-472C-B8D5-651E5C5A1EA8
+:END:
+#+begin_src emacs-lisp :tangle yes
+(use-package ox-latex
+  :straight (:type built-in)
+  :config
+  (setq org-format-latex-options
+        (plist-put org-format-latex-options :scale 1.75)))
+#+end_src
+
+**** ob-shell
+:PROPERTIES:
+:ID:       322B4C88-E54B-48DD-A3C2-B14186B95C8B
+:END:
+#+begin_src emacs-lisp :tangle yes
+(use-package ob-shell
+  :defer t
+  :straight (:type built-in)
+  :commands (org-babel-execute:sh
+             org-babel-expand-body:sh
+             org-babel-execute:bash
+             org-babel-expand-body:bash))
+#+end_src
+
+**** TODO math-preview
+:PROPERTIES:
+:ID:       3AE70A5B-EF88-4CCB-8C7C-3AB19C7EA364
+:END:
+https://gitlab.com/matsievskiysv/math-preview
+latex preview with node backend.
+**** ob-async
+:PROPERTIES:
+:ID:       725F20C8-A906-4C52-80A8-C46C1517F524
+:END:
+https://github.com/astahlman/ob-async
+#+begin_src emacs-lisp :tangle yes
+  (use-package ob-async
+    :commands 'ob-async-org-babel-execute-src-block)
+#+end_src
+
+​~:async~​ 키워드를 헤더에 추가하면 된다.
+
+**** COMMENT org-babel block chaining
+:PROPERTIES:
+:ID:       5CE268D9-6ECD-42FE-9521-183C7652667B
+:END:
+https://xenodium.com/emacs-chaining-org-babel-blocks/
+여러 소스 블럭을 묶어서 실행하는 기능
+1. ​~#+name:~​ 으로 블럭에 이름을 추가한다.(PROPERTIES 처럼)
+2. 묶어서 실행할 블럭의 헤더에 ​=:include 블럭이름=
+#+begin_src emacs-lisp :tangle yes
+(defun adviced:org-babel-execute-src-block (&optional orig-fun arg info params)
+  (let ((body (nth 1 info))
+        (include (assoc :include (nth 2 info)))
+        (named-blocks (org-element-map (org-element-parse-buffer)
+                          'src-block (lambda (item)
+                                       (when (org-element-property :name item)
+                                         (cons (org-element-property :name item)
+                                               item))))))
+    (while include
+      (unless (cdr include)
+        (user-error ":include without value" (cdr include)))
+      (unless (assoc (cdr include) named-blocks)
+        (user-error "source block \"%s\" not found" (cdr include)))
+      (setq body (concat (org-element-property :value (cdr (assoc (cdr include) named-blocks)))
+                         body))
+      (setf (nth 1 info) body)
+      (setq include (assoc :include
+                      (org-babel-parse-header-arguments
+                       (org-element-property :parameters (cdr (assoc (cdr include) named-blocks)))))))
+    (funcall orig-fun arg info params)))
+(advice-add 'org-babel-execute-src-block :around 'adviced:org-babel-execute-src-block)
+#+end_src
+
+- 잘 작동하지 않는다. 대신 ​=:noweb=​ 기능을 쓰자.
+  #+begin_comment
+#+name: the-content
+#+begin_src emacs-lisp
+(print "hello")
+#+end_src
+
+#+name: the-wrapper
+#+begin_src org :noweb yes
+<<the-content>>
+#+end_src
+  #+end_comment
+
+**** COMMENT org-babel-async-tangle
+:PROPERTIES:
+:ID:       50C07E72-EB7D-4982-813A-85C25CAF0771
+:END:
+https://www.reddit.com/r/emacs/comments/8eozfl/advanced_techniques_for_reducing_emacs_startup/dxy5437/
+[[#org-auto-tangle][org-auto-tangle]]을 사용
+#+begin_src emacs-lisp :tangle yes
+(defmacro d/after (feature &rest body)
+  "Load BODY after FEATURE, catching errors and displaying as warnings."
+  (declare (indent defun))
+  `(with-eval-after-load ,feature
+     (condition-case-unless-debug err
+         (progn
+           ,@body)
+       (error
+        (display-warning
+         'init
+         (format "%s eval-after-load: %s "
+                 (symbol-name ,feature)
+                 (error-message-string err))
+         :error)))))
+
+(d/after 'org
+  (defvar d/show-async-tangle-results nil
+    "Keep *emacs* async buffers around for later inspection.")
+  (defvar d/async-babel-tangle-decrypt nil
+    "Decrypt org entries before tangling.
+
+Probably most useful as a file-local variable.")
+
+  (defun d/async-babel-tangle (&optional decrypt)
+    "Tangle org file asynchronously.
+
+If optional DECRYPT argument is given, dercypt entries before
+tangling."
+    (interactive)
+    (let ((init-tangle-start-time (current-time))
+          (file (buffer-file-name))
+          (async-quiet-switch "-q"))
+      (async-start
+       `(lambda ()
+          (require 'org)
+          (when ,d/async-babel-tangle-decrypt
+            (require 'org-crypt)
+            (org-crypt-use-before-save-magic)
+            (add-hook 'org-babel-pre-tangle-hook 'org-decrypt-entries)
+            (remove-hook 'org-babel-pre-tangle-hook 'save-buffer))
+          (org-babel-tangle-file ,file))
+       (unless d/show-async-tangle-results
+         `(lambda (result)
+            (if result
+                (message "SUCCESS: init.org successfully tangled. (%.3fs)"
+                         (float-time (time-subtract (current-time)
+                                                    ',init-tangle-start-time)))
+              (message "ERROR: init.org tangle failed."))))))))
+#+end_src
+
+org 파일의 마지막에 다음 헤딩을 넣으면 동작한다.
+#+begin_example org tangle: no
+ * Local Variables
+:noexport:
+# Local Variables:
+# eval: (add-hook 'after-save-hook 'd/async-babel-tangle 'append 'local)
+# End:
+#+end_example
+
+*** TODO org-transclusion [1/5]
+:PROPERTIES:
+:ID:       D96D9C66-08C6-4B7B-A626-C39031603691
+:END:
+https://github.com/nobiot/org-transclusion
+
+#+begin_src emacs-lisp :tangle yes
+(use-package org-transclusion
+  :straight (org-transclusion
+             :type git
+             :host github
+             :repo "nobiot/org-transclusion")
+  ;; :hook (org-mode . org-transclusion-mode)
+  :config
+  ;; org-indent-mode 호환성
+  (add-to-list 'org-transclusion-extensions 'org-transclusion-indent-mode)
+  (require 'org-transclusion-indent-mode))
+#+end_src
+
+- [ ] org-transclusion-refresh를 find-file-hook, ace-window, switch-to-buffer 등에 넣어야 할까?
+- [ ] live-sync edit 설정
+- [X] org-transclusion-mode를 org-mode-hook에 추가해야 함
+- [ ] undo-tree의 작동을 방해하는 것 같음 Buffer has been modified; could not load undo-tree history
+- [ ] org-edit-src-code 등에서 종종 transclusion된 버퍼 조각이 섞이는 현상이 발생함.
+
+*** COMMENT org-pomodoro
+:PROPERTIES:
+:ID:       F14734B4-167E-4DD4-AF51-3C7BCA563AAF
+:END:
+https://github.com/marcinkoziej/org-pomodoro
+
+#+begin_src emacs-lisp :tangle yes
+(use-package org-pomodoro
+  :after org)
+#+end_src
+
+*** org-inlinetask
+:PROPERTIES:
+:ID:       CD035FB9-DAE7-450C-8015-23ABACC3A0AF
+:END:
+#+begin_src emacs-lisp :tangle yes
+(use-package org-inlinetask
+  :straight nil
+  :commands org-inlinetask-insert-task)
+#+end_src
+
+*** org-auto-expand
+:PROPERTIES:
+:ID:       F99EC594-1880-4E3F-99BB-F043B7802A24
+:END:
+https://github.com/alphapapa/org-auto-expand
+
+org 파일의 properties 설정에 따라 자동적으로 heading을 확장하는 패키지
+#+begin_src emacs-lisp :tangle yes
+  (use-package org-auto-expand
+    :straight (org-auto-expand
+               :type git
+               :host github
+               :repo "alphapapa/org-auto-expand")
+    :custom
+    (org-auto-expand-nodes 'heading))
+#+end_src
+
+- 모든 항목이 접힌 채 시작하려면 ​=org-startup-folded=​ 변수를 설정하거나 ​~#+STARTUP~​ 키워드를 사용
+- ​=org-auto-expand-nodes=​ 변수 혹은 org properties로 설정할 수 있다.
+  - :auto-expand:
+    - heading :: 헤딩만 보여줌
+    - body :: 헤딩과 그 본문까지만 표시함
+    - children :: 헤딩과 하위 헤딩을 표시하지만 본문은 표시하지 않음
+    - 숫자 :: 하위 헤딩을 숫자만큼의 깊이까지 표시
+
+*** evil-org-mode
+:PROPERTIES:
+:ID:       2C1BDE81-2833-49EE-881C-2DB683767548
+:END:
+https://github.com/Somelauw/evil-org-mode
+#+begin_src emacs-lisp :tangle yes
+(use-package evil-org
+  ;; :after org evil
+  :straight (evil-org
+             :repo "Somelauw/evil-org-mode")
+  :hook ((org-mode . evil-org-mode)
+         (org-agenda-mode . evil-org-mode)
+         (evil-org-mode . (lambda ()
+                            (evil-org-set-key-theme
+                             '(navigation
+                               todo
+                               insert
+                               textobjects
+                               additional)))))
+  :config
+  (require 'evil-org-agenda)
+  (evil-org-agenda-set-keys))
+#+end_src
+
+*** TODO org-auto-tangle [0/2]
+:PROPERTIES:
+:CUSTOM_ID: org-auto-tangle
+:ID:       2FD0BE62-F732-47A5-9979-CC10C68857CE
+:END:
+https://github.com/yilkalargaw/org-auto-tangle
+
+​=#+auto_tangle: t=​ 옵션을 사용하면 된다.
+#+begin_src emacs-lisp :tangle yes
+(use-package org-auto-tangle
+  :defer t
+  :hook (org-mode . org-auto-tangle-mode))
+#+end_src
+
+- [ ] 클린 설치 시 init.el을 설정할 수 없다.
+- [ ] 매 저장시마다 tangle됨. emacs 종료 혹은 버퍼 종료시로 변경해보기
+  + 혹은 autosave 대신 사용자 직접 저장시에만?
+
+*** COMMENT org-roam
+#+begin_src emacs-lisp :tangle yes
+(use-package org-roam
+    :straight t
+    ;; :hook
+    ;; (after-init . org-roam-mode)
+    :config
+    (org-roam-db-autosync-mode)
+    :custom
+    (org-roam-directory "~/org-roam/")
+    (org-roam-completion-everywhere t)
+    (org-roam-completion-system 'default)
+    (org-roam-capture-templates
+     '(("d" "default" plain
+        #'org-roam-capture--get-point
+        "%?"
+        :file-name "%<%Y%m%d%H%M%S>-${slug}"
+        :head "#+title: ${title}\n"
+        :unnarrowed t)
+       ("ll" "link note" plain
+        #'org-roam-capture--get-point
+        "* %^{Link}"
+        :file-name "Inbox"
+        :olp ("Links")
+        :unnarrowed t
+        :immediate-finish)
+       ("lt" "link task" entry
+        #'org-roam-capture--get-point
+        "* TODO %^{Link}"
+        :file-name "Inbox"
+        :olp ("Tasks")
+        :unnarrowed t
+        :immediate-finish)))
+    (org-roam-dailies-directory "Journal/")
+    (org-roam-dailies-capture-templates
+     '(("d" "default" entry
+        #'org-roam-capture--get-point
+        "* %?"
+        :file-name "Journal/%<%Y-%m-%d>"
+        :head "#+title: %<%Y-%m-%d %a>\n\n[[roam:%<%Y-%B>]]\n\n")
+       ("t" "Task" entry
+        #'org-roam-capture--get-point
+        "* TODO %?\n  %U\n  %a\n  %i"
+        :file-name "Journal/%<%Y-%m-%d>"
+        :olp ("Tasks")
+        :empty-lines 1
+        :head "#+title: %<%Y-%m-%d %a>\n\n[[roam:%<%Y-%B>]]\n\n")
+       ("j" "journal" entry
+        #'org-roam-capture--get-point
+        "* %<%I:%M %p> - Journal  :journal:\n\n%?\n\n"
+        :file-name "Journal/%<%Y-%m-%d>"
+        :olp ("Log")
+        :head "#+title: %<%Y-%m-%d %a>\n\n[[roam:%<%Y-%B>]]\n\n")
+       ("l" "log entry" entry
+        #'org-roam-capture--get-point
+        "* %<%I:%M %p> - %?"
+        :file-name "Journal/%<%Y-%m-%d>"
+        :olp ("Log")
+        :head "#+title: %<%Y-%m-%d %a>\n\n[[roam:%<%Y-%B>]]\n\n")
+       ("m" "meeting" entry
+        #'org-roam-capture--get-point
+        "* %<%I:%M %p> - %^{Meeting Title}  :meetings:\n\n%?\n\n"
+        :file-name "Journal/%<%Y-%m-%d>"
+        :olp ("Log")
+        :head "#+title: %<%Y-%m-%d %a>\n\n[[roam:%<%Y-%B>]]\n\n")))
+    :bind (:map org-roam-mode-map
+           (("C-c n l" . org-roam)
+            ("C-c n f" . org-roam-find-file)
+            ("C-c n d" . org-roam-dailies-find-date)
+            ("C-c n c" . org-roam-dailies-capture-today)
+            ("C-c n C r" . org-roam-dailies-capture-tomorrow)
+            ("C-c n t" . org-roam-dailies-find-today)
+            ("C-c n y" . org-roam-dailies-find-yesterday)
+            ("C-c n r" . org-roam-dailies-find-tomorrow)
+            ("C-c n g" . org-roam-graph))
+           :map org-mode-map
+           (("C-c n i" . org-roam-insert))
+           (("C-c n I" . org-roam-insert-immediate))))
+#+end_src
+
+*** TODO org-fc
+:PROPERTIES:
+:ID:       252C286E-0BCC-4ED0-81BE-72F70FCE36A7
+:END:
+https://github.com/l3kn/org-fc
+
+org-flashcards
+
+*** TODO titlecase
+https://github.com/duckwork/titlecase.el
+
+*** org-autolist
+:PROPERTIES:
+:ID:       A37A9B5A-4F03-4E7B-8FD9-24A517483DB0
+:END:
+https://github.com/calvinwyoung/org-autolist
+
+list 삽입/제거시 동작을 더 자연스럽게 만들어줌
+#+begin_src emacs-lisp :tangle yes
+(use-package org-autolist
+  :straight (:type git
+             :host github
+             :repo "calvinwyoung/org-autolist")
+  :hook (org-mode . org-autolist-mode))
+#+end_src
+
+*** TODO org-center-headings
+:PROPERTIES:
+:ID:       195DDB42-7801-4707-81B7-EC81C42B2C4C
+:END:
+https://github.com/amno1/org-center-headings
+
+** 기타 function
+:PROPERTIES:
+:ID:       59EFFD4B-F0B9-443B-B131-F7C53E9EBB86
+:END:
+
+*** setup
+:PROPERTIES:
+:ID:       6C097999-4930-4C4C-9C7D-CE9A89559855
+:END:
+#+begin_src emacs-lisp :tangle yes
+(defun org-mode-setup ()
+  (visual-line-mode 1)
+  ;; (setq-local evil-respect-visual-line-mode t
+  ;;             evil-cross-lines t)
+  ;; (visual-fill-column-mode 1)
+  (toggle-truncate-lines -1)
+  (display-line-numbers-mode -1)
+  ;; (setq evil-auto-indent nil)
+  (when (display-graphic-p)
+  (svg-tag-mode t)))
+#+end_src
+
+*** TODO my/org-edit-this
+:PROPERTIES:
+:ID:       1C2094F6-52F0-4A4D-961E-D52E6E5F0902
+:END:
+#+begin_src emacs-lisp :tangle yes
+(defun my/org-edit-this ()
+  "Edit element under the cursor."
+  (interactive)
+  (let ((elem (org-element-type (org-element-context))))
+    (pcase elem
+      ('src-block (org-edit-special))
+      ('example-block (org-edit-special))
+      ('link (org-insert-link))
+      ('latex-fragment (org-edit-latex-fragment)))))
+(advice-add 'org-ctrl-c-ret :before #'my/move-forward-char)
+#+end_src
+
+- [X] (org-element-type (org-element-context)) 쓰기
+
+*** TODO COMMENT org-link-complete-at-point
+:PROPERTIES:
+:ID:       1E4E2596-72CB-4BBE-9347-59FF5E686EC2
+:END:
+https://www.reddit.com/r/emacs/comments/ouh44f/company_completion_for_org_links/
+#+begin_src emacs-lisp :tangle yes
+  (defun org-link-complete-at-point ()
+    "`completion-at-point' function for att: and file: org links."
+    (let ((end (point))
+          (start (point))
+          (exit-fn (lambda (&rest _) nil))
+          collection)
+      (when (looking-back "\\(att\\|attachment\\|file\\):\\(.*\\)" (line-beginning-position))
+        (setq start (match-beginning 2)
+              end (point))
+        (setq collection (pcase (cons (match-string 1) (match-string 2))
+                           (`(,(rx "att" (zero-or-more (any))) . ,val)
+                            (->> (org-attach-dir-get-create)
+                                 (directory-files)
+                                 (cl-remove-if (lambda (file)
+                                                 (pcase file
+                                                   ((or "." "..") t)
+                                                   (_ nil))))))
+                           (`(,(rx "file") . ,val)
+                            (company-files--complete (expand-file-name (or val "~"))))
+                           (_ '()))))
+      (when collection
+        (let ((prefix (buffer-substring-no-properties start end)))
+          (list start end collection
+                :exit-function exit-fn)))))
+
+#+end_src
+- [ ] company backend를 사용함
+
+*** org-custom-link-img-follow
+:PROPERTIES:
+:ID:       2F1388BC-A1B5-47E7-BCE7-1BD91B17170A
+:END:
+https://seorenn.tistory.com/65
+외부 이미지 링크
+#+begin_src emacs-lisp :tangle yes
+  (defun org-custom-link-img-follow (path)
+    (org-link-open-from-string path))
+  (defun org-custom-link-img-export (path desc format)
+    (cond ((eq format 'html)
+           (format "<img src=\"%s\" alt=\"%s\"/>" path desc))))
+  (org-add-link-type "img" 'org-custom-link-img-follow 'org-custom-link-img-export)
+
+  (add-to-list 'org-emphasis-alist '("$" latex))
+
+#+end_src
+*** zero width space
+:PROPERTIES:
+:ID:       EDF4C234-AB85-4D66-B2D3-C76382DB7D2C
+:END:
+강조 구문(=+~$ 등등)에 zero width space를 넣는다.
+org 기본 상태에서는 e=mac=s가 안되기 때문.
+e​=mac=​s
+**** insert
+:PROPERTIES:
+:ID:       9C58B5B2-D204-4C17-8147-DCEEB546849A
+:END:
+#+begin_src emacs-lisp :tangle yes
+(defun insert-zero-width-space ()
+  "Insert zero with space character (U+200B)."
+  (interactive)
+  (insert-char #x200b))
+
+#+end_src
+**** export
+:PROPERTIES:
+:ID:       311ED005-293C-4C71-984B-F4D2DD411533
+:END:
+#+begin_src emacs-lisp :tangle yes
+  (defun my-filter-remove-u200b (text backend info)
+    "Remove zero width space character (U+200B) from TEXT."
+    (replace-regexp-in-string "\x200B" "" text))
+
+  (if (fboundp 'org-export-filter-plain-text-functions)
+      (add-to-list 'org-export-filter-plain-text-functions
+                   'my-filter-remove-u200b))
+
+#+end_src
+**** 관련 패키지
+:PROPERTIES:
+:ID:       C9F9AB7C-8DE7-49BB-A05A-5438FAD25E4E
+:END:
+[[*embrace][embrace]]
+[[*org-emphasize][org-emphasize]]
+
+*** COMMENT dw/search-org-files
+:PROPERTIES:
+:ID:       C0B585F1-E896-49F0-8B0F-E963F1384F82
+:END:
+https://config.daviwil.com/
+#+begin_src emacs-lisp :tangle yes
+(defun dw/search-org-files ()
+  "Find Org files in ~/Notes."
+  (interactive)
+  (if (featurep 'consult)
+      (consult-ripgrep "~/Notes")
+    (counsel-rg "" "~/Notes" nil "Search Notes: ")))
+#+end_src
+
+*** TODO COMMENT create human readable CUSTOM ID
+:PROPERTIES:
+:ID:       0CB44A1C-5290-4A1A-9CB2-BFEBB9043166
+:END:
+https://zzamboni.org/post/how-to-easily-create-and-use-human-readable-ids-in-org-mode-and-doom-emacs/
+#+begin_src emacs-lisp :tangle yes
+;; 추가 : `org-comment-string'과 `org-todo-keyword'를 id에 넣지 않게 변경
+(defun zz/make-id-for-title (title)
+  "Return an ID based on TITLE."
+  (let* ((new-id (replace-regexp-in-string
+                  (concat
+                   "^\\(" (mapconcat 'concat (cdar org-todo-keywords) "\\|") "\\) ")
+                  "" title))
+         (new-id (replace-regexp-in-string
+                  (concat "^" org-comment-string " ")
+                  "" new-id))
+         (new-id (replace-regexp-in-string "[^[:alnum:]]" "-" (downcase new-id))))
+    new-id))
+
+(defun zz/org-custom-id-create ()
+  "Create and store CUSTOM_ID for current heading."
+  (let* ((title (or (nth 4 (org-heading-components)) ""))
+         (new-id (zz/make-id-for-title title)))
+    (org-entry-put nil "CUSTOM_ID" new-id)
+    (org-id-add-location new-id (buffer-file-name (buffer-base-buffer)))
+    new-id))
+
+(defun zz/org-custom-id-get-create (&optional where force)
+  "Get or create CUSTOM_ID for heading at WHERE.
+
+If FORCE is t, always recreate the property."
+  (org-with-point-at where
+    (let ((old-id (org-entry-get nil "CUSTOM_ID")))
+      ;; If CUSTOM_ID exists and FORCE is false, return it
+      (if (and (not force) old-id (stringp old-id))
+          old-id
+        ;; otherwise, create it
+        (zz/org-custom-id-create)))))
+
+  ;; Now override counsel-org-link-action
+  ;; 추가 : 선택 영역이 있을 경우 선택 영역을 링크 텍스트로 쓰도록 변경함
+(defun counsel-org-link-action (x)
+  "Insert a link to X.
+
+X is expected to be a cons of the form (title . point), as passed
+by `counsel-org-link'.
+
+If X does not have a CUSTOM_ID, create it based on the headline
+title."
+  (let* ((id (zz/org-custom-id-get-create (cdr x))))
+    (org-insert-link nil id
+                     (if (use-region-p)
+                         (buffer-substring (region-beginning) (region-end))
+                       (car x)))))
+(general-define-key
+ :keymaps 'org-mode-map
+ :states '(normal visual emacs motion)
+ "SPC oih" '(counsel-org-link :which-key "insert heading"))
+#+end_src
+
+* end org
+#+begin_src emacs-lisp :tangle yes
+)
+#+end_src

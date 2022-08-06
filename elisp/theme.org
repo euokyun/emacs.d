@@ -1,0 +1,133 @@
+#+auto_tangle: t
+
+* gruvbox
+:PROPERTIES:
+:ID:       1013B3C7-6C34-4083-A94E-F18A504D6057
+:END:
+https://github.com/greduan/emacs-theme-gruvbox
+
+개인적으로 수정한 gruvbox 테마를 사용
+#+begin_src emacs-lisp :tangle yes
+(use-package gruvbox-theme
+  :straight (gruvbox-theme
+             :fork (:repo "euokyun/emacs-theme-gruvbox"))
+  :custom
+  (visible-bell t)
+  (ring-bell-function #'doom-themes-visual-bell-fn)
+
+  :config
+#+end_src
+
+** visual-bell
+:PROPERTIES:
+:ID:       66EF93CA-61DF-4AEA-A0A8-F9B740FFC90E
+:END:
+doom-themes에서 가져온 코드
+#+begin_src emacs-lisp :tangle yes
+(defface visual-bell '((t nil)) "")
+
+;;;###autoload
+(defun doom-themes-visual-bell-fn ()
+  "Blink the mode-line red briefly. Set `ring-bell-function' to this to use it."
+  (let ((doom-themes--bell-cookie
+         (face-remap-add-relative 'mode-line 'visual-bell)))
+    (force-mode-line-update)
+    (run-with-timer 0.15 nil
+                    (lambda (cookie buf)
+                      (with-current-buffer buf
+                        (face-remap-remove-relative cookie)
+                        (force-mode-line-update)))
+                    doom-themes--bell-cookie
+                    (current-buffer))))
+#+end_src
+
+** blend color
+:PROPERTIES:
+:ID:       878573C5-C96D-4DB0-9D8F-53AFD0B68530
+:END:
+doom-themes에서 가져옴
+#+begin_src emacs-lisp :tangle yes
+;;;###autoload
+(defun blend-color (color1 color2 alpha)
+  (apply (lambda (r g b) (format "#%02x%02x%02x" r g b))
+         (cl-loop for c1 in (tty-color-standard-values color1)
+                  for c2 in (tty-color-standard-values color2)
+                  collect (/ (+ (* alpha c1) (* (- 1 alpha) c2)) 256))))
+
+;;;###autoload
+(defun blend-darken (color alpha)
+  (blend-color "#000000" color alpha))
+
+;;;###autoload
+(defun blend-lighten (color alpha)
+  (blend-color "#ffffff" color alpha))
+#+end_src
+
+** 다크 모드 전환
+:PROPERTIES:
+:ID:       A4FDC7FD-FFFE-40B1-924F-21D897EC2C90
+:END:
+#+begin_src emacs-lisp :tangle yes
+;;;###autoload
+(defun refresh-theme (&optional appearance)
+  (interactive)
+  "Load theme, taking current system APPEARANCE into consideration."
+  (mapc #'disable-theme custom-enabled-themes)
+  (pcase (or appearance ns-system-appearance 'dark)
+    ('light (load-theme 'gruvbox-light-soft t))
+    ('dark (load-theme 'gruvbox-dark-soft t))))
+
+(when (eq window-system 'ns)
+  (add-hook 'ns-system-appearance-change-functions #'refresh-theme))
+#+end_src
+
+** COMMENT palette color
+:PROPERTIES:
+:ID:       B70438F8-F975-4143-8C54-139C04623B87
+:END:
+테마 내부의 색상을 외부에서 꺼내 쓸 수 있도록 함
+#+begin_src emacs-lisp :tangle yes
+;;;###autoload
+(defvar gruvbox-color (make-hash-table :test 'equal)
+  "gruvbox theme color")
+
+;;;###autoload
+(define-advice autothemer-deftheme
+    (:after (_ _ palette &rest _) defcolors)
+  (mapcar (lambda (e)
+            (puthash (symbol-name (car e)) (cadr e) gruvbox-color))
+          (cdr palette)))
+
+;;;###autoload
+(defun gruvbox-color (color)
+  (gethash (if (symbolp color) (symbol-name color) color) gruvbox-color))
+#+end_src
+
+** end
+#+begin_src emacs-lisp :tangle yes
+)
+#+end_src
+
+* doom-themes
+:PROPERTIES:
+:ID:       BC29BDD6-915C-4892-9D35-6F1A45067CDD
+:END:
+#+begin_src emacs-lisp :tangle yes
+(use-package doom-themes
+  :config
+  (doom-themes-org-config))
+#+end_src
+
+* solaire
+:PROPERTIES:
+:ID:       7196F580-4288-4A4E-8CDD-EA54BA29B3EB
+:END:
+https://github.com/hlissner/emacs-solaire-mode
+
+파일 버퍼와 기타 버퍼를 테마 컬러로 구분할 수 있게 함
+몇 몇 지원되는 테마를 제외하면 테마에 관련 face를 추가해야 한다.
+#+begin_src emacs-lisp :tangle yes
+(use-package solaire-mode
+  :config
+  (solaire-global-mode t))
+#+end_src

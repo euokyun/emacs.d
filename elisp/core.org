@@ -1,0 +1,53 @@
+#+auto_tangle: t
+
+* system-packages
+:PROPERTIES:
+:ID:       1EC57A63-2988-4FCD-A4AB-339C3189FC6C
+:END:
+https://gitlab.com/jabranham/system-packages
+#+begin_src emacs-lisp :tangle yes
+(use-package system-packages)
+#+end_src
+
+* ensure-system-package
+MacOS의 Brew와 같은 시스템 패키지 관리자와 통합하는 기능.
+그냥 시스템 패키지 관리자를 불러오는 정도일 뿐이다.
+#+begin_src emacs-lisp :tangle yes
+(use-package use-package-ensure-system-package)
+#+end_src
+use-package에서 ​~:ensure-system-package~​ 키워드로 사용할 수 있다.
+
+#+begin_example emacs-lisp :tangle no
+(use-package rg
+  :ensure-system-package rg)
+(use-package ag
+  :ensure-system-package (ag . the_silver_searcher))
+#+end_example
+car는 바이너리 파일명, cdr는 패키지 관리자에서의 이름이다. 바이너리가 없을 경우 패키지 관리자를 실행하여 설치한다.
+
+- 몇몇 recipe가 없는 패키지들은 ​=(system-packages-ensure "패키지")=​를 쓰자.
+
+* el-patch
+https://github.com/radian-software/el-patch
+el-patch 패키지는 패키지의 elisp 소스를 변경하는 기능을 제공한다.
+emacs에서 기능을 재정의하는 방법은 크게 두가지가 있다.
+1. advice, hook
+2. 코드 덮어쓰기, 원본 소스 파일 수정
+hook을 제외한 두 방법 모두 패키지 업데이트 등으로 코드가 변경되면 변경점을 찾아보기 어려울 수 있다.
+el-patch는 원본과 재정의한 함수의 차이를 보여주며(ediff) 사용자가 재정의한 함수가 변경되었을 때 사용자 설정에 업데이트가 필요하다는 것을 알려준다.
+#+begin_src emacs-lisp :tangle yes
+(use-package el-patch
+  :custom
+  (el-patch-enable-use-package-integration t))
+#+end_src
+
+* transient
+https://github.com/magit/transient
+주로 magit에서 사용하는 일시적인 키 매핑&GUI.
+#+begin_src emacs-lisp :tangle yes
+(use-package transient
+  ;; :defer t
+  :config
+  (transient-bind-q-to-quit))
+#+end_src
+

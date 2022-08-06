@@ -1,0 +1,224 @@
+#+auto_tangle: t
+
+* version control
+** ediff
+:PROPERTIES:
+:ID:       082BF8B6-8A63-44DB-AFBC-957D68426713
+:END:
+#+begin_src emacs-lisp :tangle yes
+(use-package ediff
+  :defer t
+  :config
+  ;; https://emacs.stackexchange.com/questions/7482/restoring-windows-and-layout-after-an-ediff-session
+  (defvar my-ediff-last-windows nil)
+  (defun my-store-pre-ediff-winconfig ()
+    (setq my-ediff-last-windows (current-window-configuration)))
+  (defun my-restore-pre-ediff-winconfig ()
+    (set-window-configuration my-ediff-last-windows))
+  (add-hook 'ediff-before-setup-hook #'my-store-pre-ediff-winconfig)
+  (add-hook 'ediff-quit-hook #'my-restore-pre-ediff-winconfig)
+  ;; https://emacs.stackexchange.com/questions/17064/never-create-frame-in-ediff
+  (advice-add 'ediff-window-display-p :override #'ignore))
+#+end_src
+
+** magit
+*** magit
+https://magit.vc/manual/magit/
+#+begin_src emacs-lisp :tangle yes
+(use-package magit
+  ;; :bind ("C-M-;" . magit-status)
+  :commands (magit-status magit-get-current-branch)
+  :custom
+  (magit-display-buffer-function #'magit-display-buffer-same-window-except-diff-v1)
+  :general
+  (spc
+    :states '(normal insert visual emacs motion)
+    "g" '(:ignore t :which-key "magit")
+    "gs" 'magit-status
+    "gd" 'magit-diff-unstaged
+    "gc" 'magit-branch-or-checkout
+    "gl" '(:ignore t :which-key "log")
+    "glc" 'magit-log-current
+    "glf" 'magit-log-buffer-file
+    "gb" 'magit-branch
+    "gP" 'magit-push-current
+    "gp" 'magit-pull-branch
+    "gf" 'magit-fetch
+    "gF" 'magit-fetch-all
+    "gr" 'magit-rebase))
+#+end_src
+
+*** git-mode
+:PROPERTIES:
+:ID:       55E63570-92A1-4B84-AE5B-03BDE24D1AD0
+:END:
+https://github.com/magit/git-modes
+Major modes for git files.
+#+begin_src emacs-lisp :tangle yes
+(use-package git-modes
+  :defer t)
+#+end_src
+
+*** magit-todos
+:PROPERTIES:
+:ID:       76EFFC60-3C90-4538-BF02-2A6A306D0E6D
+:END:
+https://github.com/alphapapa/magit-todos
+#+begin_src emacs-lisp :tangle yes
+(use-package magit-todos
+  :defer t
+  :general
+  (spc
+    :states '(normal insert visual emacs motion)
+    "gt" 'magit-todos-list)
+  :after magit)
+#+end_src
+
+*** ghub
+:PROPERTIES:
+:ID:       E8F2A6C0-19B9-449C-850C-863F278E62F3
+:END:
+https://github.com/magit/ghub
+#+begin_src emacs-lisp :tangle yes
+(use-package ghub
+  :custom
+  (epg-pinentry-mode 'loopback))
+#+end_src
+
+*** COMMENT magithub
+:PROPERTIES:
+:ID:       22F5FF5A-2480-445D-A9AB-4D1822734F29
+:END:
+https://github.com/vermiculus/magithub
+
+forge 패키지에 마이그레이션됨.
+#+begin_src emacs-lisp :tangle yes
+(use-package magithub
+  :after magit
+  :config
+  (magithub-feature-autoinject t)
+  (setq magithub-clone-default-directory "~/git"))
+#+end_src
+
+*** COMMENT magit-reviewboard
+:PROPERTIES:
+:ID:       EC3A662F-04B8-445A-BB39-005978FCD79D
+:END:
+https://github.com/jtamagnan/magit-reviewboard
+#+begin_src emacs-lisp :tangle yes
+(use-package magit-reviewboard
+  :commands (magit-reviewboard-mode magit-reviewboard-list)
+  :custom
+  (magit-reviewboard-base-uri
+   "https://reviews.reviewboard.org/api"
+   "Set Reviewboard api to point to official reviewboard server"))
+#+end_src
+
+** git-gutter
+:PROPERTIES:
+:ID:       B7B5B4B2-538B-492C-96DF-59C5DF7FB41F
+:CUSTOM_ID: git-gutter
+:END:
+https://github.com/emacsorphanage/git-gutter
+
+git 변경 내용을 표시하는 패키지
+#+begin_src emacs-lisp :tangle yes
+(use-package git-gutter
+  :defer t
+  :straight t
+  :diminish
+  :hook ((text-mode prog-mode) . git-gutter-mode)
+  :general
+  (spc
+    :states '(normal insert visual emacs motion)
+    "gg" '(my/git-gutters :which-key "git-gutter"))
+  :custom
+  (git-gutter:hide-gutter t)
+  (git-gutter:visual-line t)
+  (git-gutter:modified-sign "≡")
+  (git-gutter:added-sign "+")
+  (git-gutter:deleted-sign "-")
+
+  :config
+  ;; http://blog.binchen.org/posts/enhance-emacs-git-gutter-with-ivy-mode.html
+  (defun my-reshape-git-gutter (gutter)
+    "Re-shape gutter for `ivy-read'."
+    (let* ((linenum-start (aref gutter 3))
+           (linenum-end (aref gutter 4))
+           (target-line "")
+           (target-linenum 1)
+           (tmp-line "")
+           (max-line-length 0))
+      (save-excursion
+        (while (<= linenum-start linenum-end)
+          (goto-line linenum-start)
+          (setq tmp-line (replace-regexp-in-string
+                          "^[ \t]*" ""
+                          (buffer-substring (line-beginning-position)
+                                            (line-end-position))))
+          (when (> (length tmp-line) max-line-length)
+            (setq target-linenum linenum-start)
+            (setq target-line tmp-line)
+            (setq max-line-length (length tmp-line)))
+
+          (setq linenum-start (1+ linenum-start))))
+      ;; build (key . linenum-start)
+      (cons (format "%s %d: %s"
+                    (if (eq 'deleted (aref gutter 1))
+                        (propertize "-" 'face 'git-gutter:deleted)
+                      (propertize "+" 'face 'git-gutter:added))
+                    target-linenum target-line)
+            target-linenum)))
+
+  ;; ivy-version
+  (with-eval-after-load 'ivy
+    (defun my/goto-git-gutter ()
+      (interactive)
+      (if git-gutter:diffinfos
+          (ivy-read "git-gutters:"
+                    (mapcar 'my-reshape-git-gutter git-gutter:diffinfos)
+                    :action (lambda (e)
+                              (unless (numberp e) (setq e (cdr e)))
+                              (goto-line e)))
+        (message "NO git-gutters!"))))
+
+  (with-eval-after-load 'consult
+   (defun my/goto-git-gutter ()
+     (interactive)
+     (if git-gutter:diffinfos
+         (consult--read
+          (mapcar 'my-reshape-git-gutter git-gutter:diffinfos)
+          :prompt "git-gutters:"
+          :lookup (lambda (_ _ e)
+                    (goto-line (string-to-number
+                                (string-remove-suffix
+                                 ":" (cadr (split-string e))))))
+          :state (consult--jump-state))
+       (user-error "NO git-gutters!")))
+   (consult-customize my/goto-git-gutter :preview-key (kbd "S-SPC")))
+
+  (transient-define-prefix my/git-gutters ()
+    [:description
+     (lambda () (let ((s (git-gutter:statistic)))
+                  (format "diff:\t%d \nadd:\t%d,\tdeleted:\t%d" (length git-gutter:diffinfos) (car s) (cdr s))))
+     ("l" "list" my/goto-git-gutter)]
+    [[("j" "next-hunk" git-gutter:next-hunk :transient t)]
+     [("k" "previous-hunk" git-gutter:previous-hunk :transient t)]]))
+#+end_src
+
+margin 영역을 사용한다. 그래서 margin 영역을 수정하는 패키지들과 같이 사용하면 표시가 보이지 않는다.
+- visual-fill-column
+
+** diff-hl
+:PROPERTIES:
+:ID:       261E2AC2-0D8C-43C1-ABA8-C1555443F2EE
+:END:
+https://github.com/dgutov/diff-hl
+
+** COMMENT crdt
+:PROPERTIES:
+:ID:       C17BA95A-9823-4207-974B-3AC5062EA5C8
+:END:
+https://code.librehq.com/qhong/crdt.el
+
+이맥스를 위한 실시간 협업 환경

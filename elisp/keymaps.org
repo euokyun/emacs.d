@@ -1,0 +1,91 @@
+#+auto_tangle: t
+
+* general
+:PROPERTIES:
+:ID:       B92999FC-7131-4823-97C9-1D3300E96E5C
+:END:
+https://github.com/noctuid/general.el
+걍력한 기능의 키바인딩 패키지
+#+begin_src emacs-lisp :tangle yes
+(use-package general
+  :config
+  (general-auto-unbind-keys)
+  (general-override-mode)
+  (general-evil-setup t)
+  (general-unbind 'global
+    ;; "s-q"
+    [f1]
+    "s-z"
+    "s-Z"
+    "s-f"
+    "s-F"
+    "s-p"
+    "s-h"
+    "s-t"
+    "s-l"
+    "s-j"
+    "s-g"
+    "M-u"                               ; upcase-word
+    "M-l"                               ; downcase-word
+    "M-<"                               ; beginning-of-buffer
+    "M->"                               ; end-of-buffer
+    "M-s-h"
+    "M-s-f"
+    "M-<down-mouse-1>")
+  (general-create-definer spc
+    :keymaps 'override
+    :global-prefix "M-SPC"
+    :prefix "SPC"
+    ;; :prefix-command 'spc-prefix-command
+    ;; :prefix-map 'spc-prefix-map
+    )
+  (general-create-definer spc-e
+    :prefix "SPC e"
+    :global-prefix "M-SPC e")
+  (general-define-key
+   "<f17>" 'toggle-input-method
+   "s-n" '(nil
+           :which-key "new buffer & frame")
+   "s-n f" 'make-frame
+   "s-n b" '(clone-indirect-buffer-other-window
+             :which-key "clone indirect buffer - other window")
+   "s-n B" '(make-indirect-buffer
+             :which-key "make indirect buffer"))
+
+  (general-define-key
+   :keymaps 'help-map
+   [remap display-local-help] 'describe-char
+   "." 'describe-char
+   "'" 'display-local-help)
+
+  (spc-e
+    :states '(normal visual)
+    "" '(nil :which-key "eval")
+    "b" '(eval-buffer :which-key "eval buffer")
+    "x" '(eval-last-sexp :which-key "eval sexp")
+    "j" '(eval-print-last-sexp :which-key "eval print")
+    "d" '(eval-defun :which-key "eval defun"))
+
+  (spc-e
+    :keymaps '(visual)
+    "r" '(eval-region :which-key "eval region")))
+#+end_src
+
+* which-key
+:PROPERTIES:
+:ID:       06F4C962-D8EF-4BA9-B3D0-696EAB26BA45
+:END:
+https://github.com/justbur/emacs-which-key
+키 치트시트
+#+begin_src emacs-lisp :tangle yes
+(use-package which-key
+  :init (which-key-mode)
+  :diminish which-key-mode
+  :custom
+  (which-key-idle-delay 0.3)
+  :config
+  ;; (which-key-setup-minibuffer) ;; paging is not work in minibuffer mode
+  ;; (setq which-key-use-c-h-commands nil)
+  (which-key-setup-side-window-right-bottom))
+
+#+end_src

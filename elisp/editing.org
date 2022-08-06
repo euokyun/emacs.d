@@ -1,0 +1,797 @@
+#+auto_tangle: t
+
+* undo-tree
+:PROPERTIES:
+:ID:       20704DF1-2D01-4ED4-A54D-58EDB736FD1D
+:END:
+https://emacs.stackexchange.com/questions/61512/
+https://www.dr-qubit.org/Lost_undo-tree_history.html
+#+begin_src emacs-lisp :tangle yes
+(use-package queue)
+(use-package undo-tree
+  :diminish
+  :demand t
+  :hook (evil-local-mode-hook . turn-on-undo-tree-mode)
+  :custom
+  (undo-tree-auto-save-history t)
+  (undo-tree-enable-undo-in-region t)
+  :general
+  (spc
+    :states '(normal insert visual emacs motion)
+    "u" '(undo-tree-visualize :which-key "undo-tree"))
+  ("s-z" 'undo-tree-undo
+   "s-Z" 'undo-tree-redo)
+  (undo-tree-map
+   "C-/" nil)
+  (:states '(visual)
+   "u" 'undo-tree-undo)
+  (undo-tree-visualizer-mode-map
+   :override t
+   :states '(normal motion)
+   "t" 'undo-tree-visualizer-toggle-timestamps)
+  :config
+  ;; (defadvice undo-tree-make-history-save-file-name
+  ;;     (after undo-tree activate)
+  ;;   (setq ad-return-value (concat ad-return-value ".gz")))
+  (global-undo-tree-mode t))
+#+end_src
+
+- undo-tree-auto-save-history :: undo 내역을 저장하고 다음 세션에서도 쓸 수 있게 함.
+- undo-tree-enable-undo-in-region :: 선택 region 내에서만 undo를 할 수 있는 기능
+
+undo-tree는 강력하지만 히스토리 저장이 자주 깨진다. 가바지 콜렉터가 elisp 인터프리터 외부에서 실행되고, 그에 따라 실행 취소 기록이 손상될 수 있는 것이 문제라고 함.
+
+* expand-region
+:PROPERTIES:
+:ID:       5F9CAFF3-AA41-444F-8AE8-24215392F1C7
+:END:
+https://github.com/magnars/expand-region.el
+
+선택 영역을 확장해나가는 기능
+#+begin_src emacs-lisp :tangle yes
+(use-package expand-region
+  :defer t
+  :commands er/expand-region
+  :general
+  (:states 'visual
+   "v" 'er/expand-region))
+#+end_src
+
+* evil
+:PROPERTIES:
+:ID:       0F8599FE-8C21-405D-9490-D01FA3C3104A
+:END:
+https://github.com/emacs-evil/evil
+
+vim 키바인딩 레이어
+#+begin_src emacs-lisp :tangle yes
+(use-package evil
+  :init
+  (setq evil-want-keybinding nil)
+  :custom
+  (evil-ex-search-vim-style-regexp t)
+  ;; (evil-search-module 'evil-search)
+  (evil-undo-system 'undo-tree)
+  (evil-shift-width tab-width)    ; tab option for evil
+  (evil-want-C-u-scroll t)        ; set `C-u' to scroll up. not for insert mode.
+  (evil-want-C-i-jump nil)        ; set `C-i' to insert `TAB' key.
+  (evil-echo-state nil)           ; mute echo area
+  :general
+  ;; ("M-u" 'universal-argument)
+  ;; ("C-M-u" 'universal-argument)
+  ("s-u" 'universal-argument
+   "C-S-s" 'isearch-backward)           ; C-r is Redo
+  (:states 'normal
+   "C-n" nil
+   "C-p" nil
+   "C-." nil
+   "M-." nil)
+  (:states 'normal
+   :predicate '(memq last-command
+                     '(evil-paste-after
+                       evil-paste-before
+                       evil-visual-paste))
+   "C-n" 'evil-paste-pop-next
+   "C-p" 'evil-paste-pop)
+  (:states 'normal
+   :predicate '(memq last-command
+                     '(evil-repeat
+                       evil-repeat-pop
+                       evil-repeat-pop-next))
+   "M-." 'evil-repeat-pop-next
+   "C-." 'evil-repeat-pop)
+#+end_src
+
+** config
+:PROPERTIES:
+:ID:       AA15DDC6-91BC-43A4-84BA-BBEF9D691990
+:END:
+#+begin_src emacs-lisp :tangle yes
+  :config
+  (evil-mode 1)
+#+end_src
+
+#+begin_src emacs-lisp :tangle yes
+(el-patch-deftype evil-define-command
+    :classify el-patch-classify-function
+    :locate el-patch-locate-function
+    :declare ((indent defun)
+              (doc-string 3)))
+#+end_src
+
+evil은 insert와 normal의 커서 모양이 다르고 커서의 위치도 다를 때가
+있다. 해당 문제를 advice로 해결하기 위한 함수
+#+begin_src emacs-lisp :tangle yes
+  (defun my/move-forward-char ()
+    "Fix evil's last character selection problem."
+    (interactive)
+    (if (equal evil-state 'normal) (forward-char 1)))
+#+end_src
+
+#+begin_src emacs-lisp :tangle yes
+)
+#+end_src
+
+* evil-collection
+:PROPERTIES:
+:ID:       924A4906-0FAC-4C94-8941-D06F6CE8F548
+:END:
+https://github.com/emacs-evil/evil-collection
+evil 키바인딩 모음집.
+#+begin_src emacs-lisp :tangle yes
+  (use-package evil-collection
+    :after evil
+    :ensure t
+    ;; :init
+    ;; (setq evil-collection-company-use-tng nil)
+    :custom
+    (evil-collection-setup-minibuffer t)
+    (evil-collection-outline-bind-tab-p nil)
+    (forge-add-default-bindings nil)
+    :config
+    ;; (setq evil-collection-mode-list
+    ;;       (remove 'lispy evil-collection-mode-list))
+    (defun evil-collection-mode-use (blacklist lists)
+      (if (null blacklist) lists
+        (evil-collection-mode-use
+         (cdr blacklist)
+         (remove (car blacklist) lists))))
+    (setq evil-collection-mode-list
+          (evil-collection-mode-use '(lispy)
+                                    evil-collection-mode-list))
+    (evil-collection-init))
+#+end_src
+
+* evil-etc 
+** evil-numbers
+:PROPERTIES:
+:ID:       AF16B630-9036-42C6-915A-2F55092B3FC5
+:END:
+https://github.com/cofi/evil-numbers
+여러 진법의 숫자들을 가산/감산하는 기능
+#+begin_src emacs-lisp :tangle yes
+(use-package evil-numbers
+  :defer t)
+#+end_src
+
+** evil-matchit
+:PROPERTIES:
+:ID:       881D442B-6F03-49A0-9BAC-CC4AA8982AE6
+:END:
+https://github.com/redguardtoo/evil-matchit
+=%= 키로 일치하는 반대편 괄호로 점프
+#+begin_src emacs-lisp :tangle yes
+(use-package evil-matchit
+  :config
+  (global-evil-matchit-mode 1))
+#+end_src
+
+* 영역 편집 기능
+:PROPERTIES:
+:ID:       F5085277-203F-4032-A539-590CB45D988E
+:END:
+** evil-surround
+:PROPERTIES:
+:ID:       F1AAEFEB-96BE-4574-B0A9-327DA9AB7302
+:END:
+괄호, 브라켓, ', 태그, 기타 등등 "감싸는" 단축키 패키지
+https://github.com/emacs-evil/evil-surround
+#+begin_src emacs-lisp :tangle yes
+(use-package evil-surround
+  :config
+  (global-evil-surround-mode 1))
+#+end_src
+
+** embrace
+:PROPERTIES:
+:ID:       44B20B76-7CBA-4B21-A6B4-87267874723F
+:END:
+https://github.com/cute-jumper/embrace.el
+#+begin_src emacs-lisp :tangle yes
+(use-package embrace
+  :defer t
+  ;; :config/el-patch
+  ;; (defun embrace-org-mode-hook ()       ; zero width space added.
+  ;;   (dolist (lst '((?= (el-patch-concat "​" "=") . (el-patch-concat "=" "​"))
+  ;;                  (?~ (el-patch-concat "​" "~") . (el-patch-concat "~" "​"))
+  ;;                  (?/ (el-patch-concat "​" "/") . (el-patch-concat "/" "​"))
+  ;;                  (?* (el-patch-concat "​" "*") . (el-patch-concat "*" "​"))
+  ;;                  (?_ (el-patch-concat "​" "_") . (el-patch-concat "_" "​"))
+  ;;                  (?$ (el-patch-concat "​" "$") . (el-patch-concat "$" "​"))
+  ;;                  (?+ (el-patch-concat "​" "+") . (el-patch-concat "+" "​"))
+  ;;                  (?k "@@html:<kbd>@@" . "@@html:</kbd>@@")))
+  ;;     (embrace-add-pair (car lst) (cadr lst) (cddr lst)))
+  ;;   (embrace-add-pair-regexp ?l "#\\+BEGIN_.*" "#\\+END_.*" 'embrace-with-org-block
+  ;;                            (embrace-build-help "#+BEGIN_*" "#+END") t))
+  :hook ((LaTeX-mode . embrace-Latex-mode-hook)
+         (org-mode . embrace-org-mode-hook)))
+#+end_src
+
+#+begin_src emacs-lisp :tangle yes
+(el-patch-feature 'embrace)
+(with-eval-after-load 'embrace
+  (el-patch-defun embrace-org-mode-hook () ; zero width space added.
+    (dolist (lst '((?= (el-patch-concat "​" "=") . (el-patch-concat "=" "​"))
+                   (?~ (el-patch-concat "​" "~") . (el-patch-concat "~" "​"))
+                   (?/ (el-patch-concat "​" "/") . (el-patch-concat "/" "​"))
+                   (?* (el-patch-concat "​" "*") . (el-patch-concat "*" "​"))
+                   (?_ (el-patch-concat "​" "_") . (el-patch-concat "_" "​"))
+                   (?$ (el-patch-concat "​" "$") . (el-patch-concat "$" "​"))
+                   (?+ (el-patch-concat "​" "+") . (el-patch-concat "+" "​"))
+                   (?k "@@html:<kbd>@@" . "@@html:</kbd>@@")))
+      (embrace-add-pair (car lst) (cadr lst) (cddr lst)))
+    (embrace-add-pair-regexp ?l "#\\+BEGIN_.*" "#\\+END_.*" 'embrace-with-org-block
+                             (embrace-build-help "#+BEGIN_*" "#+END") t)))
+#+end_src
+
+https://github.com/cute-jumper/evil-embrace.el
+#+begin_src emacs-lisp :tangle yes
+(use-package evil-embrace
+  ;; :hook ((LaTeX-mode . (lambda ()
+  ;;                        (add-to-list
+  ;;                         'evil-embrace-evil-surround-keys
+  ;;                         ?o))))
+  :config
+  (evil-embrace-enable-evil-surround-integration))
+#+end_src
+
+** evil-exchange
+:PROPERTIES:
+:ID:       4EFE6B57-8D24-46F2-B0EF-F7323DF269AE
+:END:
+http://github.com/Dewdrops/evil-exchange
+
+​=gx=​로 영역을 선택해서 맞바꾸는 기능.
+​=gX=​로 선택을 취소할 수 있다.
+#+begin_src emacs-lisp :tangle yes
+(use-package evil-exchange
+  :config
+  (evil-exchange-install))
+#+end_src
+
+** evil-lion
+:PROPERTIES:
+:ID:       06572FD6-C5B8-4B26-8F0F-CA01005208BA
+:END:
+https://github.com/edkolev/evil-lion
+
+align operator를 추가함
+​~COUNT gl|gL ip(text-object paragraph) SPC|=|기타등등 구분자~​
+#+begin_src emacs-lisp :tangle yes
+(use-package evil-lion
+  :after evil
+  :straight (:host github :repo "edkolev/evil-lion")
+  :commands (evil-lion-left evil-lion-right)
+  :general
+  (evil-normal-state-map
+         "g l " 'evil-lion-left
+         "g L " 'evil-lion-right)
+  (evil-visual-state-map
+         "g l " 'evil-lion-left
+         "g L " 'evil-lion-right))
+#+end_src
+
+** evil-nerd-commenter
+:PROPERTIES:
+:ID:       81D14C5A-379C-4BC3-B140-C1B08A050F5F
+:END:
+https://github.com/redguardtoo/evil-nerd-commenter
+#+begin_src emacs-lisp :tangle yes
+(use-package evil-nerd-commenter
+  :general
+  (:states 'normal
+   "gc" 'evilnc-comment-operator
+   "s-/" 'evilnc-comment-or-uncomment-lines
+   "gy" 'evilnc-copy-and-comment-operator)
+  :config
+  (with-eval-after-load 'counsel
+   (defun counsel-imenu-comments ()
+     "Imenu display comments."
+     (interactive)
+     (let* ((imenu-create-index-function 'evilnc-imenu-create-index-function))
+       (counsel-imenu)))))
+#+end_src
+
+* 다중 편집 기능
+:PROPERTIES:
+:ID:       7BC8300C-123D-4166-835B-C4D226DB85AF
+:END:
+- evil과의 호환성에서 evil-mc가 더 좋다.
+- multiple-cursors의 가장 큰 문제는 너무 잦은 run once/or all 프롬프트와 "file:./var/mc-list.el" 파일 수정이 불가피하다는 점
+- 설정 측면에서 evil-mc 또한 좋은 편은 아니지만 multiple-cursors보다는 쉬운 편
+- 하지만 multiple-cursors의 기능을 사용하는 좋은 패키지들이 꽤 있다
+
+** TODO evil-mc
+:PROPERTIES:
+:ID:       1454CD20-A1C4-4822-8D66-79B733A5D440
+:END:
+https://github.com/gabesoft/evil-mc
+#+begin_src emacs-lisp :tangle yes
+(use-package evil-mc
+  :defer t
+  :diminish
+  :functions evil-mc-has-cursors-p
+  :commands (evil-mc-mode)
+  :general
+  ("s-d" 'evil-mc-make-and-goto-next-match
+   "s-D" 'evil-mc-make-and-goto-prev-match
+   "M-<mouse-1>" 'evil-mc-toggle-cursor-on-click
+   "M-s-j" '(evil-mc-make-cursor-move-next-line :which-key "make cursor & go down")
+   "M-s-k" '(evil-mc-make-cursor-move-prev-line :which-key "make cursor & go up")
+   "M-s-i" '(evil-mc-toggle-cursor-here :which-key "toggle cursor here")
+   "M-s-n" '(evil-mc-skip-and-goto-next-match :which-key "next match")
+   "M-s-p" '(evil-mc-skip-and-goto-prev-match :which-key "prev match")
+   "M-s-q" '(evil-mc-undo-all-cursors :which-key "quit multicursor")
+   "M-s-h" '(evil-mc-skip-and-goto-prev-cursor :which-key "prev cursor")
+   "M-s-l" '(evil-mc-skip-and-goto-next-cursor :which-key "next cursor")
+   "M-s-u" '(evil-mc-undo-last-added-cursor :which-key "undo cursor")
+   "M-s-s" '(evil-mc-toggle-frozen :which-key "pause/resume cursor"))
+  (:states 'normal
+   "<escape>" (general-predicate-dispatch 'evil-force-normal-state
+                (and (bound-and-true-p evil-mc-mode) (evil-mc-has-cursors-p)) 'evil-mc-undo-all-cursors
+                ;; (evil-mc-has-cursors-p) 'evil-mc-undo-all-cursors
+                ))
+  :config
+  (defun evil-mc-toggle-cursor-here ()
+    "Toggle Fake Cursor."
+    (interactive)
+    (if (eq (point) (evil-mc-get-cursor-start (evil-mc-find-next-cursor)))
+        (evil-mc-undo-cursor-at-pos (point))
+      (evil-mc-make-cursor-here)))
+  (defun evil-mc-toggle-frozen ()
+    "Toggle fake cursor pause/resume."
+    (interactive)
+    (if evil-mc-frozen
+        (evil-mc-resume-cursors)
+      (evil-mc-pause-cursors)))
+
+  (defun evil--mc-make-cursor-at-col (_startcol endcol orig-line)
+    (move-to-column endcol)
+    (unless (= (line-number-at-pos) orig-line)
+      (evil-mc-make-cursor-here)))
+  ;; During visual selection point has +1 value
+  (defun evil-mc-make-vertical-cursors (beg end)
+    (interactive (list (region-beginning) (- (region-end) 1)))
+    (evil-exit-visual-state)
+    (evil-mc-pause-cursors)
+    ;; Because `evil-mc-resume-cursors` produces a cursor,
+    ;; we have to skip a current line here to avoid having +1 cursor
+    (apply-on-rectangle #'evil--mc-make-cursor-at-col
+                        beg end (line-number-at-pos))
+    (evil-mc-resume-cursors)
+    ;; Because `evil-mc-resume-cursors` produces a cursor, we need to place it on on the
+    ;; same column as the others
+    (move-to-column (evil-mc-column-number end)))
+
+  ;; https://github.com/gabesoft/evil-mc/issues/22#issuecomment-273352904
+  (dolist
+      (elem
+       '((Buffer-menu-mark . ((:default . evil-mc-execute-default-call)))
+         (Buffer-menu-unmark . ((:default . evil-mc-execute-default-call)))
+         ;; and magit
+         (magit-stage . ((:default . evil-mc-execute-default-call)))
+         (magit-unstage . ((:default . evil-mc-execute-default-call)))
+         ;; add `M-i' tab key.
+         (tab-to-tab-stop . ((:default . evil-mc-execute-default-call)))
+         ;; add wdired
+         (wdired--self-insert . ((:default . evil-mc-execute-default-call)))))
+    (add-to-list 'evil-mc-known-commands elem))
+
+  ;; for dired
+  ;; (add-to-list 'evil-mc-known-commands '(dired-flag-file-deletion . ((:default . evil-mc-execute-default-call))))
+  ;; (add-to-list 'evil-mc-known-commands '(quoted-insert . ((:default . evil-mc-execute-default-evil-repeat))))
+  (global-evil-mc-mode)
+#+end_src
+
+- evil-mc의 기능은 'evil-mc-known-commands의 목록으로 화이트리스트로 돌아간다.
+- [ ] evil-org-open-below
+
+*** TODO COMMENT el-patch [1/2]
+:PROPERTIES:
+:ID:       7BA6FF9C-6264-4B3C-BDCE-CF6606157F72
+:END:
+- [X] 커서 토글 기능을 추가했다.
+- [ ] substitute 커서 위치 문제를 해결했다.
+
+#+begin_src emacs-lisp :tangle yes
+:config/el-patch
+(evil-define-command evil-mc-make-cursor-here ()
+  "Create a cursor at point."
+  :repeat ignore
+  :evil-mc t
+  (evil-mc-run-cursors-before)
+  (el-patch-wrap 3 0
+    (if (evil-visual-state-p) (evil-mc-make-cursor-at-pos (- (point) 1))
+      (evil-mc-make-cursor-at-pos (point)))))
+
+(defun evil-mc-execute-evil-substitute ()
+  "Execute an `evil-substitute' comand."
+  (let ((point (point)))
+    (evil-with-state normal
+      (unless
+          (el-patch-splice 2 0 (or region (eq point (point-at-bol))))
+        (evil-forward-char 1 nil t))
+      (evil-mc-execute-with-region-or-macro 'evil-substitute))))
+#+end_src
+
+*** end
+#+begin_src emacs-lisp :tangle yes
+)
+#+end_src
+
+*** el-patch(outside)
+#+begin_src emacs-lisp :tangle yes
+(el-patch-feature 'evil-mc)
+(with-eval-after-load 'evil-mc
+  (el-patch-evil-define-command evil-mc-make-cursor-here ()
+    "Create a cursor at point."
+    :repeat ignore
+    :evil-mc t
+    (evil-mc-run-cursors-before)
+    (el-patch-wrap 3 0
+      (if (evil-visual-state-p) (evil-mc-make-cursor-at-pos (- (point) 1))
+        (evil-mc-make-cursor-at-pos (point)))))
+
+  (el-patch-defun evil-mc-execute-evil-substitute ()
+    "Execute an `evil-substitute' comand."
+    (let ((point (point)))
+      (evil-with-state normal
+        (unless
+            (el-patch-splice 2 0 (or region (eq point (point-at-bol))))
+          (evil-forward-char 1 nil t))
+        (evil-mc-execute-with-region-or-macro 'evil-substitute)))))
+#+end_src
+
+*** kak
+:PROPERTIES:
+:ID:       CC87FFC9-95C3-46DD-8C69-3A6F8FF38224
+:END:
+https://github.com/aome510/kak.el
+#+begin_src emacs-lisp :tangle yes
+(use-package kak
+  :straight (kak
+             :type git
+             :host github
+             :repo "aome510/kak.el"
+             :fork (:repo "euokyun/kak.el"))
+  :commands (kak-select kak-filter)
+  :after evil-mc
+  :preface
+  (defun kak-select-bind (beg end)
+    (interactive "r")
+    (kak-select beg end nil))
+  (defun kak-select-invert-bind (beg end)
+    (interactive "r")
+    (kak-select beg end t))
+  (defun kak-filter-bind () (interactive) (kak-filter t))
+  (defun kak-filter-exclude-bind () (interactive) (kak-filter nil))
+  :general
+  ("M-s-0" 'kak-insert-index)
+  (:states 'visual
+   "s-f" '(kak-select-bind :which-key "kak-select")
+   "s-F" '(kak-select-invert-bind :which-key "kak-select-invert")
+   "M-s-t" 'kak-split-lines
+   "M-s-f" '(kak-filter-bind :which-key "kak-filter")
+   "M-s-F" '(kak-filter-exclude-bind :which-key "kak-filter-exclude")))
+#+end_src
+- 100라인이 넘어가면 kak-split-lines는 굉장히 느려지고 max-lisp-eval-depth 에러를 띄운다.
+- 최적화에 문제가 있음.
+
+*** evil-mc-extras
+https://github.com/gabesoft/evil-mc-extras
+#+begin_src emacs-lisp :tangle yes
+(use-package evil-mc-extras
+  :config/el-patch
+  (define-minor-mode evil-mc-extras-mode
+    "Toggle evil multiple cursors extras in a single buffer."
+    :group 'evil-mc-extras
+    :init-value nil
+    (el-patch-remove :keymap evil-mc-extras-key-map)
+    (evil-normalize-keymaps))
+  ;; :disabled
+  :after evil-mc
+  :hook (evil-mc-mode . evil-mc-extras-mode)
+  :general
+  (evil-mc-cursors-map
+   :states 'visual
+   "+" 'evil-mc-inc-num-at-each-cursor
+   "-" 'evil-mc-dec-num-at-each-cursor))
+#+end_src
+
+** COMMENT multiple-cursors
+https://github.com/magnars/multiple-cursors.el/
+#+begin_src emacs-lisp :tangle no
+(use-package multiple-cursors
+  :custom
+  (mc/edit-lines-empty-lines 'ignore)
+  (mc/insert-numbers-default 1)
+  (mc/unpause-jump-back nil)
+  ;; :load-path (expand-file-name "./lisp/mc-pause.el" user-emacs-directory)
+  ;; :general
+  ;; ("s-1" 'mc/pause
+  ;;  "s-2" 'mc/unpause
+  ;;  "s-3" 'mc/toggle-pause
+  ;;  )
+  :config
+  (push 'evil-state mc/cursor-specific-vars) ; evil-mode-cursor-back
+  (load-file (expand-file-name "./lisp/mc-pause.el" user-emacs-directory))
+  (require 'mc-pause)
+
+  (defun mc/toggle-cursor-at-point ()
+    "Create a fake cursor at point."
+    (interactive)
+    (let ((existing (mc/fake-cursor-at-point (point))))
+      (if existing
+          (mc/remove-fake-cursor existing)
+        (save-excursion
+          (goto-char (point))
+          (mc/create-fake-cursor-at-point))))
+    (unless mc/paused-mode (mc/maybe-multiple-cursors-mode)))
+
+  ;; ./var/mc-list.el
+  (defun mc/toggle-cmds-to-run-for-all ()
+    "Toggle commands to apply all cursors or not."
+    (interactive)
+    (if mc/always-run-for-all
+        (setq mc/always-run-for-all t)
+      (setq mc/always-run-for-all nil)))
+
+  ;; https://xenodium.com/all/
+  (defsubst counsel--string-trim-left (string &optional regexp)
+    "Trim STRING of leading string matching REGEXP.
+
+REGEXP defaults to \"[ \\t\\n\\r]+\"."
+    (if (string-match (concat "\\`\\(?:" (or regexp "[ \t\n\r]+") "\\)") string)
+        (replace-match "" t t string)
+      string))
+  (defun adviced:counsel-M-x-action (orig-fun &rest r)
+    "Additional support for multiple cursors."
+    (apply orig-fun r)
+    (let ((cmd (intern (counsel--string-trim-left (nth 0 r) "\\^"))))
+      (when (and (boundp 'multiple-cursors-mode)
+                 multiple-cursors-mode
+                 cmd
+                 (not (memq cmd mc--default-cmds-to-run-once))
+                 (not (memq cmd mc/cmds-to-run-once))
+                 (or mc/always-run-for-all
+                     (memq cmd mc--default-cmds-to-run-for-all)
+                     (memq cmd mc/cmds-to-run-for-all)
+                     (mc/prompt-for-inclusion-in-whitelist cmd)))
+        (mc/execute-command-for-all-fake-cursors cmd))))
+
+  (advice-add #'counsel-M-x-action :around #'adviced:counsel-M-x-action))
+#+end_src
+
+* structure editing
+:PROPERTIES:
+:ID:       1B6A5C59-0010-4AC6-A2A5-8C8AEF591CFC
+:END:
+코드 구조를 사용하여 쉽게 편집하는 기능을 제공한다.
+- lispy
+  - lispyville
+  - evil-lispy
+- smartparens
+  - evil-smartparens
+- paredit
+  - evil-paredit
+- parinfer
+- evil-cleverparens
+  smartparens와 paredit를 사용함
+- tree-edit
+  https://github.com/ethan-leba/tree-edit
+  tree-sitter의 구문 트리를 통해 편집. tree-sitter가 지원하는 언어라면 lisp 계열 언어가 아니더라도 작동한다.
+  - Java 지원(WIP)
+- combobulate
+  https://github.com/mickeynp/combobulate
+  tree-sitter의 구문 트리를 사용하여 소스 코드를 조작하고 편집하는 프레임워크
+  - Python
+  - Typescript + React
+  - Javascript + React
+  - HTML
+- objed
+  https://github.com/clemera/objed
+
+** lispy
+:PROPERTIES:
+:ID:       E6EA9E52-6BA4-410D-8A4F-2BC1045A67A4
+:END:
+https://github.com/abo-abo/lispy
+#+begin_src emacs-lisp :tangle yes
+(use-package lispy)
+#+end_src
+
+- [ ] lispy-split =M-RET=​에 바인딩 되어 있음
+  + normal-mode에서는 forward-char를 advice 해야 함
+  + insert-mode 매핑 없음
+
+** lispyville
+:PROPERTIES:
+:ID:       AD5B96EE-900D-43FC-B091-B4A1CF0483F6
+:END:
+https://github.com/noctuid/lispyville
+#+begin_src emacs-lisp :tangle yes
+(use-package lispyville
+  :hook ((emacs-lisp-mode racket-mode lisp-interaction-mode lisp-mode) . lispyville-mode)
+  :general
+  (lispyville-mode-map
+   :states 'normal
+   "M-j" 'lispyville-drag-forward
+   "M-k" 'lispyville-drag-backward
+   ;; TODO: M-J M-K line drag
+   "M-J" 'lispy-join
+   "M-U" 'lispy-splice
+   "M-<return>" 'lispy-split
+   "M-r" 'lispy-raise-sexp
+   "M-S-r" 'lispyville-raise-list
+   "M-t" 'transpose-sexps
+   "M-v" 'lispy-convolute-sexp)
+  (lispyville-mode-map
+   :states '(normal visual)
+   "SPC e /" '(lispy-eval-and-comment :which-key "eval and comment"))
+
+  :config
+  (lispyville-set-key-theme
+   '(operators                         ; change evil commands. y d c j .... all.
+     c-w                               ; remap evil-delete-backword-word
+     ;; additional                        ; drag, join and splice, etc.
+     additional-movement                ; H,L []{}()
+     slurp/barf-cp                      ; <>
+     prettify                           ; indent
+     commentary                         ; gc, gy, s/
+     wrap
+     ))
+
+  (advice-add 'lispy-join :before #'my/move-forward-char)
+  (advice-add 'lispy-eval-and-comment :before #'my/move-forward-char)
+  (lispyville-enter-visual-when-marking))
+#+end_src
+
+* spatial-navigate
+:PROPERTIES:
+:ID:       26EB5D96-DB2B-4B4B-A8ED-AFC62E7A7AA0
+:END:
+https://gitlab.com/ideasman42/emacs-spatial-navigate
+공백을 스킵하면서 빠르게 커서를 옮길 수 있음
+#+begin_src emacs-lisp :tangle yes
+(use-package spatial-navigate
+  :general
+  (:keymaps '(normal visual)
+   "C-M-j" 'spatial-navigate-forward-vertical-box
+   "C-M-k" 'spatial-navigate-backward-vertical-box)
+  (:keymaps 'insert
+   "C-M-j" 'spatial-navigate-forward-vertical-bar
+   "C-M-k" 'spatial-navigate-backward-vertical-bar))
+#+end_src
+
+* avy
+:PROPERTIES:
+:CUSTOM_ID: avy
+:ID:       97139C8A-0B42-41AD-89CE-CD67DE2318A4
+:END:
+https://github.com/abo-abo/avy
+빠르게 화면 내를 탐색할 수 있다.
+#+begin_src emacs-lisp :tangle yes
+(use-package avy
+  ;; :config
+  ;; (set-face-italic 'avy-goto-char-timer-face nil)
+  ;; (set-face-italic 'avy-lead-face nil)
+  :general
+  ("s-;" '(evil-avy-line-saving-column :which-key "avy-line")
+   "s-t" 'evil-avy-goto-char-timer
+   "s-p" 'avy-copy-line
+   "s-P" 'avy-copy-region)
+  (isearch-mode-map
+   "s-t" 'avy-isearch)
+  :custom
+  (avy-background nil)
+  (avy-style 'at-full)
+  (avy-timeout-seconds 0.8)
+
+  :config
+  ;; https://github.com/abo-abo/avy/issues/127
+  (defun avy-line-saving-column ()
+    (interactive)
+    (let ((col (current-column)))
+      (avy-goto-line)
+      (move-to-column col)))
+  (declare-function avy-line-saving-column "ext:avy")
+  (evil-define-avy-motion avy-line-saving-column line)
+  (dolist (command '(avy-line-saving-column))
+    (define-key evil-motion-state-map
+      (vector 'remap command) (intern-soft (format "evil-%s" command))))
+  ;; embark
+  (with-eval-after-load 'embark
+    (defun avy-action-embark (pt)
+      (unwind-protect
+          (save-excursion (goto-char pt) (embark-act))
+        (select-window (cdr (ring-ref avy-ring 0))))
+      t)
+    (setf (alist-get 8388654 avy-dispatch-alist) 'avy-action-embark)))
+#+end_src
+
+* anzu
+:PROPERTIES:
+:ID:       E34BBAE5-A5C7-496F-8F85-C8E6D20E7A53
+:END:
+https://github.com/emacsorphanage/anzu
+​=M-%=
+#+begin_src emacs-lisp :tangle yes
+(use-package anzu
+  :bind
+  ([remap query-replace] . anzu-query-replace-regexp))
+#+end_src
+
+* link-hint
+:PROPERTIES:
+:ID:       475C4475-4B94-4311-B44B-2F895BA3FABA
+:END:
+[[#ace-link][ace-link]]와 같은 기능을 한다. [[#avy][avy]]를 사용하는 것도 동일
+#+begin_src emacs-lisp :tangle yes
+(use-package link-hint
+  :defer t
+  :general
+  (:states 'normal
+           "g f" 'link-hint-open-link
+           "g F" 'link-hint-copy-link))
+#+end_src
+
+* hideshow
+:PROPERTIES:
+:ID:       DA739142-4481-4370-A66E-D9DCBC8C0194
+:END:
+이맥스 내장 폴드 기능.
+
+#+begin_src emacs-lisp :tangle yes
+(use-package hideshow
+  :straight (:type built-in)
+  :hook (prog-mode . hs-minor-mode)
+;;   :config/el-patch
+;;   ;; evil과의 호환 문제인지 hideshow가 만든 접힘 표시가 접을때와 펼 때 커서의 위치가 다르다. 그 부분을 수정했다.
+;;   (defun hs-toggle-hiding (&optional e)
+;;   "Toggle hiding/showing of a block.
+;; See `hs-hide-block' and `hs-show-block'.
+;; Argument E should be the event that triggered this action."
+;;   (interactive)
+;;   (hs-life-goes-on
+;;    (el-patch-remove (posn-set-point (event-end e)))
+;;    (if (hs-already-hidden-p)
+;;        (hs-show-block)
+;;      (hs-hide-block))))
+  :custom
+  (hs-allow-nesting t))
+#+end_src
+
+#+begin_src emacs-lisp :tangle yes
+(with-eval-after-load 'hideshow
+  (el-patch-defun hs-toggle-hiding (&optional e)
+     "Toggle hiding/showing of a block.
+See `hs-hide-block' and `hs-show-block'.
+Argument E should be the event that triggered this action."
+     (interactive)
+     (hs-life-goes-on
+      (el-patch-remove (posn-set-point (event-end e)))
+      (if (hs-already-hidden-p)
+          (hs-show-block)
+        (hs-hide-block)))))
+#+end_src
+
