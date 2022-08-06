@@ -96,6 +96,8 @@
 (push '(ns-transparent-titlebar . t)    default-frame-alist) ; hide titlebar
 ;; (push '(scroll-bar-mode -1)             default-frame-alist)
 
+;; (add-to-list 'default-frame-alist '(undecorated . t))
+
 (setq scroll-bar-mode nil
       tool-bar-mode nil)
 
