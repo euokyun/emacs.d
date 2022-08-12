@@ -528,25 +528,25 @@ https://github.com/abo-abo/ace-window
                     :repo "rdiaz02/ace-window"
                     :branch "posframe-notmgsk"))
 
-  :config/el-patch
-  (defun aw--remove-leading-chars-posframe ()
-    ;; Hide rather than delete. See aw--lead-overlay-posframe for why.
-    ((el-patch-swap map cl-map) nil #'posframe-hide aw--posframe-frames)
-    (setq aw--posframe-frames '()))
+  ;; :init/el-patch
+  ;; (defun aw--remove-leading-chars-posframe ()
+  ;;   ;; Hide rather than delete. See aw--lead-overlay-posframe for why.
+  ;;   ((el-patch-swap map cl-map) nil #'posframe-hide aw--posframe-frames)
+  ;;   (setq aw--posframe-frames '()))
   
-  (defun aw--switch-buffer ()
-    (cond ((bound-and-true-p ivy-mode)
-           (ivy-switch-buffer))
-          ((bound-and-true-p ido-mode)
-           (ido-switch-buffer))
-          (el-patch-add
-            ((and (featurep 'consult) (featurep 'persp-mode))
-             (with-persp-buffer-list () (consult-buffer)))
-            ;; ((and (featurep 'consult) (featurep 'perspective))
-            ;;  ())
-            ((featurep 'consult)
-             (consult-buffer)))
-          (t (call-interactively 'switch-to-buffer))))
+  ;; (defun aw--switch-buffer ()
+  ;;   (cond ((bound-and-true-p ivy-mode)
+  ;;          (ivy-switch-buffer))
+  ;;         ((bound-and-true-p ido-mode)
+  ;;          (ido-switch-buffer))
+  ;;         (el-patch-add
+  ;;           ((and (featurep 'consult) (featurep 'persp-mode))
+  ;;            (with-persp-buffer-list () (consult-buffer)))
+  ;;           ;; ((and (featurep 'consult) (featurep 'perspective))
+  ;;           ;;  ())
+  ;;           ((featurep 'consult)
+  ;;            (consult-buffer)))
+  ;;         (t (call-interactively 'switch-to-buffer))))
   :general
   ;; ("s-`" 'ace-window)
   ;; ("M-o" 'ace-window)
@@ -618,7 +618,27 @@ https://github.com/abo-abo/ace-window
   (define-advice refresh-theme
       (:after (&optional _))
     (if ace-window-posframe-mode
-        (kill-matching-buffers "*aw-posframe-buffer-*" t t))))
+        (kill-matching-buffers "*aw-posframe-buffer-*" t t)))
+
+  (el-patch-feature 'ace-window)
+  (el-patch-defun aw--remove-leading-chars-posframe ()
+    ;; Hide rather than delete. See aw--lead-overlay-posframe for why.
+    ((el-patch-swap map cl-map) nil #'posframe-hide aw--posframe-frames)
+    (setq aw--posframe-frames '()))
+  
+  (el-patch-defun aw--switch-buffer ()
+    (cond ((bound-and-true-p ivy-mode)
+           (ivy-switch-buffer))
+          ((bound-and-true-p ido-mode)
+           (ido-switch-buffer))
+          (el-patch-add
+            ((and (featurep 'consult) (featurep 'persp-mode))
+             (with-persp-buffer-list () (consult-buffer)))
+            ;; ((and (featurep 'consult) (featurep 'perspective))
+            ;;  ())
+            ((featurep 'consult)
+             (consult-buffer)))
+          (t (call-interactively 'switch-to-buffer)))))
 #+end_src
 
 - [X] posframe 추가

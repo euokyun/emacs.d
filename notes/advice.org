@@ -5,11 +5,7 @@
 다른 라이브러리에 정의된 함수의 기능을 수정
 advice는 강력한 기능이고, 원본 소스 코드를 수정하기 전의 마지막 수단으로만 사용해야 한다.
 
-advice 시스템은 두가지 set을 제공한다.
-- add-function, 	remove-function	:: 함수값을 가진 변수들과 객체 필드.
-- advice-add, 	advice-remove	:: 명명된 기능 위에 계층화된 set.
-
-** where
+** how
 advice의 함수와 원본 함수가 어떻게 합성되어야 하는지 명시한다.
 *** :before
 :PROPERTIES:
@@ -35,6 +31,9 @@ advice의 함수와 원본 함수가 어떻게 합성되어야 하는지 명시�
 - ​~(lambda (&rest r) (apply advice-fun orig-fun r))~​
 
 **** 예시
+:PROPERTIES:
+:ID:       8C51D687-364E-490F-BF62-5110A544DC73
+:END:
 ​~:around~​를 통해 ​~orig-fun~​으로 원본 함수를 실행할 수 있다.
 #+BEGIN_SRC emacs-lisp
 (defun toggle-dogears (orig-fun &rest args)
@@ -50,6 +49,9 @@ advice의 함수와 원본 함수가 어떻게 합성되어야 하는지 명시�
 *** :before-until
 - 함수를 실행한 뒤 nil이면 원본 함수를 호출​*한다.*​
 *** :after-while
+:PROPERTIES:
+:ID:       83480652-7A95-42D8-80B1-EB4DA3EDD77A
+:END:
 - 원본 함수를 실행한 뒤 non-nil이면 ​~advice~​ 함수를 호출​*한다.*​
 - 두 함수는 같은 인자를 받는다. 반환값은 ~advice~ 함수의 반환값을 따른다.
 - ​~(lambda (&rest r) (and (apply oldfun r) (apply function r)))~​
@@ -64,6 +66,9 @@ advice의 함수와 원본 함수가 어떻게 합성되어야 하는지 명시�
 - ​~(lambda (&rest r) (apply oldfun (funcall function r)))~​
 
 *** :filter-return
+:PROPERTIES:
+:ID:       17AF2147-3C09-449D-9D90-D119E4D6EC42
+:END:
 - 원본 함수를 실행하고 결과를 인자로 함수를 실행한다.
 - ​~(lambda (&rest r) (funcall function (apply oldfun r)))~​
 
@@ -102,8 +107,15 @@ advice의 함수와 원본 함수가 어떻게 합성되어야 하는지 명시�
 #+RESULTS:
 : 6
 
+*** define-advice
+advice-add와 defun의 래퍼 함수.
+​=(SYMBOL (HOW LAMBDA-LIST &optional NAME DEPTH) &rest BODY)=​
+NAME을 지정할 경우 자동으로 SYMBOL@NAME으로 이름붙여진다.
 
 ** [[file:hook.org][Hook]]와 다른 점
+:PROPERTIES:
+:ID:       94415FDA-97EA-4DF8-BFC1-7F157E2927A8
+:END:
 - [[file:hook.org][hook]]는 라이브러리 작성자가 제공해야 함
 - 사용자 정의를 위해 만들어졌기에 부작용이 덜함.
   따라서 advice를 지양하고 hook를 쓰는 것이 좋다.

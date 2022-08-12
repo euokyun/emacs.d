@@ -139,7 +139,7 @@ git 변경 내용을 표시하는 패키지
   (git-gutter:added-sign "+")
   (git-gutter:deleted-sign "-")
 
-  :config
+  :init
   ;; http://blog.binchen.org/posts/enhance-emacs-git-gutter-with-ivy-mode.html
   (defun my-reshape-git-gutter (gutter)
     "Re-shape gutter for `ivy-read'."
@@ -171,16 +171,16 @@ git 변경 내용을 표시하는 패키지
             target-linenum)))
 
   ;; ivy-version
-  (with-eval-after-load 'ivy
-    (defun my/goto-git-gutter ()
-      (interactive)
-      (if git-gutter:diffinfos
-          (ivy-read "git-gutters:"
-                    (mapcar 'my-reshape-git-gutter git-gutter:diffinfos)
-                    :action (lambda (e)
-                              (unless (numberp e) (setq e (cdr e)))
-                              (goto-line e)))
-        (message "NO git-gutters!"))))
+  ;; (with-eval-after-load 'ivy
+  ;;   (defun my/goto-git-gutter ()
+  ;;     (interactive)
+  ;;     (if git-gutter:diffinfos
+  ;;         (ivy-read "git-gutters:"
+  ;;                   (mapcar 'my-reshape-git-gutter git-gutter:diffinfos)
+  ;;                   :action (lambda (e)
+  ;;                             (unless (numberp e) (setq e (cdr e)))
+  ;;                             (goto-line e)))
+  ;;       (message "NO git-gutters!"))))
 
   (with-eval-after-load 'consult
    (defun my/goto-git-gutter ()
