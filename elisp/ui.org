@@ -230,18 +230,20 @@ https://github.com/alvarogonzalezsotillo/region-occurrences-highlighter
 :PROPERTIES:
 :ID:       5A79ED5F-C2D1-4A63-A21A-289F87C24ED7
 :END:
-https://gitlab.com/ideasman42/emacs-hl-block-mode
+https://codeberg.org/ideasman42/emacs-hl-block-mode
 
 커서가 위치한 블럭을 강조 표시함
 #+begin_src emacs-lisp :tangle yes
 (use-package hl-block-mode
   :custom
-  (hl-block-bracket nil)
+  (hl-block-bracket nil)                ; match all bracket type
   ;; (hl-block-single-level t)
   ;; (hl-block-style 'color-tint)
   ;; (hl-block-color-tint "#040404")
+  ;; (hl-block-multi-line t)               ; skip when begin and end are same line
   (hl-block-style 'bracket)             ; color tint mode disables rainbow mode.
-  (hl-block-bracket-face '(:inverse-video t)) ; and this fix face t problem.
+  ;; (hl-block-bracket-face 'hl-block-bracket-custom-face) ; and this fix face t problem.
+  ;; (hl-block-bracket-face '(:inverse-video t)) ; and this fix face t problem.
   :commands (hl-block-mode)
   :hook ((prog-mode . hl-block-mode)))
 #+end_src
@@ -249,8 +251,7 @@ https://gitlab.com/ideasman42/emacs-hl-block-mode
 color-tint와 bracket 두가지 모드가 있다.
 
 - color-tint는 rainbow-mode 등 몇가지 background face를 사용하는 모드를 덮어쓴다.
-- bracket은 t라는 face를 찾지 못한다는 에러를 띄우고, 의도와는 반대로 커서 위치가 헷갈리는 문제가 있다.(수정함)
-
+  
 ** highlight-indent-guides
 :PROPERTIES:
 :ID:       4CBD3996-76FE-42D5-80BE-44E1E776E20D
