@@ -183,24 +183,30 @@ git 변경 내용을 표시하는 패키지
   ;;       (message "NO git-gutters!"))))
 
   (with-eval-after-load 'consult
-   (defun my/goto-git-gutter ()
-     (interactive)
-     (if git-gutter:diffinfos
-         (consult--read
-          (mapcar 'my-reshape-git-gutter git-gutter:diffinfos)
-          :prompt "git-gutters:"
-          :lookup (lambda (_ _ e)
-                    (goto-line (string-to-number
-                                (string-remove-suffix
-                                 ":" (cadr (split-string e))))))
-          :state (consult--jump-state))
-       (user-error "NO git-gutters!")))
-   (consult-customize my/goto-git-gutter :preview-key (kbd "S-SPC")))
+    (defun my/goto-git-gutter ()
+      (interactive)
+      (if git-gutter:diffinfos
+          (consult--read
+           (mapcar 'my-reshape-git-gutter git-gutter:diffinfos)
+           :prompt "git-gutters:"
+           :lookup (lambda (e &rest _)
+                     (goto-line (string-to-number
+                                 (string-remove-suffix
+                                  ":" (cadr (split-string e))))))
+            ;; FIXME : preview not working.
+            ;; :state (consult--jump-state)
+           )
+        (user-error "NO git-gutters!")))
+    (consult-customize my/goto-git-gutter :preview-key (kbd "S-SPC")))
 
   (transient-define-prefix my/git-gutters ()
     [:description
-     (lambda () (let ((s (git-gutter:statistic)))
-                  (format "diff:\t%d \nadd:\t%d,\tdeleted:\t%d" (length git-gutter:diffinfos) (car s) (cdr s))))
+     (lambda ()
+       (let ((s (git-gutter:statistic)))
+         (format "diff:\t%d \nadd:\t%d,\tdeleted:\t%d"
+                 (length git-gutter:diffinfos)
+                 (car s)
+                 (cdr s))))
      ("l" "list" my/goto-git-gutter)]
     [[("j" "next-hunk" git-gutter:next-hunk :transient t)]
      [("k" "previous-hunk" git-gutter:previous-hunk :transient t)]]))
