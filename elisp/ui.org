@@ -552,7 +552,10 @@ https://github.com/abo-abo/ace-window
   ;; ("s-`" 'ace-window)
   ;; ("M-o" 'ace-window)
   ;; ("M-`" 'ace-window)
-  ("M-`" 'ace-window)
+  ("M-`" '(lambda (&rest arg)
+            (interactive)
+            (deactivate-input-method)
+            (ace-window arg)))
   :custom
   (aw-minibuffer-flag t)                ; minibuffer도 표시함
   (aw-dispatch-always t)

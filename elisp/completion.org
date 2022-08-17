@@ -292,7 +292,8 @@ https://github.com/minad/consult
             "M-s G" 'consult-git-grep
             "M-s r" 'consult-ripgrep
             "M-s l" 'consult-line
-            "s-f" 'consult-line
+            ;; "s-f" 'consult-line
+            "s-f" 'consult-ripgrep-or-line
             "M-s L" 'consult-line-multi
             "s-F" 'consult-line-multi
             "M-s m" 'consult-multi-occur
@@ -305,7 +306,7 @@ https://github.com/minad/consult
             "M-s e" 'consult-isearch-history ;; orig. isearch-edit-string
             ;; "M-s l" 'consult-line ;; needed by consult-line to detect isearch
             ;; "M-s L" 'consult-line-multi
-            "s-f" 'consult-line ;; needed by consult-line to detect isearch
+            "s-f" 'consult-ripgrep-or-line ;; needed by consult-line to detect isearch
             "s-F" 'consult-line-multi) ;; ;; needed by consult-line to detect isearch
   ;; needed by consult-line to detect isearch
 
@@ -386,7 +387,8 @@ DEFS is a plist associating completion categories to commands."
 
   (define-minibuffer-key [(super f)]
     'consult-location #'previous-history-element
-    'file #'consult-find-for-minibuffer)
+    'file #'consult-find-for-minibuffer
+    'consult-grep #'previous-history-element)
 
   ;; Optionally configure the narrowing key.
   ;; Both < and C-+ work reasonably well.
@@ -398,20 +400,59 @@ DEFS is a plist associating completion categories to commands."
 
   ;; Optionally configure a function which returns the project root directory.
   ;; There are multiple reasonable alternatives to chose from.
-;;;; 1. project.el (project-roots)
-  ;; (setq consult-project-root-function
-  ;;       (lambda ()
-  ;;         (when-let (project (project-current))
-  ;;           (car (project-roots project)))))
+  ;; 1. project.el (project-roots)
+  (setq consult-project-root-function
+        (lambda ()
+          (when-let (project (project-current))
+            (car (project-roots project)))))
 ;;;; 2. projectile.el (projectile-project-root)
-  (autoload 'projectile-project-root "projectile")
-  (setq consult-project-root-function #'projectile-project-root)
+  ;; (autoload 'projectile-project-root "projectile")
+  ;; (setq consult-project-root-function #'projectile-project-root)
 ;;;; 3. vc.el (vc-root-dir)
   ;; (setq consult-project-root-function #'vc-root-dir)
 ;;;; 4. locate-dominating-file
   ;; (setq consult-project-root-function (lambda () (locate-dominating-file "." ".git")))
 
-  )
+
+
+  (defcustom consult-ripgrep-or-line-limit 300000
+    "Buffer size threshold for `my-consult-ripgrep-or-line'.
+When the number of characters in a buffer exceeds this threshold,
+`consult-ripgrep' will be used instead of `consult-line'."
+    :type 'integer)
+
+  (defun consult-ripgrep-or-line ()
+    "Call `consult-line' for small buffers or `consult-ripgrep' for large files."
+    (interactive)
+    (if (or (not buffer-file-name)
+            (buffer-narrowed-p)
+            (ignore-errors
+              (file-remote-p buffer-file-name))
+            (jka-compr-get-compression-info buffer-file-name)
+            (<= (buffer-size)
+                (/ consult-ripgrep-or-line-limit
+                   (if (eq major-mode 'org-mode) 4 1))))
+        (consult-line)
+      (when (file-writable-p buffer-file-name)
+        (save-buffer))
+      (let ((consult-ripgrep-command
+             (concat "rg "
+                     "--null "
+                     "--line-buffered "
+                     "--color=ansi "
+                     "--max-columns=250 "
+                     "--no-heading "
+                     "--line-number "
+                     ;; adding these to default
+                     "--smart-case "
+                     "--hidden "
+                     "--max-columns-preview "
+                     ;; add back filename to get parsing to work
+                     "--with-filename "
+                     ;; defaults
+                     "-e ARG OPTS "
+                     (shell-quote-argument buffer-file-name))))
+        (consult-ripgrep)))))
 #+end_src
 
 - [ ] describe-face 등에 history

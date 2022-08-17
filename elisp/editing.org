@@ -151,14 +151,14 @@ evil 키바인딩 모음집.
     :config
     ;; (setq evil-collection-mode-list
     ;;       (remove 'lispy evil-collection-mode-list))
-    (defun evil-collection-mode-use (blacklist lists)
-      (if (null blacklist) lists
-        (evil-collection-mode-use
-         (cdr blacklist)
-         (remove (car blacklist) lists))))
-    (setq evil-collection-mode-list
-          (evil-collection-mode-use '(lispy)
-                                    evil-collection-mode-list))
+    ;; (defun evil-collection-mode-use (blacklist lists)
+    ;;   (if (null blacklist) lists
+    ;;     (evil-collection-mode-use
+    ;;      (cdr blacklist)
+    ;;      (remove (car blacklist) lists))))
+    ;; (setq evil-collection-mode-list
+    ;;       (evil-collection-mode-use '(lispy)
+    ;;                                 evil-collection-mode-list))
     (evil-collection-init))
 #+end_src
 
@@ -283,10 +283,7 @@ align operator를 추가함
   :straight (:host github :repo "edkolev/evil-lion")
   :commands (evil-lion-left evil-lion-right)
   :general
-  (evil-normal-state-map
-         "g l " 'evil-lion-left
-         "g L " 'evil-lion-right)
-  (evil-visual-state-map
+  (:states '(normal visual)
          "g l " 'evil-lion-left
          "g L " 'evil-lion-right))
 #+end_src
@@ -310,6 +307,22 @@ https://github.com/redguardtoo/evil-nerd-commenter
      (interactive)
      (let* ((imenu-create-index-function 'evilnc-imenu-create-index-function))
        (counsel-imenu)))))
+#+end_src
+
+** rotfr
+https://github.com/herbertjones/rotfr
+cycle-at-point와 같은 기능.
+
+#+begin_src emacs-lisp :tangle yes
+(use-package rotfr
+  :straight (rotfr
+             :repo "https://github.com/herbertjones/rotfr")
+  :general
+  (:states 'normal
+   "[r" 'rotfr-rotate-this
+   "]r" 'rotfr-rotate-this-reversed)
+  :config
+  (push '(:mode lisp-interaction-mode :rot ("t" "nil")) rotfr-rotation-sets))
 #+end_src
 
 * 다중 편집 기능
@@ -590,6 +603,7 @@ REGEXP defaults to \"[ \\t\\n\\r]+\"."
 - lispy
   - lispyville
   - evil-lispy
+  - swiper, ivy에 의존성을 가짐.
 - smartparens
   - evil-smartparens
 - paredit
@@ -611,20 +625,23 @@ REGEXP defaults to \"[ \\t\\n\\r]+\"."
 - objed
   https://github.com/clemera/objed
 
-** lispy
+** COMMENT lispy
 :PROPERTIES:
 :ID:       E6EA9E52-6BA4-410D-8A4F-2BC1045A67A4
 :END:
 https://github.com/abo-abo/lispy
 #+begin_src emacs-lisp :tangle yes
-(use-package lispy)
+(use-package lispy
+  :config
+  (advice-add 'lispy-join :before #'my/move-forward-char)
+  (advice-add 'lispy-eval-and-comment :before #'my/move-forward-char))
 #+end_src
 
 - [ ] lispy-split =M-RET=​에 바인딩 되어 있음
   + normal-mode에서는 forward-char를 advice 해야 함
   + insert-mode 매핑 없음
 
-** lispyville
+** COMMENT lispyville
 :PROPERTIES:
 :ID:       AD5B96EE-900D-43FC-B091-B4A1CF0483F6
 :END:
@@ -638,16 +655,17 @@ https://github.com/noctuid/lispyville
    "M-j" 'lispyville-drag-forward
    "M-k" 'lispyville-drag-backward
    ;; TODO: M-J M-K line drag
-   "M-J" 'lispy-join
-   "M-U" 'lispy-splice
-   "M-<return>" 'lispy-split
-   "M-r" 'lispy-raise-sexp
+   ;; "M-J" 'lispy-join
+   ;; "M-U" 'lispy-splice
+   ;; "M-<return>" 'lispy-split
+   ;; "M-r" 'lispy-raise-sexp
    "M-S-r" 'lispyville-raise-list
    "M-t" 'transpose-sexps
-   "M-v" 'lispy-convolute-sexp)
-  (lispyville-mode-map
-   :states '(normal visual)
-   "SPC e /" '(lispy-eval-and-comment :which-key "eval and comment"))
+   ;; "M-v" 'lispy-convolute-sexp
+   )
+  ;; (lispyville-mode-map
+  ;;  :states '(normal visual)
+  ;;  "SPC e /" '(lispy-eval-and-comment :which-key "eval and comment"))
 
   :config
   (lispyville-set-key-theme
@@ -661,10 +679,29 @@ https://github.com/noctuid/lispyville
      wrap
      ))
 
-  (advice-add 'lispy-join :before #'my/move-forward-char)
-  (advice-add 'lispy-eval-and-comment :before #'my/move-forward-char)
   (lispyville-enter-visual-when-marking))
 #+end_src
+
+** COMMENT evil-smartparens
+https://github.com/luxbock/evil-cleverparens/
+#+begin_src emacs-lisp :tangle yes
+(use-package evil-smartparens
+  :hook ((racket-mode lisp-data-mode) . evil-smartparens))
+#+end_src
+
+** parinfer
+#+begin_src emacs-lisp :tangle yes
+(use-package parinfer-rust-mode
+    :hook emacs-lisp-mode
+    :custom
+    (parinfer-rust-auto-download t)
+    (parinfer-rust-library (no-littering-expand-var-file-name "parinfer/parinfer-rust-library.so")))
+#+end_src
+두 가지 모드가 있다.
+- paren-mode
+  + paren 수정에 따라 parinfer가 indentation에만 관여한다.
+- indent-mode
+  + indentation 수정에 따라 paren을 알아서 변경한다.
 
 * spatial-navigate
 :PROPERTIES:
