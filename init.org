@@ -125,7 +125,7 @@ ad-redefinition-action 'accept         ; silent warning for redifinition.
 byte-compile-warnings '(cl-functions)  ; silent old cl-functions warning.
 native-comp-async-report-warnings-errors nil  ; silent gccemacs native comp warning.
 package-native-compile t
-;; find-function-C-source-directory "/Applications/Emacs.app/Contents/Resources/src"
+find-function-C-source-directory "~/git/emacs/src"
 cursor-in-non-selected-windows nil     ; only shows the cursor of focus buffer.
 cursor-type '(hbar . 2)                ; 2px size horizontal bar
 default-input-method "korean-hangul"   ; input method for korean

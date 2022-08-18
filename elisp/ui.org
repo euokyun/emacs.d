@@ -418,15 +418,16 @@ https://github.com/Wilfred/helpful
 help-mode 도움말을 를 더 유용하게 바꿈
 #+begin_src emacs-lisp :tangle yes
 (use-package helpful
-  ;; :custom
+  :custom
+  (helpful-max-highlight 10000)
   ;; (counsel-describe-function-function #'helpful-callable)
   ;; (counsel-describe-variable-function #'helpful-variable)
-  :bind
-  ([remap describe-function] . helpful-function)
-  ([remap describe-symbol] . helpful-symbol)
-  ([remap describe-variable] . helpful-variable)
-  ([remap describe-command] . helpful-command)
-  ([remap describe-key] . helpful-key)
+  :general
+  ([remap describe-function] 'helpful-function
+   [remap describe-symbol] 'helpful-symbol
+   [remap describe-variable] 'helpful-variable
+   [remap describe-command] 'helpful-command
+   [remap describe-key] 'helpful-key)
   ;; :config
   ;; https://xenodium.com/basic-imenu-in-helpful-mode/
   ;; (defun helpful--create-imenu-index ()
@@ -459,7 +460,7 @@ help-mode 도움말을 를 더 유용하게 바꿈
   )
 #+end_src
 
-** elisp-demos
+** COMMENT elisp-demos
 :PROPERTIES:
 :ID:       8FDA0791-F789-4A01-8673-1A4073D411A7
 :END:
@@ -473,7 +474,7 @@ https://github.com/xuchunyang/elisp-demos
   (advice-add 'helpful-update :after #'elisp-demos-advice-helpful-update))
 #+end_src
 
-** info-colors
+** COMMENT info-colors
 :PROPERTIES:
 :ID:       098C8571-A6DA-476E-851F-EF6305476D91
 :END:
@@ -580,7 +581,7 @@ https://github.com/abo-abo/ace-window
           (?K delete-other-windows "Delete Other Windows")
           (?t aw-transpose-frame "Transpose Frame")
           (?! aw--vterm "open vTerm")
-          (?v hydra-window-scroll/body)
+          ;; (?v hydra-window-scroll/body)
           (?u aw--winner-undo)
           (?r winner-redo)
           ;; (?x )
@@ -594,16 +595,16 @@ https://github.com/abo-abo/ace-window
           (select-window (minibuffer-selected-window))
         (select-window (active-minibuffer-window)))))
 
-  (defun joe-scroll-other-window ()
-    (interactive)
-    (scroll-other-window 1))
-  (defun joe-scroll-other-window-down ()
-    (interactive)
-    (scroll-other-window-down 1))
-  (defhydra hydra-window-scroll (:color red)
-    "Scroll other window"
-    ("j" joe-scroll-other-window "scroll")
-    ("k" joe-scroll-other-window-down "scroll down"))
+  ;; (defun joe-scroll-other-window ()
+  ;;   (interactive)
+  ;;   (scroll-other-window 1))
+  ;; (defun joe-scroll-other-window-down ()
+  ;;   (interactive)
+  ;;   (scroll-other-window-down 1))
+  ;; (defhydra hydra-window-scroll (:color red)
+  ;;   "Scroll other window"
+  ;;   ("j" joe-scroll-other-window "scroll")
+  ;;   ("k" joe-scroll-other-window-down "scroll down"))
 
   (defun aw--vterm (window)
     (select-window window)

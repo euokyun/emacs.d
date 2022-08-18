@@ -12,7 +12,7 @@
          (org-tab-first-hook . org-end-of-line))
 #+end_src
 
-* 키바인딩 [2/6]
+* 키바인딩 [2/7]
 :PROPERTIES:
 :ID:       F1716479-97B0-44F2-8F99-E5B987F12882
 :END:
@@ -56,9 +56,12 @@
 ;; $를 한번 누르면 보이는 라인 끝으로, 두번 누르면 실제 라인 끝으로 보낸다.
 (org-mode-map
  :states '(normal motion visual)
- "$" (general-key-dispatch '(lambda () (interactive) (evil-org-end-of-line))
-       :timeout 0.25
-       "$" 'evil-end-of-line))
+ "$" (general-predicate-dispatch 'evil-org-end-of-line
+       (eq (point)
+           (save-excursion
+             (evil-org-end-of-line)
+             (point)))
+       'evil-end-of-line))
 #+end_src
 
 - [X] org-toggle-comment
@@ -131,6 +134,7 @@ prompted for."
 :END:
 #+begin_src emacs-lisp :tangle yes
 :custom
+(org-edit-src-persistent-message nil)                               ; head-line message
 (org-id-link-to-org-use-id 'create-if-interactive-and-no-custom-id)    ; create ID if need to make link.
 ;; (org-startup-indented t)         ; Keep the indentation
 (org-startup-indented nil)         ; Keep the indentation

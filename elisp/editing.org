@@ -27,7 +27,6 @@ https://www.dr-qubit.org/Lost_undo-tree_history.html
    "u" 'undo-tree-undo)
   (undo-tree-visualizer-mode-map
    :override t
-   :states '(normal motion)
    "t" 'undo-tree-visualizer-toggle-timestamps)
   :config
   ;; (defadvice undo-tree-make-history-save-file-name
@@ -76,16 +75,31 @@ vim 키바인딩 레이어
   (evil-want-C-u-scroll t)        ; set `C-u' to scroll up. not for insert mode.
   (evil-want-C-i-jump nil)        ; set `C-i' to insert `TAB' key.
   (evil-echo-state nil)           ; mute echo area
+  :ghook
+  ('after-init-hook #'(lambda (&rest _)
+                        (when-let ((messages-buffer (get-buffer "*Messages*")))
+                          (with-current-buffer messages-buffer
+                            (evil-normalize-keymaps)))))
   :general
-  ;; ("M-u" 'universal-argument)
-  ;; ("C-M-u" 'universal-argument)
-  ("s-u" 'universal-argument
-   "C-S-s" 'isearch-backward)           ; C-r is Redo
+  ("C-S-s" 'isearch-backward           ; C-r is Redo
+   "s-v" 'evil-paste-before)
   (:states 'normal
    "C-n" nil
    "C-p" nil
    "C-." nil
    "M-." nil)
+  (:states 'normal
+   "0" (general-predicate-dispatch 'beginning-of-line-text
+         (eq (point)
+             (save-excursion
+               (beginning-of-line)
+               (skip-chars-forward " \t")
+               (point)))
+         'beginning-of-line))
+  ;; (:states 'normal
+  ;;  :predicate '(memq last-command
+  ;;                    '(beginning-of-line-text))
+  ;;  "0" 'beginning-of-line)
   (:states 'normal
    :predicate '(memq last-command
                      '(evil-paste-after
@@ -361,7 +375,7 @@ https://github.com/gabesoft/evil-mc
    "M-s-s" '(evil-mc-toggle-frozen :which-key "pause/resume cursor"))
   (:states 'normal
    "<escape>" (general-predicate-dispatch 'evil-force-normal-state
-                (and (bound-and-true-p evil-mc-mode) (evil-mc-has-cursors-p)) 'evil-mc-undo-all-cursors
+                (and (fboundp 'evil-mc-has-cursors-p) (evil-mc-has-cursors-p)) 'evil-mc-undo-all-cursors
                 ;; (evil-mc-has-cursors-p) 'evil-mc-undo-all-cursors
                 ))
   :config
@@ -683,25 +697,65 @@ https://github.com/noctuid/lispyville
 #+end_src
 
 ** COMMENT evil-smartparens
-https://github.com/luxbock/evil-cleverparens/
+https://github.com/expez/evil-smartparens
+
+parinfer와 같이 쓰기 위해서 evil-smartparens-mode는 사용하지 않는다.
+대신 raise-sexp, slurp, barf 기능은 사용한다.
+
 #+begin_src emacs-lisp :tangle yes
-(use-package evil-smartparens
-  :hook ((racket-mode lisp-data-mode) . evil-smartparens))
+(use-package evil-smartparens)
+  ;; :hook ((racket-mode lisp-data-mode) . evil-smartparens))
 #+end_src
 
+** evil-cleverparens
+https://github.com/luxbock/evil-cleverparens/
+
+​~smartparen~​, ​~paredit~​의 기능을 사용한다. 
+#+begin_src emacs-lisp :tangle yes
+(use-package evil-cleverparens
+  :general
+  (:states '(normal visual motion)
+           "<" 'evil-cp-<
+           ">" 'evil-cp->)
+  (:state 'normal
+   "M-j" 'evil-cp-drag-forward
+   "M-k" 'evil-cp-drag-backward
+   "M-t" 'sp-transpose-hybrid-sexp
+   "M-r" 'sp-raise-sexp
+   "M-J" 'sp-join-sexp
+   "M-S" 'sp-split-sexp
+   "M-v" 'sp-convolute-sexp))
+#+end_src
+
+- raise-sexp
+  선택된 자식 요소를 부모 자리에 대체한다.
+- join-sexp
+  두 sexp를 합친다.
+- split-sexp
+  한 sexp를 두개로 나눈다.
+- convulute-sexp
+  커서 뒤의 sexp를 부모로, 나머지를 자식으로 구조를 변경한다.
+
 ** parinfer
+https://github.com/justinbarclay/parinfer-rust-mode
+
 #+begin_src emacs-lisp :tangle yes
 (use-package parinfer-rust-mode
-    :hook emacs-lisp-mode
-    :custom
-    (parinfer-rust-auto-download t)
-    (parinfer-rust-library (no-littering-expand-var-file-name "parinfer/parinfer-rust-library.so")))
+  :hook emacs-lisp-mode
+  :general
+  ("C-c C-p" '(nil :which-key "parinfer"))
+  :custom
+  (parinfer-rust-auto-download t)
+  (parinfer-rust-library (no-littering-expand-var-file-name "parinfer/parinfer-rust-library.so")))
 #+end_src
+
 두 가지 모드가 있다.
 - paren-mode
   + paren 수정에 따라 parinfer가 indentation에만 관여한다.
 - indent-mode
   + indentation 수정에 따라 paren을 알아서 변경한다.
+- smart-mode
+  + indent-mode와 비슷하지만 코드 구조를 유지한다.
 
 * spatial-navigate
 :PROPERTIES:
