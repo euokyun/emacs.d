@@ -81,8 +81,7 @@ vim 키바인딩 레이어
                           (with-current-buffer messages-buffer
                             (evil-normalize-keymaps)))))
   :general
-  ("C-S-s" 'isearch-backward           ; C-r is Redo
-   "s-v" 'evil-paste-before)
+  ("C-S-s" 'isearch-backward)           ; C-r is Redo
   (:states 'normal
    "C-n" nil
    "C-p" nil
@@ -92,22 +91,17 @@ vim 키바인딩 레이어
    "0" (general-predicate-dispatch 'beginning-of-line-text
          (eq (point)
              (save-excursion
-               (beginning-of-line)
-               (skip-chars-forward " \t")
+               (beginning-of-line-text)
                (point)))
          'beginning-of-line))
-  ;; (:states 'normal
-  ;;  :predicate '(memq last-command
-  ;;                    '(beginning-of-line-text))
-  ;;  "0" 'beginning-of-line)
-  (:states 'normal
+  (:states '(normal insert)
    :predicate '(memq last-command
                      '(evil-paste-after
                        evil-paste-before
                        evil-visual-paste))
    "C-n" 'evil-paste-pop-next
    "C-p" 'evil-paste-pop)
-  (:states 'normal
+  (:states '(normal insert)
    :predicate '(memq last-command
                      '(evil-repeat
                        evil-repeat-pop
@@ -724,7 +718,30 @@ https://github.com/luxbock/evil-cleverparens/
    "M-r" 'sp-raise-sexp
    "M-J" 'sp-join-sexp
    "M-S" 'sp-split-sexp
-   "M-v" 'sp-convolute-sexp))
+   "M-v" 'sp-convolute-sexp)
+  :config/el-patch
+  (defun evil-cp--skip-whitespace-and-comments (&optional reversep)
+   "Skips whitespace and comments forward."
+   (catch 'stop
+     (if reversep
+         (while (or (looking-back evil-cp--ws-regexp)
+                    (evil-cp--point-in-comment (1- (point))))
+           (backward-char)
+           (when (bobp) (throw 'stop :bobp)))
+       (while (or (looking-at evil-cp--ws-regexp)
+                  (evil-cp--point-in-comment))
+         (forward-char)
+         (when (looking-at
+                (el-patch-wrap 1 1
+                  (or sp-comment-char
+                      (progn
+                       (dotimes (char 256)
+                         (unless sp-comment-char
+                           (when (= ?< (char-syntax char))
+                             (setq sp-comment-char (string char)))))
+                       sp-comment-char))))
+           (forward-line))
+         (when (eobp) (throw 'stop :eobp)))))))
 #+end_src
 
 - raise-sexp
@@ -745,6 +762,7 @@ https://github.com/justinbarclay/parinfer-rust-mode
   :general
   ("C-c C-p" '(nil :which-key "parinfer"))
   :custom
+  (parinfer-rust-dim-parens nil)
   (parinfer-rust-auto-download t)
   (parinfer-rust-library (no-littering-expand-var-file-name "parinfer/parinfer-rust-library.so")))
 #+end_src

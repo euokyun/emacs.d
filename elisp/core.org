@@ -29,6 +29,7 @@ car는 바이너리 파일명, cdr는 패키지 관리자에서의 이름이다.
 
 * el-patch
 https://github.com/radian-software/el-patch
+
 el-patch 패키지는 패키지의 elisp 소스를 변경하는 기능을 제공한다.
 emacs에서 기능을 재정의하는 방법은 크게 두가지가 있다.
 1. advice, hook
