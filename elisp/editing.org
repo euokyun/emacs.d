@@ -24,7 +24,7 @@ https://www.dr-qubit.org/Lost_undo-tree_history.html
   (undo-tree-map
    "C-/" nil)
   (:states '(visual)
-   "u" 'undo-tree-undo)
+           "u" 'undo-tree-undo)
   (undo-tree-visualizer-mode-map
    :override t
    "t" 'undo-tree-visualizer-toggle-timestamps)
@@ -32,7 +32,39 @@ https://www.dr-qubit.org/Lost_undo-tree_history.html
   ;; (defadvice undo-tree-make-history-save-file-name
   ;;     (after undo-tree activate)
   ;;   (setq ad-return-value (concat ad-return-value ".gz")))
-  (global-undo-tree-mode t))
+  (global-undo-tree-mode t)
+  :init
+  ;; undo-tree의 히스토리 저장 기능은 필요 없는 버퍼에도 너무 자주 작동하기에
+  ;; 버퍼에 실제 변화가 있을 때만 작동하는 기능을 추가함.
+  ;; 또한 버퍼 이름을 정규식으로 필터링해서 저장을 원하지 않는 버퍼를 필터링할
+  ;; 수 있게 변경함.
+  (defvar-local buffer-modified nil
+    "Check if buffer is modified. unlike `buffer-modified-p', this value
+is regardless of undo or revert to original buffer.
+after save buffer, this value will reset to `nil'")
+
+  (defun undo-tree--first-changed () (setq buffer-modified t))
+  (defun undo-tree--first-unchanged () (setq buffer-modified nil))
+  (add-hook 'first-change-hook #'undo-tree--first-changed)
+  (add-hook 'after-save-hook #'undo-tree--first-unchanged)
+
+  (defvar undo-tree-save-history-exclude-alist
+    nil
+    "List of buffer name(or regexp) that you don't want save history for undo-tree.")
+
+  (defun undo-tree-exclude-buffer-p ()
+    (--first (string-match it (buffer-name (current-buffer))) undo-tree-save-history-exclude-alist))
+  :config/el-patch
+  ;; Versions of save/load functions for use in hooks
+  (defun undo-tree-save-history-from-hook ()
+    (when (and undo-tree-mode undo-tree-auto-save-history
+               (el-patch-add buffer-modified)
+               (not (eq buffer-undo-list t))
+               buffer-file-name
+               (el-patch-add (not (undo-tree-exclude-buffer-p)))
+               (file-writable-p
+                (undo-tree-make-history-save-file-name buffer-file-name)))
+      (undo-tree-save-history nil 'overwrite) nil)))
 #+end_src
 
 - undo-tree-auto-save-history :: undo 내역을 저장하고 다음 세션에서도 쓸 수 있게 함.

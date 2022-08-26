@@ -20,6 +20,17 @@
 ;;; Commentary: euokyun's emacs init file.
 ;;; Code:
 #+end_src
+
+*** COMMENT benchmark-init
+https://github.com/dholm/benchmark-init-el
+
+#+begin_src emacs-lisp :tangle yes
+(use-package benchmark-init
+  :config
+  ;; To disable collection of benchmark data after init is done.
+  (add-hook 'after-init-hook 'benchmark-init/deactivate))
+#+end_src
+
 *** backup file-name-handler-alist
 :PROPERTIES:
 :ID:       069B8D28-4544-4F70-843C-7B759D3798DE
@@ -119,48 +130,49 @@ speed up load time
 :END:
 #+begin_src emacs-lisp :tangle yes
 initial-major-mode 'lisp-interaction-mode
-garbage-collection-messages nil        ;
-ad-redefinition-action 'accept         ; silent warning for redifinition.
+garbage-collection-messages nil         ;
+ad-redefinition-action 'accept          ; silent warning for redifinition.
 ;; auto-save-default nil                  ; do not make temporary auto-save files. now i use `super-save' instead.
-byte-compile-warnings '(cl-functions)  ; silent old cl-functions warning.
-native-comp-async-report-warnings-errors nil  ; silent gccemacs native comp warning.
+auto-save-file-name-transforms `((".*" ,(no-littering-expand-var-file-name "auto-save/") t))
+byte-compile-warnings '(cl-functions)        ; silent old cl-functions warning.
+native-comp-async-report-warnings-errors nil ; silent gccemacs native comp warning.
 package-native-compile t
 find-function-C-source-directory "~/git/emacs/src"
-cursor-in-non-selected-windows nil     ; only shows the cursor of focus buffer.
-cursor-type '(hbar . 2)                ; 2px size horizontal bar
-default-input-method "korean-hangul"   ; input method for korean
-delete-by-moving-to-trash t            ; delete = trash
-delete-selection-mode t                ; override selection
+cursor-in-non-selected-windows nil      ; only shows the cursor of focus buffer.
+cursor-type '(hbar . 2)                 ; 2px size horizontal bar
+default-input-method "korean-hangul"    ; input method for korean
+delete-by-moving-to-trash t             ; delete = trash
+delete-selection-mode t                 ; override selection
 ;; desktop-save-mode 1                    ; save last frame -- can break perspective.
-indent-tabs-mode nil                   ; tab=space!
-tab-width 4                            ; space=4!
-inhibit-startup-screen t               ;
-initial-scratch-message nil            ; empty *scratch* buffer.
-keyboard-coding-system 'utf-8-unix     ; utf-8
-large-file-warning-threshold nil       ; do not warn file size.
-make-backup-files nil                  ; do not make temporal backup files.
-scroll-step 1                          ; scroll step
-show-help-function nil                 ; t
+indent-tabs-mode nil                    ; tab=space!
+tab-width 4                             ; space=4!
+inhibit-startup-screen t                ;
+initial-scratch-message nil             ; empty *scratch* buffer.
+keyboard-coding-system 'utf-8-unix      ; utf-8
+large-file-warning-threshold nil        ; do not warn file size.
+make-backup-files nil                   ; do not make temporal backup files.
+scroll-step 1                           ; scroll step
+show-help-function nil                  ; t
 straight-check-for-modifications '(check-on-save find-when-checking) ; don't catch modification unless `save buffer' command.
-use-dialog-box nil                     ;
-vc-follow-symlinks t                   ; silent warning for symlink.
-warning-minimum-level :error           ;
-warning-suppress-log-types '((comp))   ; silent warning for native-comp.
+use-dialog-box nil
+vc-follow-symlinks t                    ; silent warning for symlink.
+warning-minimum-level :error
+warning-suppress-log-types '((comp))    ; silent warning for native-comp.
 warning-suppress-types '((use-package) (use-package))
-fill-column 80                         ; default is `70'. force line breaker.
-comment-column 60                      ; set comment column to 60
-window-combination-resize t            ;
-x-stretch-cursor t                     ;
-truncate-lines t                       ; do not wrap code.
-backup-by-copying t                    ; make backup.
+fill-column 80                          ; default is `70'. force line breaker.
+comment-column 60                       ; set comment column to 60
+window-combination-resize t
+x-stretch-cursor t
+truncate-lines t                        ; do not wrap code.
+backup-by-copying t                     ; make backup.
 ;; global-auto-revert-non-file-buffers t  ; revert dired and other buffers.
-auto-revert-verbose nil                ; do not message this
-auto-revert-avoid-polling t            ; do not use pooling.
-delete-old-versions t                  ; delete old versions.
-version-control t                      ;
-x-underline-at-descent-line t          ; Underline looks a bit better when drawn lower
-inhibit-compacting-font-caches t       ; for fix all-the-icons slow rendering
-even-window-sizes nil                  ; perspective - fix window layout.
+auto-revert-verbose nil          ; do not message this
+auto-revert-avoid-polling t      ; do not use pooling.
+delete-old-versions t            ; delete old versions.
+version-control t                ;
+x-underline-at-descent-line t    ; Underline looks a bit better when drawn lower
+inhibit-compacting-font-caches t ; for fix all-the-icons slow rendering
+even-window-sizes nil            ; perspective - fix window layout.
 ;; tab-bar-format '(tab-bar-format-global) ; global modeline using emacs28 tab-bar
 ;; tab-bar-mode t                         ; http://ruzkuku.com/texts/emacs-global.html
 ;; tab-line-mode t
@@ -168,8 +180,8 @@ even-window-sizes nil                  ; perspective - fix window layout.
 use-default-font-for-symbols nil
 require-final-newline t ; according to POSIX, every text file should end with newline.
 imenu-auto-rescan t
-scroll-step 1      ; keyboard scroll one line at a time
-use-dialog-box nil ; Disable dialog boxes since they weren't working in Mac OSX
+scroll-step 1       ; keyboard scroll one line at a time
+use-dialog-box nil  ; Disable dialog boxes since they weren't working in Mac OSX
 world-clock-list '(("Asia/Seoul" "Seoul")
                    ;; ("America/Los_Angeles" "Seattle")
                    ("America/New_York" "New York")
@@ -178,13 +190,11 @@ world-clock-time-format "%a, %e %b %T %Z"
 display-time-format "%R"
 display-time-default-load-average nil
 blink-cursor-mode nil
-create-lockfiles nil                    ; .#foo.txt 등의 lockfile을 생성하지 않음
-disabled-command-function nil           ; 어려운 기능 경고 해제
+create-lockfiles nil                   ; .#foo.txt 등의 lockfile을 생성하지 않음
+disabled-command-function nil          ; 어려운 기능 경고 해제
 async-bytecomp-package-mode t
-save-interprogram-paste-before-kill t   ; 다른 프로그램의 클립보드를 덮어쓰기 전에 저장함
+save-interprogram-paste-before-kill t ; 다른 프로그램의 클립보드를 덮어쓰기 전에 저장함
 switch-to-buffer-preserve-window-point 'already-displayed
-straight-recipes-gnu-elpa-use-mirror nil
-straight-recipes-emacsmirror-use-mirror nil
 #+end_src
 
 **** COMMENT 버퍼 범위를 보여줌.
@@ -535,6 +545,18 @@ https://stackoverflow.com/questions/23622296/emacs-timing-execution-of-function-
 
 (general-after-init
   (scratch-apply-highlights))
+#+end_src
+
+**** delete ds-store for straight
+
+#+begin_src emacs-lisp :tangle yes
+(advice-add 'straight-merge-package
+    :before #'(lambda ()
+                (call-process-shell-command
+                 (concat "find "
+                         (concat straight-base-dir "straight")
+                         " -name '.DS_Store' -type f -delete")
+                 nil 0 nil)))
 #+end_src
 
 ** keybinding

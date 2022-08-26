@@ -51,18 +51,17 @@ https://github.com/flycheck/flycheck
   :hook (lsp-mode . flycheck-mode))
 #+end_src
 
-*** TODO flycheck-inline
+*** flycheck-inline
 :PROPERTIES:
 :ID:       C9B601F0-27FC-40C9-BC9C-95F8992ABE6A
 :END:
 https://github.com/flycheck/flycheck-inline
 #+begin_src emacs-lisp :tangle yes
 (use-package flycheck-inline
-  ;; :hook (flycheck-mode . flycheck-inline-mode)
+  :after flycheck
+  :hook (flycheck-mode . flycheck-inline-mode)
   :config
-  ;; (add-hook 'flycheck-mode-hook #'flycheck-inline-mode)
-  (global-flycheck-inline-mode)
-  )
+  (global-flycheck-inline-mode))
 #+end_src
 
 ** TODO COMMENT tree-sitter
@@ -133,6 +132,7 @@ https://github.com/emacs-lsp/lsp-mode
            typescript-mode ; https://github.com/typescript-language-server/typescript-language-server
            js2-mode
            web-mode
+           c-mode c++-mode objc-mode
            racket-mode) . lsp-deferred)
          (lsp-completion-mode . my/lsp-mode-setup-completion))
 
@@ -202,7 +202,7 @@ lsp의 디버거
 #+begin_src emacs-lisp :tangle yes
 (use-package dap-mode
   :straight t
-  :after (company lsp)
+  :after lsp
   :custom
   (lsp-enable-dap-auto-configure nil)
   :config
@@ -210,11 +210,11 @@ lsp의 디버거
   (dap-tooltip-mode 1)
   (require 'dap-node)
   (dap-node-setup))
-
 #+end_src
+
 ** languages
 *** emacs-lisp
-**** emacs-lisp indent
+**** COMMENT emacs-lisp-indent by Fuco1
 :PROPERTIES:
 :ID:       B4957536-7F95-426F-899A-DE999C4F6C60
 :END:
@@ -292,6 +292,187 @@ Lisp function does not specify a special indentation."
                      (method (funcall method indent-point state))))))))
 (add-hook 'emacs-lisp-mode-hook
           (lambda () (setq-local lisp-indent-function #'Fuco1/lisp-indent-function)))
+#+end_src
+**** emacs-lisp-indent
+https://emacs.stackexchange.com/questions/10230/how-to-indent-keywords-aligned
+
+#+begin_src emacs-lisp :tangle yes
+(advice-add #'calculate-lisp-indent :override #'void~calculate-lisp-indent)
+
+(defun void~calculate-lisp-indent (&optional parse-start)
+  "Add better indentation for quoted and backquoted lists."
+  ;; This line because `calculate-lisp-indent-last-sexp` was defined with `defvar` 
+  ;; with it's value ommited, marking it special and only defining it locally. So  
+  ;; if you don't have this, you'll get a void variable error.
+  (defvar calculate-lisp-indent-last-sexp)
+  (save-excursion
+    (beginning-of-line)
+    (let ((indent-point (point))
+          state
+          ;; setting this to a number inhibits calling hook
+          (desired-indent nil)
+          (retry t)
+          calculate-lisp-indent-last-sexp containing-sexp)
+      (cond ((or (markerp parse-start) (integerp parse-start))
+             (goto-char parse-start))
+            ((null parse-start) (beginning-of-defun))
+            (t (setq state parse-start)))
+      (unless state
+        ;; Find outermost containing sexp
+        (while (< (point) indent-point)
+          (setq state (parse-partial-sexp (point) indent-point 0))))
+      ;; Find innermost containing sexp
+      (while (and retry
+                  state
+                  (> (elt state 0) 0))
+        (setq retry nil)
+        (setq calculate-lisp-indent-last-sexp (elt state 2))
+        (setq containing-sexp (elt state 1))
+        ;; Position following last unclosed open.
+        (goto-char (1+ containing-sexp))
+        ;; Is there a complete sexp since then?
+        (if (and calculate-lisp-indent-last-sexp
+                 (> calculate-lisp-indent-last-sexp (point)))
+            ;; Yes, but is there a containing sexp after that?
+            (let ((peek (parse-partial-sexp calculate-lisp-indent-last-sexp
+                                            indent-point 0)))
+              (if (setq retry (car (cdr peek))) (setq state peek)))))
+      (if retry
+          nil
+        ;; Innermost containing sexp found
+        (goto-char (1+ containing-sexp))
+        (if (not calculate-lisp-indent-last-sexp)
+            ;; indent-point immediately follows open paren.
+            ;; Don't call hook.
+            (setq desired-indent (current-column))
+          ;; Find the start of first element of containing sexp.
+          (parse-partial-sexp (point) calculate-lisp-indent-last-sexp 0 t)
+          (cond ((looking-at "\\s("))
+                 ;; First element of containing sexp is a list.
+                 ;; Indent under that list.
+                 
+                ((> (save-excursion (forward-line 1) (point))
+                    calculate-lisp-indent-last-sexp)
+                 ;; This is the first line to start within the containing sexp.
+                 ;; It's almost certainly a function call.
+                 (if (or
+                      ;; Containing sexp has nothing before this line
+                      ;; except the first element. Indent under that element.
+                      (= (point) calculate-lisp-indent-last-sexp)
+
+                      ;; First sexp after `containing-sexp' is a keyword. This
+                      ;; condition is more debatable. It's so that I can have
+                      ;; unquoted plists in macros. It assumes that you won't
+                      ;; make a function whose name is a keyword.
+                      ;; (when-let (char-after (char-after (1+ containing-sexp)))
+                      ;;   (char-equal char-after ?:))
+
+                      ;; Check for quotes or backquotes around.
+                      (let* ((positions (elt state 9))
+                             (last (car (last positions)))
+                             (rest (reverse (butlast positions)))
+                             (any-quoted-p nil)
+                             (point nil))
+                        (or
+                         (when-let (char (char-before last))
+                           (or (char-equal char ?')
+                               (char-equal char ?`)))
+                         (progn
+                           (while (and rest (not any-quoted-p))
+                             (setq point (pop rest))
+                             (setq any-quoted-p
+                                   (or
+                                    (when-let (char (char-before point))
+                                      (or (char-equal char ?')
+                                          (char-equal char ?`)))
+                                    (save-excursion
+                                      (goto-char (1+ point))
+                                      (looking-at-p
+                                       "\\(?:back\\)?quote[\t\n\f\s]+(")))))
+                           any-quoted-p))))
+                     ;; Containing sexp has nothing before this line
+                     ;; except the first element.  Indent under that element.
+                     nil
+                   ;; Skip the first element, find start of second (the first
+                   ;; argument of the function call) and indent under.
+                   (progn (forward-sexp 1)
+                          (parse-partial-sexp (point)
+                                              calculate-lisp-indent-last-sexp
+                                              0 t)))
+                 (backward-prefix-chars))
+                (t
+                 ;; Indent beneath first sexp on same line as
+                 ;; `calculate-lisp-indent-last-sexp'.  Again, it's
+                 ;; almost certainly a function call.
+                 (goto-char calculate-lisp-indent-last-sexp)
+                 (beginning-of-line)
+                 (parse-partial-sexp (point) calculate-lisp-indent-last-sexp
+                                     0 t)
+                 (backward-prefix-chars)))))
+      ;; Point is at the point to indent under unless we are inside a string.
+      ;; Call indentation hook except when overridden by lisp-indent-offset
+      ;; or if the desired indentation has already been computed.
+      (let ((normal-indent (current-column)))
+        (cond ((elt state 3)
+               ;; Inside a string, don't change indentation.
+               nil)
+              ((and (integerp lisp-indent-offset) containing-sexp)
+               ;; Indent by constant offset
+               (goto-char containing-sexp)
+               (+ (current-column) lisp-indent-offset))
+              ;; in this case calculate-lisp-indent-last-sexp is not nil
+              (calculate-lisp-indent-last-sexp
+               (or
+                ;; try to align the parameters of a known function
+                (and lisp-indent-function
+                     (not retry)
+                     (funcall lisp-indent-function indent-point state))
+                ;; If the function has no special alignment
+                ;; or it does not apply to this argument,
+                ;; try to align a constant-symbol under the last
+                ;; preceding constant symbol, if there is such one of
+                ;; the last 2 preceding symbols, in the previous
+                ;; uncommented line.
+                (and (save-excursion
+                       (goto-char indent-point)
+                       (skip-chars-forward " \t")
+                       (looking-at ":"))
+                     ;; The last sexp may not be at the indentation
+                     ;; where it begins, so find that one, instead.
+                     (save-excursion
+                       (goto-char calculate-lisp-indent-last-sexp)
+                       ;; Handle prefix characters and whitespace
+                       ;; following an open paren.  (Bug#1012)
+                       (backward-prefix-chars)
+                       (while (not (or (looking-back "^[ \t]*\\|([ \t]+"
+                                                     (line-beginning-position))
+                                       (and containing-sexp
+                                            (>= (1+ containing-sexp) (point)))))
+                         (forward-sexp -1)
+                         (backward-prefix-chars))
+                       (setq calculate-lisp-indent-last-sexp (point)))
+                     (> calculate-lisp-indent-last-sexp
+                        (save-excursion
+                          (goto-char (1+ containing-sexp))
+                          (parse-partial-sexp (point) calculate-lisp-indent-last-sexp 0 t)
+                          (point)))
+                     (let ((parse-sexp-ignore-comments t)
+                           indent)
+                       (goto-char calculate-lisp-indent-last-sexp)
+                       (or (and (looking-at ":")
+                                (setq indent (current-column)))
+                           (and (< (line-beginning-position)
+                                   (prog2 (backward-sexp) (point)))
+                                (looking-at ":")
+                                (setq indent (current-column))))
+                       indent))
+                ;; another symbols or constants not preceded by a constant
+                ;; as defined above.
+                normal-indent))
+              ;; in this case calculate-lisp-indent-last-sexp is nil
+              (desired-indent)
+              (t
+               normal-indent))))))
 #+end_src
 
 **** highlight-defined
@@ -520,6 +701,13 @@ https://gitlab.com/emacs-geiser/geiser
       eos))
 #+end_src
 
+**** vue-mode
+#+begin_src emacs-lisp :tangle yes
+(use-package vue-mode
+  :mode "\\.vue\\'"
+  :commands (vue-mode))
+#+end_src
+
 *** C/C++
 **** ccls
 :PROPERTIES:
@@ -528,7 +716,19 @@ https://gitlab.com/emacs-geiser/geiser
 #+begin_src emacs-lisp :tangle yes
 (use-package ccls
   :hook ((c-mode c++-mode objc-mode cuda-mode) .
-         (lambda () (require 'ccls) (lsp))))
+         (lambda () (require 'ccls) (lsp)))
+  :custom
+  (ccls-initialization-options '(:index (:comments 2) :completion (:detailedLabel t)))
+  (ccls-executable "/usr/local/bin/ccls")
+  :config
+  (add-to-list 'flycheck-disabled-checkers 'c/c++-clang)
+  (add-to-list 'flycheck-disabled-checkers 'c/c++-cppcheck)
+  (add-to-list 'flycheck-disabled-checkers 'c/c++-gcc))
+#+end_src
+
+**** clang-format
+#+begin_src emacs-lisp :tangle yes
+(use-package clang-format)
 #+end_src
 
 *** markdown
@@ -596,7 +796,7 @@ HTTP REST API 테스트용
   :hook (restclient-mode . display-line-numbers-mode))
 #+end_src
 
-*** emmet-mode
+**** emmet-mode
 :PROPERTIES:
 :ID:       B3A02BB3-E68B-4F5E-87AD-2A8626CB1FCA
 :END:
@@ -609,13 +809,6 @@ https://github.com/smihica/emmet-mode
   :hook (web-mode css-mode))
 #+end_src
 
-*** vue-mode
-#+begin_src emacs-lisp :tangle yes
-(use-package vue-mode
-  :mode "\\.vue\\'"
-  :commands (vue-mode))
-#+end_src
-
 *** yaml
 **** yaml-mode
 :PROPERTIES:
@@ -624,6 +817,14 @@ https://github.com/smihica/emmet-mode
 #+begin_src emacs-lisp :tangle yes
 (use-package yaml-mode
   :mode "\\.ya?ml\\'")
+#+end_src
+*** shell script
+**** smtfs
+shell script formatter
+
+#+begin_src emacs-lisp
+(use-package shfmt
+  :ensure-system-package shfmt)
 #+end_src
 
 ** code formatter
@@ -672,14 +873,31 @@ auto code formatter
   :straight (:type built-in)
   :custom
   (compilation-scroll-output t)
-  :config 
+  :config
+;;;###autoload 
   (defun auto-recompile-buffer ()
     (interactive)
     (if (member #'recompile after-save-hook)
         (remove-hook 'after-save-hook #'recompile t)
-      (add-hook 'after-save-hook #'recompile nil t))))
-#+end_src
+      (add-hook 'after-save-hook #'recompile nil t)))
 
+;;;###autoload 
+  (defun compile-and-run-cpp ()
+    (interactive)
+    (save-buffer)
+    (let ((name (buffer-file-name)))
+      (other-window)
+      (compile
+       (concat "g++ "
+               (file-name-nondirectory name)
+               " -o "
+               (file-name-sans-extension (file-name-nondirectory name))
+               " && ./"
+               (file-name-sans-extension (file-name-nondirectory name)))
+       t)
+      (end-of-buffer))))
+
+#+end_src
 
 * terminal thing
 :PROPERTIES:

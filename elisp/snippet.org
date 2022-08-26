@@ -1,7 +1,7 @@
 #+auto_tangle: t
 
 * snippet
-** yasnippet
+** COMMENT yasnippet
 :PROPERTIES:
 :ID:       8AB07E8C-E91E-49BA-BBF5-9641FB9BC029
 :END:
@@ -19,17 +19,18 @@ https://github.com/joaotavora/yasnippet
    "<tab>" nil)
   :config
   ;; (setq yas-fallback-behavior '(apply tab-jump-out 1))
-  (yas-reload-all)
+  (yas-reload-all))
   ;; Add yasnippet support for all company backends
   ;; https://github.com/syl20bnr/spacemacs/pull/179
-  (with-eval-after-load
-      (defvar company-mode/enable-yas t
-        "Enable yasnippet for all backends.")
-    (defun company-mode/backend-with-yas (backend)
-      (if (or (not company-mode/enable-yas) (and (listp backend) (member 'company-yasnippet backend)))
-          backend
-        (append (if (consp backend) backend (list backend))
-                '(:with company-yasnippet))))))
+  ;; (with-eval-after-load
+  ;;     (defvar company-mode/enable-yas t
+  ;;       "Enable yasnippet for all backends.")
+  ;;   (defun company-mode/backend-with-yas (backend)
+  ;;     (if (or (not company-mode/enable-yas) (and (listp backend) (member 'company-yasnippet backend)))
+  ;;         backend
+  ;;       (append (if (consp backend) backend (list backend))
+  ;;               '(:with company-yasnippet)))))
+  
 #+end_src
 
 *** yasnippet-snippets
@@ -118,13 +119,19 @@ abbrev를 사용해서 스니펫을 입력할 수 있고, 템플릿을 elisp로 
 :END:
 https://github.com/minad/tempel
 
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :tangle yes
 (use-package tempel
   ;; :bind (("M-+" . tempel-complete) ;; Alternative tempel-expand
   ;;        ("M-*" . tempel-insert))
-  ;; :custom
-  ;; (tempel-trigger-prefix "<")
+  :custom
+  (tempel-trigger-prefix "<")
+  (tempel-path (expand-file-name "tempel/templates" no-littering-var-directory))
   :hook ((prog-mode text-mode) . tempel-setup-capf)
+  :general
+  ("M-/ ." 'tempel-complete)
+  (tempel-map
+   "C-n" 'tempel-next
+   "C-p" 'tempel-previous)
   :init
   (defun tempel-setup-capf ()
     ;; Add the Tempel Capf to `completion-at-point-functions'.
@@ -134,12 +141,13 @@ https://github.com/minad/tempel
     ;; does not trigger too often when you don't expect it. NOTE: We add
     ;; `tempel-expand' *before* the main programming mode Capf, such
     ;; that it will be tried first.
-    (setq-local completion-at-point-functions
-                (cons
-                 ;; #'tempel-expand
-                 #'tempel-complete
-                      completion-at-point-functions))))
+    ;; (setq-local completion-at-point-functions
+    ;;             (cons
+    ;;              ;; #'tempel-expand
+    ;;              #'tempel-complete
+    ;;                   completion-at-point-functions))
+    (add-to-list 'completion-at-point-functions #'tempel-complete)))
 #+end_src
 
-- 바인딩을 따로 하는 편이 속 편할 듯 하다. 근데 그럼 yasnippet과 차이가?
 - tempel-complete를 하면 아무것도 쓰지 않은 상황에서 tab으로 표시할 수 있다.
+  

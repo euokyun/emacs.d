@@ -49,10 +49,8 @@
 공백 문자를 표시해줌
 #+begin_src emacs-lisp :tangle yes
 (use-package whitespace
-  ;; :demand t
   ;; :init
   ;; (global-whitespace-mode t)
-  ;; :custom-face
   :custom
   (whitespace-global-modes '(not magit-diff-mode org-mode))
   (whitespace-line-column nil)
@@ -61,8 +59,7 @@
    '((space-mark 32 [183] [46]) ; 32 SPACE 「 」, 183 MIDDLE DOT 「·」, 46 FULL STOP 「.」
      ;; (newline-mark 10 [8617 10]) ; 10 LINE FEED
      ;; (lines-tail 10 [8617 10]) ; 10 LINE FEED
-     (tab-mark 9 [8594 9] [183 9]) ; 9 TAB, 9655 WHITE RIGHT-POINTING TRIANGLE 「▷」
-     ))
+     (tab-mark 9 [8594 9] [183 9]))) ; 9 TAB, 9655 WHITE RIGHT-POINTING TRIANGLE 「▷」
   (whitespace-style '(face              ; use faces
                       trailing
                       spaces
@@ -72,10 +69,9 @@
                       indentation::space
                       tabs
                       ;; newline
-                      space-mark
-                      tab-mark
                       ;; newline-mark
-                      )))
+                      space-mark
+                      tab-mark)))
 #+end_src
 
 ** beacon
@@ -498,9 +494,9 @@ https://github.com/ubolonton/info-colors
   :straight (:type built-in)
   :commands eldoc-mode
   :hook (emacs-lisp-mode . turn-on-eldoc-mode)
-  :diminish t
-  :custom
-  (eldoc-idle-delay 0))
+  :diminish t)
+  ;; :custom
+  ;; (eldoc-idle-delay 0))
 #+end_src
 
 * transpose-frame

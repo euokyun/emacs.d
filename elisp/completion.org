@@ -57,10 +57,10 @@ https://github.com/minad/vertico
    "<escape>" '(lambda ()
                  (interactive)
                  (evil-normal-state)
-                 (forward-char 1)))
+                 (ignore-errors (forward-char 1))))
   (vertico-map
    :states 'normal
-   "q" 'minibuffer-keyboard-quit
+    "q" 'abort-recursive-edit
    [remap evil-goto-first-line] 'vertico-first
    [remap evil-goto-line] 'vertico-last)
   ;; (vertico-map
@@ -300,19 +300,19 @@ https://github.com/minad/consult
             "M-s k" 'consult-keep-lines
             "M-s u" 'consult-focus-lines
             ;; Isearch integration
-            "M-s e" 'consult-isearch-history
-            :map isearch-mode-map
-            "M-e" 'consult-isearch-history ;; orig. isearch-edit-string
-            "M-s e" 'consult-isearch-history ;; orig. isearch-edit-string
-            ;; "M-s l" 'consult-line ;; needed by consult-line to detect isearch
-            ;; "M-s L" 'consult-line-multi
-            "s-f" 'consult-ripgrep-or-line ;; needed by consult-line to detect isearch
-            "s-F" 'consult-line-multi) ;; ;; needed by consult-line to detect isearch
+            "M-s e" 'consult-isearch-history)
+  (isearch-mode-map
+   "M-e" 'consult-isearch-history ;; orig. isearch-edit-string
+   "M-s e" 'consult-isearch-history ;; orig. isearch-edit-string
+   ;; "M-s l" 'consult-line ;; needed by consult-line to detect isearch
+   ;; "M-s L" 'consult-line-multi
+   "s-f" 'consult-ripgrep-or-line ;; needed by consult-line to detect isearch
+   "s-F" 'consult-line-multi) ;; ;; needed by consult-line to detect isearch
   ;; needed by consult-line to detect isearch
 
-  ;; Enable automatic preview at point in the *Completions* buffer. This is
-  ;; relevant when you use the default completion UI. You may want to also
-  ;; enable `consult-preview-at-point-mode` in Embark Collect buffers.
+   ;; Enable automatic preview at point in the *Completions* buffer. This is
+   ;; relevant when you use the default completion UI. You may want to also
+   ;; enable `consult-preview-at-point-mode` in Embark Collect buffers.
   :hook (completion-list-mode . consult-preview-at-point-mode)
 
   ;; The :init configuration is always executed (Not lazy)
@@ -369,6 +369,7 @@ DEFS is a plist associating completion categories to commands."
                                                  minibuffer-completion-predicate)
                             'category))))))
 
+;;;###autoload
   (defun consult-find-for-minibuffer ()
     "Search file with find, enter the result in the minibuffer."
     (interactive)
@@ -413,14 +414,13 @@ DEFS is a plist associating completion categories to commands."
 ;;;; 4. locate-dominating-file
   ;; (setq consult-project-root-function (lambda () (locate-dominating-file "." ".git")))
 
-
-
   (defcustom consult-ripgrep-or-line-limit 300000
     "Buffer size threshold for `my-consult-ripgrep-or-line'.
 When the number of characters in a buffer exceeds this threshold,
 `consult-ripgrep' will be used instead of `consult-line'."
     :type 'integer)
 
+;;;###autoload
   (defun consult-ripgrep-or-line ()
     "Call `consult-line' for small buffers or `consult-ripgrep' for large files."
     (interactive)
@@ -467,9 +467,7 @@ https://github.com/karthink/consult-dir
 (use-package consult-dir
   :straight t
   :general
-  ("C-x C-d" 'consult-dir
-   ;; "s-O" 'consult-dir
-   )
+  ("C-x C-d" 'consult-dir)
   (vertico-map
    "C-x C-d" 'consult-dir
    "C-x C-j" 'consult-dir-jump-file)
@@ -543,12 +541,12 @@ https://github.com/minad/corfu
   :straight (:host github
              :repo "minad/corfu")
   :load-path "straight/repos/corfu/extensions/"
+  ;; :if (display-graphic-p)
   :custom
-  ;; (corfu-cycle t)                     ; Enable cycling for `corfu-next/previous'
+  (corfu-cycle t)                     ; Enable cycling for `corfu-next/previous'
   ;; (completion-cycle-threshold 3)
   (corfu-auto t)                        ; Enable auto completion
   (corfu-auto-prefix 3)
-  ;; (corfu-commit-predicate nil) ; Do not commit selected candidates on next input
   ;; (corfu-commit-predicate nil) ; Do not commit selected candidates on next input
   ;; (corfu-quit-at-boundary t)           ; Automatically quit at word boundary
   ;; (corfu-quit-no-match t)              ; Automatically quit if there is no match
@@ -566,10 +564,10 @@ https://github.com/minad/corfu
   ;; :hook (minibuffer-setup . corfu-mode)
   :hook ((minibuffer-setup . (lambda ()
                                (let ((corfu-auto nil))
-                                 (corfu-mode))))
-         ;; (minibuffer-exit . (lambda ()
-         ;;                      (setq-local corfu-auto t)))
-         )
+                                 (corfu-mode)))))
+  ;; (minibuffer-exit . (lambda ()
+  ;;                      (setq-local corfu-auto t)))
+         
 
   ;; Recommended: Enable Corfu globally.
   ;; This is recommended since dabbrev can be used globally (M-/).
@@ -578,7 +576,10 @@ https://github.com/minad/corfu
   :general
   ("C-SPC" 'completion-at-point)
   (corfu-map
-   "SPC" 'corfu-insert-separator
+   ;; "SPC" 'corfu-insert-separator
+   "SPC" (general-predicate-dispatch 'corfu-insert-separator
+           (eq 'corfu-insert-separator last-command)
+           'corfu-quit)
    ;; "SPC" (general-key-dispatch
    ;;         '(lambda () (interactive) 'corfu-insert-separator)
    ;;         :timeout 0.25
@@ -589,22 +590,22 @@ https://github.com/minad/corfu
    ;; "C-p" 'corfu-previous
    [remap evil-complete-next] 'corfu-next
    [remap evil-complete-previous] 'corfu-previous
-   ;; "C-h" 'corfu-show-documentation
    ;; [remap evil-beginning-of-line] 'corfu-beginning-of-prompt
    ;; [remap evil-end-of-line] 'corfu-end-of-prompt
    ;; [remap evil-undo] 'corfu-reset
    ;; "<escape>" 'corfu-quit
-   [remap evil-insert] '(lambda (&optional args)
-                          (interactive)
-                          (evil-insert args)
-                          (completion-at-point))
+   ;; [remap evil-insert] '(lambda (&optional args)
+   ;;                        (interactive)
+   ;;                        (evil-insert args)
+   ;;                        (completion-at-point))
    [remap completion-at-point] 'corfu-quit
    [remap evil-force-normal-state] '(lambda () (interactive)
-                                      (corfu-quit)
+                                      (call-interactively 'corfu-quit)
                                       (evil-force-normal-state))
+                                      
    [remap evil-mc-undo-all-cursors] 'corfu-quit)
-  ([remap evil-complete-next] '()
-   [remap evil-complete-previous] '())
+  ([remap evil-complete-next] nil
+   [remap evil-complete-previous] nil)
 
   (corfu-map
    :states 'motion
@@ -630,19 +631,37 @@ https://github.com/minad/corfu
   ;;  "<backtab>" 'corfu-previous)
 
   :config
-  ;; (add-hook 'minibuffer-setup-hook #'corfu-mode)
+;;;###autoload
   (defun corfu-beginning-of-prompt ()
     "Move to beginning of completion input."
     (interactive)
     (corfu--goto -1)
     (goto-char (car completion-in-region--data)))
 
+;;;###autoload
   (defun corfu-end-of-prompt ()
     "Move to end of completion input."
     (interactive)
     (corfu--goto -1)
     (goto-char (cadr completion-in-region--data)))
-  (advice-add 'refresh-theme :after #'(lambda (&rest args) (kind-icon-reset-cache))))
+
+;;;###autoload
+  (defun corfu-complete-common-or-next ()
+    "Complete common prefix or go to next candidate."
+    (interactive)
+    (if (= corfu--total 1)
+        (progn
+          (corfu--goto 1)
+          (corfu-insert))
+      (let* ((input (car corfu--input))
+             (str (if (thing-at-point 'filename) (file-name-nondirectory input) input))
+             (pt (length str))
+             (common (try-completion str corfu--candidates)))
+        (if (and (> pt 0)
+                 (stringp common)
+                 (not (string= str common)))
+            (insert (substring common pt))
+          (corfu-next))))))
 #+end_src
 
 ** corfu components
@@ -652,19 +671,37 @@ https://github.com/minad/corfu
 #+begin_src emacs-lisp :tangle yes
 (use-package corfu-indexed
   :straight nil
+  :after corfu
   :config
   (corfu-indexed-mode))
 
 (use-package corfu-history
   :straight nil
+  :after corfu
   :config
   (corfu-history-mode))
 
 ;; (use-package corfu-info
+  ;; :after corfu
 ;;   :straight nil)
 
 ;; (use-package corfu-quick
+  ;; :after corfu
 ;;   :straight nil)
+#+end_src
+
+** corfu-terminal
+
+#+begin_src emacs-lisp :tangle yes
+(use-package popon
+ :straight (popon :type git :repo "https://codeberg.org/akib/emacs-popon.git"))
+
+(use-package corfu-terminal
+  :straight (corfu-terminal
+             :type git
+             :repo "https://codeberg.org/akib/emacs-corfu-terminal.git")
+  :unless (display-graphic-p)
+  :after popon)
 #+end_src
 
 ** kind-icon
@@ -680,19 +717,20 @@ company에서 company-box가 그러하듯 corfu에서 아이콘을 표시하는 
              :type git
              :host github
              :repo "jdtsmith/kind-icon")
-  :after corfu
   :custom
   (kind-icon-default-face 'corfu-default) ; to compute blended backgrounds correctly
   (kind-icon-blend-background nil)
   (kind-icon-blend-frac 0.08)
   (svg-lib-icons-dir (no-littering-expand-var-file-name "svg-lib/cache/"))
   :config
-  (add-to-list 'corfu-margin-formatters #'kind-icon-margin-formatter))
+  (add-to-list 'corfu-margin-formatters #'kind-icon-margin-formatter)
+  (advice-add 'refresh-theme :after #'(lambda (&rest _) (kind-icon-reset-cache))))
 #+end_src
 
 - backend의 ​='kind=​를 읽어옴
 
-** TODO cape [1/2]
+** DONE cape [2/2]
+CLOSED: [2022-08-22 Mon 00:32]
 :PROPERTIES:
 :ID:       8F65C0EC-D60B-4B50-A55D-E81BAA03494F
 :END:
@@ -706,100 +744,36 @@ company의 backend를 corfu에서도 사용할 수 있도록 함
              :type git
              :host github
              :repo "minad/cape")
+
+  :general
   ;; Bind dedicated completion commands
-  ;; :bind (("C-c p p" . completion-at-point) ;; capf
-  ;;        ("C-c p t" . complete-tag)        ;; etags
-  ;;        ("C-c p d" . cape-dabbrev)        ;; or dabbrev-completion
-  ;;        ("C-c p f" . cape-file)
-  ;;        ("C-c p k" . cape-keyword)
-  ;;        ("C-c p s" . cape-symbol)
-  ;;        ("C-c p a" . cape-abbrev)
-  ;;        ("C-c p i" . cape-ispell)
-  ;;        ("C-c p l" . cape-line)
-  ;;        ("C-c p w" . cape-dict)
-  ;;        ("C-c p \\" . cape-tex)
-  ;;        ("C-c p &" . cape-sgml)
-  ;;        ("C-c p r" . cape-rfc1345))
-  ;; :general
-
-  ;; :init
-  ;; ;; (use-package company)                 ; load company backends
-  ;; ;; Add `completion-at-point-functions', used by `completion-at-point'.
-  ;; (add-to-list 'completion-at-point-functions #'cape-file)
-  ;; ;; (add-to-list 'completion-at-point-functions
-  ;; ;;              (cape-company-to-capf #'cape-yasnippet))
-  ;; ;; (add-to-list 'completion-at-point-functions #'cape-tex)
-  ;; (add-to-list 'completion-at-point-functions #'cape-dabbrev)
-  ;; (add-to-list 'completion-at-point-functions #'cape-keyword)
-  ;; ;;(add-to-list 'completion-at-point-functions #'cape-sgml)
-  ;; ;;(add-to-list 'completion-at-point-functions #'cape-rfc1345)
-  ;; ;; (add-to-list 'completion-at-point-functions #'cape-abbrev)
-  ;; ;;(add-to-list 'completion-at-point-functions #'cape-ispell)
-  ;; ;;(add-to-list 'completion-at-point-functions #'cape-dict)
-  ;; (add-to-list 'completion-at-point-functions #'cape-symbol)
-  ;; ;;(add-to-list 'completion-at-point-functions #'cape-line)
-
-
-  ;; (setq completion-at-point-functions
-  ;;       `(
-  ;;         ,(cape-company-to-capf #'cape-yasnippet)
-  ;;         cape-symbol
-  ;;         ;; ,(cape-super-capf
-  ;;         ;;   #'cape-symbol
-  ;;         ;; ;; (cape-company-to-capf #'cape-yasnippet)
-  ;;         ;;   #'cape-abbrev
-  ;;         ;;   #'cape-keyword
-  ;;         ;;   #'cape-dabbrev
-  ;;         ;;   #'cape-file
-  ;;         ;;   ;; #'elisp-completion-at-point
-  ;;         ;;   )
-  ;;         ;; ,(cape-company-to-capf #'cape-yasnippet)
-  ;;         cape-dabbrev
-  ;;         cape-abbrev
-  ;;         cape-keyword
-  ;;         cape-file
-  ;;         t))
-
-;;   :config
-;; ;;;###autoload
-;;   (defun cape-yasnippet (command &optional arg &rest ignore)
-;;     "Cape version of `company-yasnippet'"
-;;     (let* ((templates (yas--all-templates (yas--get-snippet-tables)))
-;;            (cands (mapcar (lambda (template)
-;;                             (list (yas--template-key template)
-;;                                   template))
-;;                           templates))
-;;            (template (cadr (assoc arg cands))))
-;;       (cl-case command
-;;         (prefix
-;;          (and (bound-and-true-p yas-minor-mode)
-;;               (let ((bounds (cons (point) (save-excursion (skip-syntax-backward "w_") (point)))))
-;;                 (buffer-substring (car bounds) (cdr bounds)))))
-;;         (annotation
-;;          (concat " -> " (yas--template-name template)))
-;;         (candidates cands)
-;;         (meta (yas--template-content template))
-;;         (no-cache t)
-;;         (kind 'snippet)
-;;         (post-completion
-;;          (yas-expand-snippet template
-;;                              (- (point) (length arg)) (point))))))
-
-  ;; (add-hook 'racket-mode-hook
-  ;;           #'(lambda (&optional _)
-  ;;               (setq completion-at-point-functions
-  ;;                     `(racket-complete-at-point
-  ;;                       cape-abbrev
-  ;;                       cape-dabbrev
-  ;;                       ,(cape-company-to-capf #'cape-yasnippet)
-  ;;                       cape-file))))
-  )
+  ;; ("M-/ p" 'completion-at-point) ;; capf
+  ("M-/ t" 'complete-tag) ;; etags
+  ("M-/ d" 'cape-dabbrev) ;; or dabbrev-completion
+  ("M-/ f" 'cape-file)
+  ("M-/ k" 'cape-keyword)
+  ("M-/ s" 'cape-symbol)
+  ("M-/ a" 'cape-abbrev)
+  ("M-/ i" 'cape-ispell)
+  ("M-/ l" 'cape-line)
+  ("M-/ w" 'cape-dict)
+  ("M-/ \\" 'cape-tex)
+  ("M-/ &" 'cape-sgml)
+  ("M-/ r" 'cape-rfc1345)
+  :hook (emacs-lisp-mode . (lambda ()
+                             (setq-local completion-at-point-functions
+                                         (-replace 'elisp-completion-at-point
+                                                   (cape-capf-predicate
+                                                    #'elisp-completion-at-point
+                                                    #'(lambda (sym) (not (keywordp sym))))
+                                                   completion-at-point-functions)))))
 #+end_src
 
 - [X] 자동으로 버퍼 따라 백엔드 활성화가 필요함.
   + setq로 설정하면 되는 듯 하다. 기본 백엔드가 자동으로 사용하나? 그럼 왜 add-to-list는 안 되는거지?
     - 기본 백엔드가 자동으로 사용하는데, 모드마다 사용하는 백엔드 범위가 다른듯함.
-- [ ] cape-yasnippet을 백엔드에서 제거하고 단축키를 따로 설정하는 편이 좋겠음.
+- [X] cape-yasnippet을 백엔드에서 제거하고 단축키를 따로 설정하는 편이 좋겠음.
+  + 제거함. tempel을 사용할 것.
 
 ** corfu-doc
 :PROPERTIES:
@@ -815,12 +789,14 @@ corfu용 quickhelp
              :host github
              :repo "galeo/corfu-doc")
   :hook (corfu-mode . corfu-doc-mode)
+  :custom
+  ;; (corfu-doc-max-height 20)
+  (corfu-doc-max-width 60)
   :general
   (corfu-map
    "M-p" 'corfu-doc-scroll-down
    "M-n" 'corfu-doc-scroll-up
-   ;; "S-SPC" 'corfu-doc-show)
-   "S-SPC" 'corfu-doc-toggle)
+   "S-SPC" 'corfu-doc-toggle))
 
   ;; :config/el-patch
   ;; (defun corfu-doc--make-frame (x y width height content)
@@ -880,13 +856,23 @@ corfu용 quickhelp
   ;;     (set-frame-size corfu-doc--frame width height t)
   ;;     (make-frame-visible corfu-doc--frame)))
 
-  :config
-  ;; help에서 독스트링을 가리는 message를 제거함.
-  ;; (defun override-ignore-function (&rest _) nil)
-  (define-advice corfu-doc-show (:around (orig) ignore-message)
-    (advice-add 'help-window-display-message :override 'ignore)
-    (funcall orig)
-    (advice-remove 'help-window-display-message 'ignore)))
+  ;; :config
+  ;; ;; help에서 독스트링을 가리는 message를 제거함.
+  ;; ;; (defun override-ignore-function (&rest _) nil)
+  ;; (define-advice corfu-doc-show (:around (orig) ignore-message)
+  ;;   (advice-add 'help-window-display-message :override 'ignore)
+  ;;   (funcall orig)
+  ;;   (advice-remove 'help-window-display-message 'ignore)))
+#+end_src
+
+** corfu-doc-terminal
+
+#+begin_src emacs-lisp :tangle yes
+(use-package corfu-doc-terminal
+  :straight (corfu-doc-terminal
+             :type git
+             :repo "https://codeberg.org/akib/emacs-corfu-doc-terminal.git")
+  :unless (display-graphic-p))
 #+end_src
 
 * embark

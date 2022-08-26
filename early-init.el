@@ -2,9 +2,8 @@
 
 ;; from https://github.com/hlissner/doom-emacs/blob/develop/early-init.el
 ;; temporary prevent gc running and reset it later by `gcmh-mode'.
-(setq gc-cons-threshold most-positive-fixnum
+(setq gc-cons-threshold most-positive-fixnum)
       ;; gc-cons-percentage 0.6
-      )
 
 ;; Prevent unwanted runtime compilation for gccemacs.
 ;; (setq comp-deferred-compilation nil
@@ -45,16 +44,11 @@
 (straight-use-package 'use-package)
 ;; (require 'use-package-ensure)
 (setq straight-use-package-by-default t
-      straight-check-for-modifications '(check-on-save find-when-checking))
+      straight-check-for-modifications '(check-on-save find-when-checking)
+      straight-recipes-gnu-elpa-use-mirror nil
+      straight-recipes-emacsmirror-use-mirror nil)
 
-(advice-add 'straight-prune-build
-    :before #'(lambda ()
-                (delete-file
-                 (expand-file-name
-                  ".DS_Store"
-                  (expand-file-name
-                   straight-build-dir
-                   (concat straight-base-dir "straight"))))))
+
 
 
 ;; (straight-use-package 'esup)
@@ -65,7 +59,7 @@
 (use-package exec-path-from-shell
   :custom
   (exec-path-from-shell-arguments 'nil)
-  (exec-path-from-shell-variables '("PATH" "MANPATH" "SHELL" "JAVA_HOME"))
+  (exec-path-from-shell-variables '("PATH" "MANPATH" "SHELL" "JAVA_HOME" "LSP_USE_PLISTS"))
   :config
   (exec-path-from-shell-initialize))
 
@@ -73,9 +67,6 @@
 ;; - var : persistent data
 ;; - etc : configuration files.
 (use-package no-littering
-  :init
-  (setq auto-save-file-name-transforms
-        `((".*" ,(no-littering-expand-var-file-name "auto-save/") t)))
   :config
   (require 'recentf) ;; recent files에 var, etc 제외
   (add-to-list 'recentf-exclude no-littering-var-directory)

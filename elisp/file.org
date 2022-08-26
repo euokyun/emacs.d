@@ -125,23 +125,15 @@ https://github.com/alexluigit/dirvish
 (use-package dirvish
   :load-path "straight/repos/dirvish/extensions/"
   :general
-  ;; (dirvish-mode-map
-  ;;  :states 'normal
-  ;;  "H" 'dirvish-up-directory
-  ;;  [remap dired-do-copy] 'dirvish-yank
-  ;;  [remap evil-goto-first-line] 'dirvish-go-top
-  ;;  [remap evil-goto-line] 'dirvish-go-bottom
-  ;;  "SPC dh" 'dirvish-show-history
-  ;;  "S-SPC" 'dirvish-toggle-preview)
   (dirvish-mode-map
    "C-c f" 'dirvish-fd
-   ;; Dirvish has all the keybindings (except `dired-summary') in `dired-mode-map' already
-   ;; ("h" . dired-up-directory)
-   ;; ("j" . dired-next-line)
-   ;; ("k" . dired-previous-line)
-   ;; ("l" . dired-find-file)
-   ;; ("i" . wdired-change-to-wdired-mode)
-   ;; ("." . dired-omit-mode)
+   [remap evil-backward-char] 'dired-up-directory
+   [remap evil-forward-char] 'dired-find-file
+   [remap dired-clean-directory] 'dired-omit-mode
+   [remap evil-backward-word-begin] 'dirvish-bookmark-jump
+   [remap evil-find-char] 'dirvish-file-info-menu
+   [remap evil-yank] 'dirvish-yank-menu
+   [remap evil-search-previous] 'dirvish-narrow
    "b" 'dirvish-bookmark-jump
    "f" 'dirvish-file-info-menu
    "y" 'dirvish-yank-menu
@@ -154,7 +146,7 @@ https://github.com/alexluigit/dirvish
    "M-p" 'dirvish-history-go-backward
    "M-l" 'dirvish-ls-switches-menu
    "M-m" 'dirvish-mark-menu
-   "M-f" 'dirvish-toggle-fullscreen
+   "M-f" 'dirvish-layout-toggle
    "M-s" 'dirvish-setup-menu
    "M-e" 'dirvish-emerge-menu
    "M-j" 'dirvish-fd-jump)
@@ -162,12 +154,12 @@ https://github.com/alexluigit/dirvish
   (system-packages-ensure "gls")
   (dirvish-override-dired-mode t)
   :custom
-  (dirvish-attributes '(all-the-icons file-size collapse subtree-state vc-state git-msg))
-  :config
+  (dirvish-attributes '(all-the-icons file-size collapse subtree-state vc-state git-msg)))
+  ;; :config
   ;; (require 'dirvish-minibuffer-preview)
   ;; (dirvish-minibuf-preview-mode)
   ;; (require 'dirvish-yank)
-  (dirvish-peek-mode))
+  ;; (dirvish-peek-mode))
 #+end_src
 
 ** dirvish의 외부 의존성
@@ -603,6 +595,12 @@ https://github.com/Fanael/persistent-scratch
 (use-package persistent-scratch
   :init
   (defvar persistent-scratch-backup-keep 7 "How long keep scratch backup(day)")
+  (persistent-scratch-setup-default)
+  :general
+  (lisp-interaction-mode-map
+   ;; "s-O" 'persistent-scratch-restore-from-file
+   "s-s" 'persistent-scratch-save
+   "s-S" 'persistent-scratch-save-to-file)
   :custom
   (persistent-scratch-backup-file-name-format "%Y%m%dT%H%M%S")
   (persistent-scratch-backup-directory
@@ -616,9 +614,7 @@ https://github.com/Fanael/persistent-scratch
              (encode-time (parse-time-string file))
              (time-subtract (current-time)
                             (days-to-time persistent-scratch-backup-keep)))))
-        files)))
-  :config
-  (persistent-scratch-setup-default))
+        files))))
 #+end_src
 
 * osx-trash
